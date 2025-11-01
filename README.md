@@ -1,28 +1,27 @@
-Startup of Kanban Board
-
-Kanban board consists of backend and frontend logics, where two collaborators have working on it simultaneously.
-
 # Project Purpose
+This Kanban Board application integrates both backend and frontend logic, developed collaboratively by two contributors. It provides an interactive way to manage tasks with real-time updates and drag-and-drop functionality.
 
-# Key Features
+## Key Features
+1. Fetch boards and tasks via API
+2. Add new tasks dynamically
+3. Drag-and-drop (DND) task movement between columns
+4. Display of the latest action performed
 
-* Fetch boards and tasks via REST API
+## Setup instruction
+Execute start.sh to automate the installation and startup process.
 
-* Add new tasks
+## Contribution Guide
+* Create a new branch for each feature or fix.
+* Use meaningful commit messages.
+* Submit pull requests for review before merging.
+* Require (1) approval for every PR review before merging.
 
-* Drag-and-drop for moving task
+## Further improvement
+* Add authentication and user-specific boards.
+* Integrate cloud database for persistent task storage.
 
-* Shown last action done
 
-# Setup instruction
-
-# Contribution Guide
-
-# Further improvement
-
-* Add database connection to store in cloud
-
-# Tech Stack
+## Tech Stack
 1. Express
 2. Node.js
 3. Bash Script
