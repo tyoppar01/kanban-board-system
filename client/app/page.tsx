@@ -158,6 +158,32 @@ export default function KanbanBoard() {
       setData(newData);
       return;
     }
+
+    // moving from one column to another
+    const startTaskIds = Array.from(startColumn.tasks);
+    startTaskIds.splice(source.index, 1);
+    const newStartColumn = {
+      ...startColumn,
+      tasks: startTaskIds,
+    };
+
+    const finishTaskIds = Array.from(finishColumn.tasks);
+    finishTaskIds.splice(destination.index, 0, draggableId);
+    const newFinishColumn = {
+      ...finishColumn,
+      tasks: finishTaskIds,
+    };
+
+    const newState = {
+      ...data,
+      columns: {
+        ...data.columns,
+        [newStartColumn.id]: newStartColumn,
+        [newFinishColumn.id]: newFinishColumn,
+      },
+    };
+
+    setData(newState);
   }
   
   return (
