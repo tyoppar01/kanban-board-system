@@ -2,7 +2,7 @@
 
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 // Task
 interface Task {  
@@ -37,19 +37,20 @@ const initialData: Board = {
     'todo': {
       id: 'todo',
       name: 'To Do',
-      tasks: ['task-2', 'task-3', 'task-4'],     columnColor: 'blue-600'
+      tasks: ['task-2', 'task-3', 'task-4'],
+      columnColor: 'blue'
     },
     'in-progress': {
       id: 'in-progress',
       name: 'In Progress',
       tasks: ['task-1'],
-      columnColor: 'yellow-600'
+      columnColor: 'yellow'
     },
     'completed': {
       id: 'completed',
       name: 'Completed',
       tasks: [],
-      columnColor: 'green-600'
+      columnColor: 'green'
     },
   },
   columnOrder: ['todo', 'in-progress', 'completed'],
@@ -64,17 +65,17 @@ export default function KanbanBoard() {
 
   // color mapping to ensure tailwind classes are included in build
   const colorClasses = {
-    'blue-600': {
+    'blue': {
       bg: 'bg-blue-600',
       text: 'text-blue-600',
       border: 'border-blue-600'
     },
-    'yellow-500': {
+    'yellow': {
       bg: 'bg-yellow-500',
       text: 'text-yellow-600',
       border: 'border-yellow-500'
     },
-    'green-600': {
+    'green': {
       bg: 'bg-green-600',
       text: 'text-green-600',
       border: 'border-green-600'
@@ -115,6 +116,76 @@ export default function KanbanBoard() {
 
     setTaskCounter(taskCounter + 1);
   }
+
+  // drag handler function
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    // if no destination, do nothing
+    if (!destination) {
+      return;
+    }
+
+    // if dropped in the same place, do nothing
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const startColumn = data.columns[source.droppableId];
+    const finishColumn = data.columns[destination.droppableId];
+
+    // moving within the same column
+    if (startColumn === finishColumn) {
+      const newTaskIds = Array.from(startColumn.tasks);
+      newTaskIds.splice(source.index, 1);
+      newTaskIds.splice(destination.index, 0, draggableId);
+
+      const newColumn = {
+        ...startColumn,
+        tasks: newTaskIds,
+      };
+
+      const newData = {
+        ...data,
+        columns: {
+          ...data.columns,
+          [newColumn.id]: newColumn,
+        },
+      };
+
+      setData(newData);
+      return;
+    }
+
+    // moving from one column to another
+    const startTaskIds = Array.from(startColumn.tasks);
+    startTaskIds.splice(source.index, 1);
+    const newStartColumn = {
+      ...startColumn,
+      tasks: startTaskIds,
+    };
+
+    const finishTaskIds = Array.from(finishColumn.tasks);
+    finishTaskIds.splice(destination.index, 0, draggableId);
+    const newFinishColumn = {
+      ...finishColumn,
+      tasks: finishTaskIds,
+    };
+
+    const newState = {
+      ...data,
+      columns: {
+        ...data.columns,
+        [newStartColumn.id]: newStartColumn,
+        [newFinishColumn.id]: newFinishColumn,
+      },
+    };
+
+    setData(newState);
+  }
   
   return (
     // main container
@@ -131,7 +202,8 @@ export default function KanbanBoard() {
             Last Actions
           </button>
         </div>
-      
+
+        <DragDropContext onDragEnd={onDragEnd}>
         {/* board container */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* render columns */}
@@ -151,11 +223,27 @@ export default function KanbanBoard() {
                   <h2 className="text-2xl font-bold text-gray-900">{column.name}</h2>
                 </div>
 
-                {/* Task list for each column */}
-                <div className="flex-1 space-y-3 min-h-[200px] p-2 rounded-lg">
-                    {tasks.map(task => {
-                      return (
-                        <div key={task.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-move hover:shadow-md transition-shadow">
+                {/* Droppable area for tasks */}
+                  <Droppable droppableId={column.id}>
+                    {(provided, snapshot) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className={`flex-1 space-y-3 min-h-[200px] p-2 rounded-lg transition-colors ${
+                          snapshot.isDraggingOver ? 'bg-blue-50 border-2 border-blue-200' : ''
+                        }`}
+                      >
+                        {tasks.map((task, index) => (
+                          <Draggable key={task.id} draggableId={task.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-move hover:shadow-md transition-all ${
+                                  snapshot.isDragging ? 'rotate-3 shadow-lg' : ''
+                                }`}
+                              >
                           <div className={`text-xs ${colorClasses[column.columnColor as keyof typeof colorClasses]?.text || 'text-gray-500'} font-semibold mb-2`}>
                             {task.id}
                           </div>
@@ -163,13 +251,18 @@ export default function KanbanBoard() {
                             {task.content}
                           </div>
                         </div>
-                      );
-                    })}
-                </div>
+                       )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
               </div>
             );
           })}
         </div>
+        </DragDropContext>
         <button
           onClick={addTask} 
           className="fixed bottom-8 right-8 w-16 h-16 bg-gray-700 hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center text-3xl transition-colors"
