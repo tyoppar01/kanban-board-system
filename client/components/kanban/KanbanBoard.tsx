@@ -1,13 +1,16 @@
 "use client"
 
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { useKanban } from '../../hooks/useKanban';
 import { Column } from './Column';
+import { LastActions } from './LastActions';
 
 export default function KanbanBoard() {
   // Use the custom hook for all kanban logic
-  const { data, addTask, onDragEnd } = useKanban();
+  const { data, addTask, onDragEnd, actions } = useKanban();
+  const [showLastActions, setShowLastActions] = useState(false);
   
   return (
     // main container
@@ -20,7 +23,10 @@ export default function KanbanBoard() {
             <h1 className="text-5xl font-bold text-gray-900 mb-2">My Kanban</h1>
             <p className="text-gray-600">A simple board to keep track of tasks.</p>
           </div>
-          <button className="text-gray-600 hover:text-gray-900">
+          <button 
+            onClick={() => setShowLastActions(true)}
+            className="text-gray-600 hover:text-gray-900"
+          >
             Last Actions
           </button>
         </div>
@@ -56,6 +62,13 @@ export default function KanbanBoard() {
       >
         <Plus className="w-6 h-6 text-white-700" />
       </button>
+
+      {showLastActions && (
+        <LastActions 
+          actions={actions} 
+          onClose={() => setShowLastActions(false)} 
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,16 @@ import { useState } from 'react';
 import { Board, Task, ColorClasses } from '../types/kanban.types';
 import { DropResult } from '@hello-pangea/dnd';
 
+export interface Action {
+  id: string;
+  type: 'created' | 'moved';
+  taskId: string;
+  taskContent: string;
+  fromColumn?: string;
+  toColumn: string;
+  timestamp: Date;
+}
+
 // Initial data
 const initialData: Board = {
   tasks: {
@@ -55,6 +65,7 @@ export const colorClasses: ColorClasses = {
 export const useKanban = () => {
   const [data, setData] = useState<Board>(initialData);
   const [taskCounter, setTaskCounter] = useState<number>(7);
+  const [actions, setActions] = useState<Action[]>([]);
 
   // Function to add a new task
   const addTask = () => {
@@ -82,6 +93,17 @@ export const useKanban = () => {
       tasks: updatedTasks,
       columns: updatedColumns
     });
+
+    // Add action to history
+    const newAction: Action = {
+      id: `action-${Date.now()}`,
+      type: 'created',
+      taskId: newTaskId,
+      taskContent: 'New task',
+      toColumn: 'To Do',
+      timestamp: new Date()
+    };
+    setActions([newAction, ...actions].slice(0, 10)); // Keep last 10 actions
 
     setTaskCounter(taskCounter + 1);
   };
@@ -152,6 +174,19 @@ export const useKanban = () => {
     };
 
     setData(newData);
+
+    // Add action to history
+    const task = data.tasks[draggableId];
+    const newAction: Action = {
+      id: `action-${Date.now()}`,
+      type: 'moved',
+      taskId: draggableId,
+      taskContent: task.content,
+      fromColumn: startColumn.name,
+      toColumn: finishColumn.name,
+      timestamp: new Date()
+    };
+    setActions([newAction, ...actions].slice(0, 10)); // Keep last 10 actions
   };
 
   return {
@@ -159,5 +194,6 @@ export const useKanban = () => {
     taskCounter,
     addTask,
     onDragEnd,
+    actions,
   };
 };
