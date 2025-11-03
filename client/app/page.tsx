@@ -13,6 +13,7 @@ interface Column {
   id: string;
   name: string;
   tasks: string[];
+  columnColor?: string;
 }
 
 // Board
@@ -34,17 +35,19 @@ const initialData: Board = {
     'todo': {
       id: 'todo',
       name: 'To Do',
-      tasks: ['task-2', 'task-3', 'task-4'],
+      tasks: ['task-2', 'task-3', 'task-4'],     columnColor: 'blue-600'
     },
     'in-progress': {
       id: 'in-progress',
       name: 'In Progress',
       tasks: ['task-1'],
+      columnColor: 'yellow-500'
     },
     'completed': {
       id: 'completed',
       name: 'Completed',
       tasks: [],
+      columnColor: 'green-600'
     },
   },
   columnOrder: ['todo', 'in-progress', 'completed'],
@@ -80,7 +83,7 @@ export default function KanbanBoard() {
 
                 {/* column header */}
                 <div className="flex items-center gap-3 mb-4">
-                  <span className={`bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm`}>
+                  <span className={`bg-${column.columnColor} text-white w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm`}>
                     {tasks.length}
                   </span>
                   <h2 className="text-2xl font-bold text-gray-900">{column.name}</h2>
@@ -91,7 +94,7 @@ export default function KanbanBoard() {
                     {tasks.map(task => {
                       return (
                         <div key={task.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-move hover:shadow-md transition-shadow">
-                          <div className="text-xs text-blue-600 font-semibold mb-2">
+                          <div className={`text-xs text-${column.columnColor} font-semibold mb-2`}>
                             {task.id}
                           </div>
                           <div className="text-gray-900 font-medium">
