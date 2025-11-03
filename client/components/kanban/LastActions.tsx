@@ -6,9 +6,9 @@ interface LastActionsProps {
 }
 
 export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) => {
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 1000); // seconds
+  const formatTime = (timestamp: number) => {
+    const now = Date.now();
+    const diff = Math.floor((now - timestamp) / 1000); // seconds
 
     if (diff < 60) return 'just now';
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;

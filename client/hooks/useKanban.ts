@@ -9,7 +9,7 @@ export interface Action {
   taskContent: string;
   fromColumn?: string;
   toColumn: string;
-  timestamp: Date;
+  timestamp: number;
 }
 
 // Initial data
@@ -101,7 +101,7 @@ export const useKanban = () => {
       taskId: newTaskId,
       taskContent: 'New task',
       toColumn: 'To Do',
-      timestamp: new Date()
+      timestamp: Date.now()
     };
     setActions([newAction, ...actions].slice(0, 10)); // Keep last 10 actions
 
@@ -184,7 +184,7 @@ export const useKanban = () => {
       taskContent: task.content,
       fromColumn: startColumn.name,
       toColumn: finishColumn.name,
-      timestamp: new Date()
+      timestamp: Date.now()
     };
     setActions([newAction, ...actions].slice(0, 10)); // Keep last 10 actions
   };
