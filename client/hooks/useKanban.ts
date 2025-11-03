@@ -55,8 +55,6 @@ export const colorClasses: ColorClasses = {
 export const useKanban = () => {
   const [data, setData] = useState<Board>(initialData);
   const [taskCounter, setTaskCounter] = useState<number>(7);
-  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [editingContent, setEditingContent] = useState<string>('');
 
   // Function to add a new task
   const addTask = () => {
@@ -84,10 +82,6 @@ export const useKanban = () => {
       tasks: updatedTasks,
       columns: updatedColumns
     });
-
-    // Put the new task in editing mode
-    setEditingTaskId(newTaskId);
-    setEditingContent(newTask.content);
 
     setTaskCounter(taskCounter + 1);
   };
@@ -163,10 +157,6 @@ export const useKanban = () => {
   return {
     data,
     taskCounter,
-    editingTaskId,
-    editingContent,
-    setEditingTaskId,
-    setEditingContent,
     addTask,
     onDragEnd,
   };
