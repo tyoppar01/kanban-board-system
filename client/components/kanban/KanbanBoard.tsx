@@ -4,26 +4,18 @@ import { Plus } from 'lucide-react';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { useKanban } from '../../hooks/useKanban';
 import { Column } from './Column';
+import { Header } from './Header';
 
 export default function KanbanBoard() {
   // Use the custom hook for all kanban logic
-  const { data, addTask, onDragEnd } = useKanban();
+  const { data, addTask, onDragEnd, actions } = useKanban();
   
   return (
     // main container
     <div className="min-h-screen bg-gray-50 p-8 flex flex-col">
 
       <div className="max-w-7xl mx-auto flex-1 w-full">
-        {/* header container */}
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-5xl font-bold text-gray-900 mb-2">My Kanban</h1>
-            <p className="text-gray-600">A simple board to keep track of tasks.</p>
-          </div>
-          <button className="text-gray-600 hover:text-gray-900">
-            Last Actions
-          </button>
-        </div>
+        <Header actions={actions} />
 
         <DragDropContext onDragEnd={onDragEnd}>
         {/* board container */}
