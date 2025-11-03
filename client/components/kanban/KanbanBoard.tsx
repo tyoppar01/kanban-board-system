@@ -10,9 +10,9 @@ export default function KanbanBoard() {
   
   return (
     // main container
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-8 flex flex-col">
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto flex-1 w-full">
         {/* header container */}
         <div className="flex justify-between items-start mb-8">
           <div>
@@ -84,18 +84,19 @@ export default function KanbanBoard() {
           })}
         </div>
         </DragDropContext>
-        <button
-          onClick={addTask} 
-          className="fixed bottom-8 right-8 w-16 h-16 bg-gray-700 hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center text-3xl transition-colors"
-        >
-          <Plus className="w-6 h-6 text-white-700" />
-        </button>
-
-        {/* Footer */}
-        <footer className="mt-16 text-center text-gray-500 text-sm">
-          Built by Jasper and Najiha
-        </footer>
       </div>
+
+      {/* Footer */}
+      <footer className="mt-auto pt-16 text-center text-gray-500 text-sm max-w-7xl mx-auto w-full">
+        Built by Jasper and Najiha
+      </footer>
+
+      <button
+        onClick={addTask} 
+        className="fixed bottom-8 right-8 w-16 h-16 bg-gray-700 hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center text-3xl transition-colors"
+      >
+        <Plus className="w-6 h-6 text-white-700" />
+      </button>
     </div>
   );
 }
