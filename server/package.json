@@ -1,8 +1,9 @@
 {
   "name": "server",
   "version": "1.0.0",
+  "type": "commonjs",
   "description": "npm init -y\r npm install express cors\r npm install -D typescript ts-node nodemon @types/node @types/express @types/cors",
-  "main": "server.js",
+  "main": "server.ts",
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc"
