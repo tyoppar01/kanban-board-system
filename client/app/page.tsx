@@ -175,7 +175,8 @@ export default function KanbanBoard() {
             Last Actions
           </button>
         </div>
-      
+
+        <DragDropContext onDragEnd={onDragEnd}>
         {/* board container */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* render columns */}
@@ -214,6 +215,7 @@ export default function KanbanBoard() {
             );
           })}
         </div>
+        </DragDropContext>
         <button
           onClick={addTask} 
           className="fixed bottom-8 right-8 w-16 h-16 bg-gray-700 hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center text-3xl transition-colors"
