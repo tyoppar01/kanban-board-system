@@ -37,19 +37,20 @@ const initialData: Board = {
     'todo': {
       id: 'todo',
       name: 'To Do',
-      tasks: ['task-2', 'task-3', 'task-4'],     columnColor: 'blue-600'
+      tasks: ['task-2', 'task-3', 'task-4'],
+      columnColor: 'blue'
     },
     'in-progress': {
       id: 'in-progress',
       name: 'In Progress',
       tasks: ['task-1'],
-      columnColor: 'yellow-600'
+      columnColor: 'yellow'
     },
     'completed': {
       id: 'completed',
       name: 'Completed',
       tasks: [],
-      columnColor: 'green-600'
+      columnColor: 'green'
     },
   },
   columnOrder: ['todo', 'in-progress', 'completed'],
@@ -64,17 +65,17 @@ export default function KanbanBoard() {
 
   // color mapping to ensure tailwind classes are included in build
   const colorClasses = {
-    'blue-600': {
+    'blue': {
       bg: 'bg-blue-600',
       text: 'text-blue-600',
       border: 'border-blue-600'
     },
-    'yellow-500': {
+    'yellow': {
       bg: 'bg-yellow-500',
       text: 'text-yellow-600',
       border: 'border-yellow-500'
     },
-    'green-600': {
+    'green': {
       bg: 'bg-green-600',
       text: 'text-green-600',
       border: 'border-green-600'
