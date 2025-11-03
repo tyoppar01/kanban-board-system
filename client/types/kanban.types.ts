@@ -1,0 +1,29 @@
+// Task interface
+export interface Task {
+  id: string;
+  content: string;
+}
+
+// Column interface
+export interface Column {
+  id: string;
+  name: string;
+  tasks: string[];
+  columnColor?: string;
+}
+
+// Board interface
+export interface Board {
+  tasks: Record<string, Task>;
+  columns: Record<string, Column>;
+  columnOrder: string[];
+}
+
+// Color classes type
+export type ColorClasses = {
+  [key: string]: {
+    bg: string;
+    text: string;
+    border: string;
+  };
+};
