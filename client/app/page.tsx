@@ -62,6 +62,25 @@ export default function KanbanBoard() {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState<string>('');
 
+  // color mapping to ensure tailwind classes are included in build
+  const colorClasses = {
+    'blue-600': {
+      bg: 'bg-blue-600',
+      text: 'text-blue-600',
+      border: 'border-blue-600'
+    },
+    'yellow-500': {
+      bg: 'bg-yellow-500',
+      text: 'text-yellow-600',
+      border: 'border-yellow-500'
+    },
+    'green-600': {
+      bg: 'bg-green-600',
+      text: 'text-green-600',
+      border: 'border-green-600'
+    }
+  };
+
   // function to add a new task
   const addTask = () => {
 
@@ -126,7 +145,7 @@ export default function KanbanBoard() {
 
                 {/* column header */}
                 <div className="flex items-center gap-3 mb-4">
-                  <span className={`bg-${column.columnColor} text-white w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm`}>
+                  <span className={`${colorClasses[column.columnColor as keyof typeof colorClasses]?.bg || 'bg-gray-500'} text-white w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm`}>
                     {tasks.length}
                   </span>
                   <h2 className="text-2xl font-bold text-gray-900">{column.name}</h2>
@@ -137,7 +156,7 @@ export default function KanbanBoard() {
                     {tasks.map(task => {
                       return (
                         <div key={task.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-move hover:shadow-md transition-shadow">
-                          <div className={`text-xs text-${column.columnColor} font-semibold mb-2`}>
+                          <div className={`text-xs ${colorClasses[column.columnColor as keyof typeof colorClasses]?.text || 'text-gray-500'} font-semibold mb-2`}>
                             {task.id}
                           </div>
                           <div className="text-gray-900 font-medium">
