@@ -90,6 +90,11 @@ export default function KanbanBoard() {
         >
           <Plus className="w-6 h-6 text-white-700" />
         </button>
+
+        {/* Footer */}
+        <footer className="mt-16 text-center text-gray-500 text-sm">
+          Built by Jasper and Najiha
+        </footer>
       </div>
     </div>
   );
