@@ -14,3 +14,7 @@ app.get('/api/hello', (req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
+
+// set header https code (200 ok)
+// res.setHeader('Content-Type', 'text/plain');
+
