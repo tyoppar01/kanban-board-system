@@ -43,7 +43,7 @@ const initialData: Board = {
       id: 'in-progress',
       name: 'In Progress',
       tasks: ['task-1'],
-      columnColor: 'yellow-500'
+      columnColor: 'yellow-600'
     },
     'completed': {
       id: 'completed',
