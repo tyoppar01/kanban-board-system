@@ -106,7 +106,7 @@ The backend updates the column arrays accordingly and returns the updated board 
 ### Response
 ```
 {
-    success": true,
+    "success": true,
     "message": string
 }
 ```
