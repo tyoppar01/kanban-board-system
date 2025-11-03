@@ -57,9 +57,14 @@ export default function KanbanBoard() {
 
       <div className="max-w-7xl mx-auto">
         {/* header container */}
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold text-gray-900">My Kanban</h1>
-          <p className="text-gray-600">A simple board to keep track of tasks.</p>
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-5xl font-bold text-gray-900 mb-2">My Kanban</h1>
+            <p className="text-gray-600">A simple board to keep track of tasks.</p>
+          </div>
+          <button className="text-gray-600 hover:text-gray-900">
+            Last Actions
+          </button>
         </div>
       
         {/* board container */}
