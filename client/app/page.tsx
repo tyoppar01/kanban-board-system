@@ -1,3 +1,7 @@
+"use client"
+
+import { Plus } from 'lucide-react';
+
 // Task
 interface Task {  
   id: string;
@@ -77,10 +81,9 @@ export default function KanbanBoard() {
                   <h2 className="text-2xl font-bold text-gray-900">{column.name}</h2>
                 </div>
 
-                {/* Task list for this column */}
+                {/* Task list for each column */}
                 <div className="flex-1 space-y-3 min-h-[200px] p-2 rounded-lg">
                     {tasks.map(task => {
-                      
                       return (
                         <div key={task.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-move hover:shadow-md transition-shadow">
                           <div className="text-xs text-blue-600 font-semibold mb-2">
@@ -97,7 +100,12 @@ export default function KanbanBoard() {
             );
           })}
         </div>
-
+        <button
+          onClick={() => alert('Add Task Clicked!')} 
+          className="fixed bottom-8 right-8 w-16 h-16 bg-gray-700 hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center text-3xl transition-colors"
+        >
+          <Plus className="w-6 h-6 text-white-700" />
+        </button>
       </div>
     </div>
   );
