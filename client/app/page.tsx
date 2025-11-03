@@ -1,6 +1,8 @@
 "use client"
 
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
+
 
 // Task
 interface Task {  
@@ -54,6 +56,47 @@ const initialData: Board = {
 };
 
 export default function KanbanBoard() {
+
+  const [data, setData] = useState<Board>(initialData);
+  const [taskCounter, setTaskCounter] = useState<number>(7);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState<string>('');
+
+  // function to add a new task
+  const addTask = () => {
+
+    const newTaskId = `task-${taskCounter}`;
+    const newTask: Task = { id: newTaskId, content: 'New task' };
+
+    const todoColumn = data.columns['todo'];
+    const newTaskIds = [...todoColumn.tasks, newTaskId];
+
+    const updatedTasks = {
+      ...data.tasks,
+      [newTaskId]: newTask,
+    };
+
+    const updatedColumns = {
+        ...data.columns,
+        todo: {
+          ...todoColumn,
+          tasks: newTaskIds
+        }
+      }
+
+    setData({
+      ...data,
+      tasks: updatedTasks,
+      columns: updatedColumns
+    });
+
+    // Put the new task in editing mode
+    setEditingTaskId(newTaskId);
+    setEditingContent(newTask.content);
+
+    setTaskCounter(taskCounter + 1);
+  }
+  
   return (
     // main container
     <div className="min-h-screen bg-gray-50 p-8">
@@ -73,9 +116,9 @@ export default function KanbanBoard() {
         {/* board container */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* render columns */}
-          {initialData.columnOrder.map(columnId => {
-            const column = initialData.columns[columnId];
-            const tasks = column.tasks.map(taskId => initialData.tasks[taskId]);
+          {data.columnOrder.map(columnId => {
+            const column = data.columns[columnId];
+            const tasks = column.tasks.map(taskId => data.tasks[taskId]);
 
             return (
               // Individual column container
@@ -109,7 +152,7 @@ export default function KanbanBoard() {
           })}
         </div>
         <button
-          onClick={() => alert('Add Task Clicked!')} 
+          onClick={addTask} 
           className="fixed bottom-8 right-8 w-16 h-16 bg-gray-700 hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center text-3xl transition-colors"
         >
           <Plus className="w-6 h-6 text-white-700" />
