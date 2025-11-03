@@ -115,6 +115,50 @@ export default function KanbanBoard() {
 
     setTaskCounter(taskCounter + 1);
   }
+
+  // drag handler function
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    // if no destination, do nothing
+    if (!destination) {
+      return;
+    }
+
+    // if dropped in the same place, do nothing
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const startColumn = data.columns[source.droppableId];
+    const finishColumn = data.columns[destination.droppableId];
+
+    // moving within the same column
+    if (startColumn === finishColumn) {
+      const newTaskIds = Array.from(startColumn.tasks);
+      newTaskIds.splice(source.index, 1);
+      newTaskIds.splice(destination.index, 0, draggableId);
+
+      const newColumn = {
+        ...startColumn,
+        tasks: newTaskIds,
+      };
+
+      const newData = {
+        ...data,
+        columns: {
+          ...data.columns,
+          [newColumn.id]: newColumn,
+        },
+      };
+
+      setData(newData);
+      return;
+    }
+  }
   
   return (
     // main container
