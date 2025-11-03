@@ -196,11 +196,27 @@ export default function KanbanBoard() {
                   <h2 className="text-2xl font-bold text-gray-900">{column.name}</h2>
                 </div>
 
-                {/* Task list for each column */}
-                <div className="flex-1 space-y-3 min-h-[200px] p-2 rounded-lg">
-                    {tasks.map(task => {
-                      return (
-                        <div key={task.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-move hover:shadow-md transition-shadow">
+                {/* Droppable area for tasks */}
+                  <Droppable droppableId={column.id}>
+                    {(provided, snapshot) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className={`flex-1 space-y-3 min-h-[200px] p-2 rounded-lg transition-colors ${
+                          snapshot.isDraggingOver ? 'bg-blue-50 border-2 border-blue-200' : ''
+                        }`}
+                      >
+                        {tasks.map((task, index) => (
+                          <Draggable key={task.id} draggableId={task.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-move hover:shadow-md transition-all ${
+                                  snapshot.isDragging ? 'rotate-3 shadow-lg' : ''
+                                }`}
+                              >
                           <div className={`text-xs ${colorClasses[column.columnColor as keyof typeof colorClasses]?.text || 'text-gray-500'} font-semibold mb-2`}>
                             {task.id}
                           </div>
@@ -208,9 +224,13 @@ export default function KanbanBoard() {
                             {task.content}
                           </div>
                         </div>
-                      );
-                    })}
-                </div>
+                       )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
               </div>
             );
           })}
