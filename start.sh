@@ -18,3 +18,7 @@ else
   sudo apt-get install -y npm
   echo "✅ npm installation complete."
 fi
+
+# Install project dependencies
+echo "📦 Installing project dependencies for front end..."
+cd client && npm install
