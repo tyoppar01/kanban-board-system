@@ -7,9 +7,9 @@ const taskRouter = express.Router();
 taskRouter.post("/", createTask);
 
 // DELETE /api/task/id/column
-taskRouter.delete("/:id/:column", deleteTask);
+taskRouter.delete("/delete/:id/:column", deleteTask);
 
 // PUT /api/task/id/index/arrayName
-taskRouter.put("/:id/:index/:arrayName", moveTask);
+taskRouter.put("/move/:id/:index/:arrayName", moveTask);
 
 export default taskRouter;
