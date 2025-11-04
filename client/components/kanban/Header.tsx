@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LastActions } from './LastActions';
-import { Action } from '../../hooks/useKanban';
+import { Action } from '../../types/kanban.types';
 
 interface HeaderProps {
   actions: Action[];
