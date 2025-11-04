@@ -1,4 +1,5 @@
 import { Action } from '../../types/kanban.types';
+import { X } from 'lucide-react';
 
 interface LastActionsProps {
   actions: Action[];
@@ -31,7 +32,7 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
           >
-            ×
+            <X className="w-5 h-5" />
           </button>
         </div>
         
@@ -47,7 +48,7 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
                   <div className="flex items-start gap-3">
                     <div className={`w-2 h-2 rounded-full mt-2 ${
                       action.type === 'created' ? 'bg-blue-500' :
-                      action.type === 'edited' ? 'bg-blue-500': 
+                      action.type === 'edited' ? 'bg-yellow-500': 
                       'bg-green-500'
                     }`} />
                     <div className="flex-1">
@@ -58,7 +59,7 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
                           </>
                         ) : action.type === 'edited' ? (
                           <>
-                            Edited <span className="font-semibold">"{action.taskContent}"</span>
+                            Edited <span className="font-semibold">"{action.taskContent}"</span> from <span className="font-semibold">"{action.oldContent}"</span>
                           </>
                         ) : (
                           <>

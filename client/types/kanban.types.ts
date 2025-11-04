@@ -42,6 +42,7 @@ export interface Action {
   type: 'created' | 'moved' | 'edited';
   taskId: string;
   taskContent: string;
+  oldContent?: string;
   fromColumn?: string;
   toColumn: string;
   timestamp: number;

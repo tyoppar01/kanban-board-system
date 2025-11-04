@@ -209,6 +209,8 @@ export const useKanban = () => {
 
   // update task content function
   const updateTask = (taskId: string, newContent: string) => {
+    const oldContent = data.tasks[taskId]?.content || '';
+
     const updatedTasks = {
       ...data.tasks,
       [taskId]: {
@@ -221,16 +223,23 @@ export const useKanban = () => {
       tasks: updatedTasks
     });
 
-    // Add action to history
+    // no change before & after editing, or editing a newly created task
+    if (oldContent !== newContent && oldContent !== 'New task') {
+
+      // Add action to history
     const newAction: Action = {
       id: `action-${Date.now()}`,
       type: 'edited',
       taskId: taskId,
       taskContent: newContent,
+      oldContent: oldContent,
       toColumn: '',
       timestamp: Date.now()
     };
   setActions([newAction, ...actions].slice(0, 10)); // Keep last 10 actions
+    }
+
+    
   };
 
   // Function to start editing a task
