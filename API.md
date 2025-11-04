@@ -24,10 +24,10 @@ No body required
   "message": string,
   "data": {
     "task-list": {
-      "1": { "id": number, "content": string  },
-      "2": { "id": number, "content": string  },
-      "3": { "id": number, "content": string  },
-      "4": { "id": number, "content": string  }
+      "1": { "id": number, "title": string  },
+      "2": { "id": number, "title": string  },
+      "3": { "id": number, "title": string  },
+      "4": { "id": number, "title": string  }
     },
     "columns": {
       "todo": array[number],
