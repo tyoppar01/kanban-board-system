@@ -8,7 +8,16 @@ import { Header } from './Header';
 
 export default function KanbanBoard() {
   // Use the custom hook for all kanban logic
-  const { data, addTask, onDragEnd, actions } = useKanban();
+  const { 
+    data, 
+    addTask, 
+    onDragEnd, 
+    actions,
+    editingState,
+    startEditingTask,
+    stopEditingTask,
+    updateTask
+  } = useKanban();
   
   return (
     // main container
@@ -31,7 +40,11 @@ export default function KanbanBoard() {
               <Column 
                 key={column.id} 
                 column={column} 
-                tasks={tasks} 
+                tasks={tasks}
+                editingTaskId={editingState.taskId}
+                onStartEdit={startEditingTask}
+                onStopEdit={stopEditingTask}
+                onUpdateTask={updateTask}
               />
             );
           })}

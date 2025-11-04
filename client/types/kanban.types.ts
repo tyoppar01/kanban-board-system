@@ -39,10 +39,17 @@ export interface StorageState {
 // Action interface
 export interface Action {
   id: string;
-  type: 'created' | 'moved';
+  type: 'created' | 'moved' | 'edited';
   taskId: string;
   taskContent: string;
+  oldContent?: string;
   fromColumn?: string;
   toColumn: string;
   timestamp: number;
+}
+
+// editing state
+export interface EditingState {
+  isEditing: boolean;
+  taskId: string | null; 
 }

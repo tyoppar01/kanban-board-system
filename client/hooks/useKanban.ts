@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Board, Task, ColorClasses } from '../types/kanban.types';
+import { Board, Task, ColorClasses, EditingState } from '../types/kanban.types';
 import { DropResult } from '@hello-pangea/dnd';
 import { Action, StorageState } from '../types/kanban.types';
 import { getStorageData, setStorageData, STORAGE_KEYS, isLocalStorageAvailable } from '@/utils/storage';
@@ -64,6 +64,10 @@ export const useKanban = () => {
   const [storageState, setStorageState] = useState<StorageState>({
     isLoading: true,
     isAvailable: false,
+  });
+  const [editingState, setEditingState] = useState<EditingState>({
+    isEditing: false,
+    taskId: null,
   });
 
   // hydration effect
@@ -185,19 +189,78 @@ export const useKanban = () => {
       columns: updatedColumns
     });
 
-    // Add action to history
-    const newAction: Action = {
-      id: `action-${Date.now()}`,
-      type: 'created',
-      taskId: newTaskId,
-      taskContent: 'New task',
-      toColumn: 'To Do',
-      timestamp: Date.now()
-    };
-    setActions([newAction, ...actions].slice(0, 10)); // Keep last 10 actions
-
+    // Don't add action yet - wait until user finishes editing
+    
     setTaskCounter(taskCounter + 1);
+
+    setTimeout(() => {
+      startEditingTask(newTaskId);
+    }, 100);
   };
+
+  // update task content function
+  const updateTask = (taskId: string, newContent: string) => {
+    const oldContent = data.tasks[taskId]?.content || '';
+
+    const updatedTasks = {
+      ...data.tasks,
+      [taskId]: {
+        ...data.tasks[taskId],
+        content: newContent
+      }
+    };
+    setData({
+      ...data,
+      tasks: updatedTasks
+    });
+
+    // Check if this is a newly created task being named for the first time
+    if (oldContent === 'New task' && newContent !== 'New task') {
+      // Find which column the task is in
+      let columnName = 'To Do';
+      for (const [colId, column] of Object.entries(data.columns)) {
+        if (column.tasks.includes(taskId)) {
+          columnName = column.name;
+          break;
+        }
+      }
+
+      // Add "Created" action
+      const newAction: Action = {
+        id: `action-${Date.now()}`,
+        type: 'created',
+        taskId: taskId,
+        taskContent: newContent,
+        toColumn: columnName,
+        timestamp: Date.now()
+      };
+      setActions([newAction, ...actions].slice(0, 10));
+    } 
+    // otherwise, if content actually changed and it's not a new task, record as edit
+    else if (oldContent !== newContent && oldContent !== 'New task') {
+      // Add "Edited" action
+      const newAction: Action = {
+        id: `action-${Date.now()}`,
+        type: 'edited',
+        taskId: taskId,
+        taskContent: newContent,
+        oldContent: oldContent,
+        toColumn: '',
+        timestamp: Date.now()
+      };
+      setActions([newAction, ...actions].slice(0, 10));
+    }
+  };
+
+  // Function to start editing a task
+const startEditingTask = (taskId: string) => {
+  setEditingState({ isEditing: true, taskId });
+};
+
+// Function to stop editing
+const stopEditingTask = () => {
+  setEditingState({ isEditing: false, taskId: null });
+};
 
   // Handle drag and drop
   const onDragEnd = (result: DropResult) => {
@@ -288,6 +351,10 @@ export const useKanban = () => {
     actions,
     storageState,
     clearStorage,
-    isHydrated
+    isHydrated,
+    editingState,
+    startEditingTask,
+    stopEditingTask,
+    updateTask,
   };
 };

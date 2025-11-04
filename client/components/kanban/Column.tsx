@@ -6,11 +6,19 @@ import { colorClasses } from '../../hooks/useKanban';
 interface ColumnProps {
   column: ColumnType;
   tasks: Task[];
+  editingTaskId: string | null;
+  onStartEdit: (taskId: string) => void;
+  onStopEdit: () => void;
+  onUpdateTask: (taskId: string, content: string) => void;
 }
 
 export const Column: React.FC<ColumnProps> = ({ 
   column, 
-  tasks
+  tasks,
+  editingTaskId,
+  onStartEdit,
+  onStopEdit,
+  onUpdateTask
 }) => {
   return (
     <div key={column.id} className="flex flex-col">
@@ -38,6 +46,10 @@ export const Column: React.FC<ColumnProps> = ({
                 task={task}
                 index={index}
                 columnColor={column.columnColor || 'gray'}
+                isEditing={editingTaskId === task.id}
+                onStartEdit={() => onStartEdit(task.id)}
+                onStopEdit={onStopEdit}
+                onUpdate={(content) => onUpdateTask(task.id, content)}
               />
             ))}
             {provided.placeholder}
