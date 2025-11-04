@@ -1,7 +1,7 @@
 import express = require("express");
 import http = require("http");
 import cors from "cors";
-import boardRouter from "./routes/boardRoute";
+import kanbanBoardRouter from "./routes/router";
 
 // ==================== Middleware ======================== //
 const app = express();
@@ -9,8 +9,8 @@ app.use(express.json());
 app.use(cors());
 
 // ====================== Router  ========================= //
-app.use("/api/board", boardRouter);  // all board endpoints
-//app.use("/api/task", taskRouter);    // all task endpoints
+app.use("/api/board", kanbanBoardRouter);  // all board endpoints
+app.use("/api/task", kanbanBoardRouter);    // all task endpoints
 
 // =================== Health Check ======================= //
 app.get("/", (req, res) => {

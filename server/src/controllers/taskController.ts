@@ -1,28 +1,30 @@
 import { Request, Response } from "express";
 import { ApiResponse } from "../../types/response";
 import { sendFailedResponse, sendSuccessResponse } from "../../utils/apiResponse";
-import { ApiStatus } from "../../utils/apiStatus";
 import { ErrorCode } from "../../utils/errorCode";
+import { Task } from "../models/task";
 import { getFullBoard } from "../services/boardService";
+import { ApiStatus } from "../../utils/apiStatus";
 
-export const getBoard = async function (_req: Request, _res: Response){
-
+export const createTask = async (_req: Request, _res: Response) => {
+    const { id, title, description, createdDate }:Task = _req.body;
+    
     try {
-        // GET board
+        // validation of input
+        if (!id || !title) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
+        
+        // get board from services
         const board = await getFullBoard();
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
             success: true,
-            message: "board details has been received successfully",
+            message: "new task has been created successfully",
             data: board
         }
-
-        // Return Response
         sendSuccessResponse(_res, response);
 
     } catch (err: any) {
         sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
     }
-
 }
