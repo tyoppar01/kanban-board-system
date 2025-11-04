@@ -14,7 +14,7 @@ export const createTask = async (_req: Request, _res: Response) => {
         if (!id || !title) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
         
         // get board from services
-        const board = await getFullBoard();
+        const board = await addTask();
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
