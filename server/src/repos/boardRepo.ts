@@ -3,10 +3,10 @@ import { Board } from "../models/board";
 // for testing purpose
 const board: Board = {
   taskList: {
-    1: { id: 1, content: "Setup project structure" },
-    2: { id: 2, content: "Implement Express routes" },
-    3: { id: 3, content: "Add service layer" },
-    4: { id: 4, content: "Test API endpoints" },
+    1: { id: 1, title: "Setup project structure" },
+    2: { id: 2, title: "Implement Express routes" },
+    3: { id: 3, title: "Add service layer" },
+    4: { id: 4, title: "Test API endpoints" },
   },
   columns: {
     todo: [1, 2],
@@ -23,7 +23,5 @@ export const boardRepo = {
       setTimeout(() => resolve(board), 100); 
     });
   },
-
-  
 
 };
