@@ -10,7 +10,7 @@ app.use(cors());
 
 // ====================== Router  ========================= //
 app.use("/api/board", kanbanBoardRouter);  // all board endpoints
-//app.use("/api/task", taskRouter);    // all task endpoints
+app.use("/api/task", kanbanBoardRouter);    // all task endpoints
 
 // =================== Health Check ======================= //
 app.get("/", (req, res) => {
