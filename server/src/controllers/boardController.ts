@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import boardService = require("../services/boardService");
+import {getFullBoard} from "../services/boardService";
 import { ApiResponse } from "../../types/response";
 import { sendSuccessResponse, sendFailedResponse } from "../../utils/apiResponse";
 
 export const getBoard = async function (_req: Request, res: Response){
 
     try {
-        const board = await boardService.getFullBoard();
+        const board = await getFullBoard();
 
         // create a generic response
         const response: ApiResponse<typeof board> = {
