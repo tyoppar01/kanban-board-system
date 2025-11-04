@@ -21,9 +21,11 @@ export default function KanbanBoard() {
         {/* board container */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* render columns */}
-          {data.columnOrder.map(columnId => {
+          {data && data.columnOrder && data.columnOrder.map(columnId => {
             const column = data.columns[columnId];
-            const tasks = column.tasks.map(taskId => data.tasks[taskId]);
+            if (!column || !column.tasks) return null;
+            
+            const tasks = column.tasks.map(taskId => data.tasks[taskId]).filter(Boolean);
 
             return (
               <Column 

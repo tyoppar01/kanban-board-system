@@ -27,3 +27,22 @@ export type ColorClasses = {
     border: string;
   };
 };
+
+// Storage state interface
+export interface StorageState {
+  isLoading: boolean;
+  isAvailable: boolean;
+  lastSaved?: number;
+  error?: string;
+}
+
+// Action interface
+export interface Action {
+  id: string;
+  type: 'created' | 'moved';
+  taskId: string;
+  taskContent: string;
+  fromColumn?: string;
+  toColumn: string;
+  timestamp: number;
+}
