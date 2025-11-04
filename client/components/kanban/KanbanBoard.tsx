@@ -16,8 +16,19 @@ export default function KanbanBoard() {
     editingState,
     startEditingTask,
     stopEditingTask,
-    updateTask
+    updateTask,
+    storageState,
+    isHydrated
   } = useKanban();
+  
+  // Show loading state until storage is loaded
+  if (!isHydrated || storageState.isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
   
   return (
     // main container
