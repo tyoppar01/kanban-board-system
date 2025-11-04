@@ -99,7 +99,8 @@ The backend updates the column arrays accordingly and returns the updated board 
 {
     "id": number,
     "index": number,
-    "arrayName": string
+    "currentColumn": string,
+    "newColumn": string
 }
 ```
 
@@ -108,6 +109,7 @@ The backend updates the column arrays accordingly and returns the updated board 
 {
     "success": true,
     "message": string
+    "data" : task
 }
 ```
 
@@ -116,6 +118,41 @@ The backend updates the column arrays accordingly and returns the updated board 
 | Code  | Description                     |
 |-------|---------------------------------|
 | 200   | Task moved successfully         |
+| 400   | Invalid request                 |
+| 500   | Internal server error occurred  |
+```
+
+### 🟥 (4) Remove Task
+```
+DELETE /api/task/delete
+```
+### Description
+> Deletes a task from the specified column in the Kanban board.
+The backend removes the task ID from the column’s list but retains the task in memory for potential recovery or auditing.
+Returns the deleted task details upon success.
+
+### Request Body
+```
+{
+    "id": number,
+    "column": string
+}
+```
+
+### Response
+```
+{
+    "success": true,
+    "message": string,
+    "data" : task
+}
+```
+
+### Status Code
+```
+| Code  | Description                     |
+|-------|---------------------------------|
+| 200   | Task deleted successfully       |
 | 400   | Invalid request                 |
 | 500   | Internal server error occurred  |
 ```

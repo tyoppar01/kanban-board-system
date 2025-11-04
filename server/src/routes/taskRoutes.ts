@@ -1,9 +1,15 @@
 import express from "express";
-import { createTask } from "../controllers/taskController";
+import { createTask, deleteTask, moveTask } from "../controllers/taskController";
 
 const taskRouter = express.Router();
 
 // POST /api/task/
-taskRouter.post("/", createTask)
+taskRouter.post("/", createTask);
+
+// DELETE /api/task/id/column
+taskRouter.delete("/delete/:id/:column", deleteTask);
+
+// PUT /api/task/id/index/arrayName
+taskRouter.put("/move/:id/:index/:arrayName", moveTask);
 
 export default taskRouter;
