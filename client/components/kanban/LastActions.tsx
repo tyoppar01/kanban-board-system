@@ -46,13 +46,19 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
                 <div key={action.id} className="p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start gap-3">
                     <div className={`w-2 h-2 rounded-full mt-2 ${
-                      action.type === 'created' ? 'bg-blue-500' : 'bg-green-500'
+                      action.type === 'created' ? 'bg-blue-500' :
+                      action.type === 'edited' ? 'bg-blue-500': 
+                      'bg-green-500'
                     }`} />
                     <div className="flex-1">
                       <p className="text-sm text-gray-900">
                         {action.type === 'created' ? (
                           <>
                             Created <span className="font-semibold">"{action.taskContent}"</span> in {action.toColumn}
+                          </>
+                        ) : action.type === 'edited' ? (
+                          <>
+                            Edited <span className="font-semibold">"{action.taskContent}"</span>
                           </>
                         ) : (
                           <>
