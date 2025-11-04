@@ -1,25 +1,30 @@
-import express = require("express");
+import express from "express";
 import http = require("http");
 import cors = require("cors");
 
-const boardRouter = require("./routes/boardRoute.ts");
-const taskRouter = require ("./routes/taskRoute.ts");
 
 const app = express();
-app.use(express.json());
+const router = express.Router()
 
 // ==================== Middleware ======================== //
 app.use(cors());
 app.use(express.json());
 
+// ====================== Router  ========================= //
+// app.use("/api/board", boardRouter);
+// app.use("/api/task", taskRouter);
+
 // =================== Health Check ======================= //
 app.get("/", (req, res) => {
-  console.log("✅ GET / triggered");
+  console.log("✅ GET / triggered OK");
   res.status(200).json({ success: true, message: "Server is running" });
 });
 
 // ===================== Error Check ========================= //
-
+app.get("/", (req, res) => {
+  console.log("✅ GET / triggered OK");
+  res.status(200).json({ success: true, message: "Server is running" });
+});
 
 
 // =================== Server Setup ======================= //
