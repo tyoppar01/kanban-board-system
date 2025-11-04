@@ -27,3 +27,11 @@ export type ColorClasses = {
     border: string;
   };
 };
+
+// Storage state interface
+export interface StorageState {
+  isLoading: boolean;
+  isAvailable: boolean;
+  lastSaved?: number;
+  error?: string;
+}

@@ -1,4 +1,4 @@
-import { Action } from '../../hooks/useKanban';
+import { Action } from '../../types/kanban.types';
 
 interface LastActionsProps {
   actions: Action[];

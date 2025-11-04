@@ -1,16 +1,8 @@
 import { useState } from 'react';
 import { Board, Task, ColorClasses } from '../types/kanban.types';
 import { DropResult } from '@hello-pangea/dnd';
+import { Action } from '../types/kanban.types';
 
-export interface Action {
-  id: string;
-  type: 'created' | 'moved';
-  taskId: string;
-  taskContent: string;
-  fromColumn?: string;
-  toColumn: string;
-  timestamp: number;
-}
 
 // Initial data
 const initialData: Board = {
