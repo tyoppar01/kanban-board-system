@@ -1,20 +1,22 @@
 import { Request, Response } from "express";
 import { ApiResponse } from "../../types/response";
 import { sendFailedResponse, sendSuccessResponse } from "../../utils/apiResponse";
+import { ApiStatus } from "../../utils/apiStatus";
 import { ErrorCode } from "../../utils/errorCode";
 import { Task } from "../models/task";
-import { getFullBoard } from "../services/boardService";
-import { ApiStatus } from "../../utils/apiStatus";
+import { addTask } from "../services/taskService";
 
 export const createTask = async (_req: Request, _res: Response) => {
-    const { id, title, description, createdDate }:Task = _req.body;
     
     try {
+        // pre-validation on mandatory field
+        const { id, title, description, createdDate }:Task = _req.body;
+
         // validation of input
         if (!id || !title) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
         
         // get board from services
-        const board = await addTask();
+        const board = await addTask(_req.body);
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
