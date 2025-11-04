@@ -1,14 +1,21 @@
 {
   "name": "server",
   "version": "1.0.0",
+  "description": "Express.js backend with TypeScript, Nodemon, and ts-node setup",
+  "main": "dist/server.js",
   "type": "commonjs",
-  "description": "npm init -y\r npm install express cors\r npm install -D typescript ts-node nodemon @types/node @types/express @types/cors",
-  "main": "server.ts",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/server.ts",
-    "build": "tsc"
+    "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
   },
-  "keywords": [],
+  "keywords": [
+    "express",
+    "typescript",
+    "backend",
+    "api",
+    "node"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -18,9 +25,9 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
-    "@types/node": "^24.10.0",
+    "@types/node": "^20.12.12",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.6.3"
   }
 }
