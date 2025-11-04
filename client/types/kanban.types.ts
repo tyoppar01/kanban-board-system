@@ -35,3 +35,14 @@ export interface StorageState {
   lastSaved?: number;
   error?: string;
 }
+
+// Action interface
+export interface Action {
+  id: string;
+  type: 'created' | 'moved';
+  taskId: string;
+  taskContent: string;
+  fromColumn?: string;
+  toColumn: string;
+  timestamp: number;
+}

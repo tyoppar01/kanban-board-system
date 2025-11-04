@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Board, Task, ColorClasses } from '../types/kanban.types';
 import { DropResult } from '@hello-pangea/dnd';
-import { Action } from '../types/kanban.types';
+import { Action, StorageState } from '../types/kanban.types';
+import { getStorageData, setStorageData, STORAGE_KEYS, isLocalStorageAvailable } from '@/utils/storage';
 
 
 // Initial data
@@ -58,6 +59,104 @@ export const useKanban = () => {
   const [data, setData] = useState<Board>(initialData);
   const [taskCounter, setTaskCounter] = useState<number>(7);
   const [actions, setActions] = useState<Action[]>([]);
+
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [storageState, setStorageState] = useState<StorageState>({
+    isLoading: true,
+    isAvailable: false,
+  });
+
+  // hydration effect
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  // load from storage after hydration
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const available = isLocalStorageAvailable();
+    setStorageState(prev => ({
+      ...prev,
+      isAvailable: available,
+    }));
+
+    if (available) {
+      const savedData = getStorageData(STORAGE_KEYS.KANBAN_DATA, null);
+      const savedCounter = getStorageData(STORAGE_KEYS.KANBAN_COUNTER, 7);
+      const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
+
+      if (savedData) {
+        setData(savedData);
+      }
+      if (savedCounter) {
+        setTaskCounter(savedCounter);
+      }
+      if (savedActions) {
+        setActions(savedActions);
+      }
+    }
+
+    setStorageState(prev => ({
+      ...prev,
+      isLoading: false,
+    }));
+  }, [isHydrated]);
+
+  // save to storage function
+  const saveToStorage = useCallback(() => {
+    if (!storageState.isAvailable) return;
+
+    const success =
+      setStorageData(STORAGE_KEYS.KANBAN_DATA, data) &&
+      setStorageData(STORAGE_KEYS.KANBAN_COUNTER, taskCounter) &&
+      setStorageData(STORAGE_KEYS.KANBAN_ACTIONS, actions);
+
+    if (success) {
+      setStorageState(prev => ({
+        ...prev,
+        lastSaved: Date.now(),
+        error: undefined,
+      }));
+    } else {
+      setStorageState(prev => ({
+        ...prev,
+        error: 'Failed to save data to local storage.',
+      }));
+    }
+
+    return success;
+  }, [data, taskCounter, actions, storageState.isAvailable]);
+
+
+  // auto save when data changes
+  useEffect(() => {
+    if (isHydrated) {
+      saveToStorage();
+    }
+  }, [data, taskCounter, actions, isHydrated, saveToStorage]);
+
+  // clear storage function
+  const clearStorage = useCallback(() => {
+    if (typeof window === 'undefined') {
+      localStorage.removeItem(STORAGE_KEYS.KANBAN_DATA);
+      localStorage.removeItem(STORAGE_KEYS.KANBAN_COUNTER);
+      localStorage.removeItem(STORAGE_KEYS.KANBAN_ACTIONS);
+
+      // reset to intial state
+      setData(initialData);
+      setTaskCounter(7);
+      setActions([]); 
+      setStorageState(prev => ({
+        ...prev,
+        lastSaved: undefined,
+        error: undefined,
+      }));
+
+      return true;
+    }
+    return false;
+  }, []);
 
   // Function to add a new task
   const addTask = () => {
@@ -187,5 +286,8 @@ export const useKanban = () => {
     addTask,
     onDragEnd,
     actions,
+    storageState,
+    clearStorage,
+    isHydrated
   };
 };
