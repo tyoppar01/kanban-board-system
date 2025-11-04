@@ -1,6 +1,7 @@
 import { Board } from "../models/board";
+import { Task } from "../models/task";
 
-// for testing purpose
+// ================== Dummy Data =================== //
 const board: Board = {
   taskList: {
     1: { id: 1, title: "Setup project structure" },
@@ -15,6 +16,8 @@ const board: Board = {
   },
   order: ["todo", "ongoing", "done"],
 };
+
+// ================== Board Repo =================== //
 
 export const boardRepo = {
 
