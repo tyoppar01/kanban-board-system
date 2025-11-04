@@ -189,17 +189,8 @@ export const useKanban = () => {
       columns: updatedColumns
     });
 
-    // Add action to history
-    const newAction: Action = {
-      id: `action-${Date.now()}`,
-      type: 'created',
-      taskId: newTaskId,
-      taskContent: 'New task',
-      toColumn: 'To Do',
-      timestamp: Date.now()
-    };
-    setActions([newAction, ...actions].slice(0, 10)); // Keep last 10 actions
-
+    // Don't add action yet - wait until user finishes editing
+    
     setTaskCounter(taskCounter + 1);
 
     setTimeout(() => {
@@ -223,23 +214,42 @@ export const useKanban = () => {
       tasks: updatedTasks
     });
 
-    // no change before & after editing, or editing a newly created task
-    if (oldContent !== newContent && oldContent !== 'New task') {
+    // Check if this is a newly created task being named for the first time
+    if (oldContent === 'New task' && newContent !== 'New task') {
+      // Find which column the task is in
+      let columnName = 'To Do';
+      for (const [colId, column] of Object.entries(data.columns)) {
+        if (column.tasks.includes(taskId)) {
+          columnName = column.name;
+          break;
+        }
+      }
 
-      // Add action to history
-    const newAction: Action = {
-      id: `action-${Date.now()}`,
-      type: 'edited',
-      taskId: taskId,
-      taskContent: newContent,
-      oldContent: oldContent,
-      toColumn: '',
-      timestamp: Date.now()
-    };
-  setActions([newAction, ...actions].slice(0, 10)); // Keep last 10 actions
+      // Add "Created" action
+      const newAction: Action = {
+        id: `action-${Date.now()}`,
+        type: 'created',
+        taskId: taskId,
+        taskContent: newContent,
+        toColumn: columnName,
+        timestamp: Date.now()
+      };
+      setActions([newAction, ...actions].slice(0, 10));
+    } 
+    // otherwise, if content actually changed and it's not a new task, record as edit
+    else if (oldContent !== newContent && oldContent !== 'New task') {
+      // Add "Edited" action
+      const newAction: Action = {
+        id: `action-${Date.now()}`,
+        type: 'edited',
+        taskId: taskId,
+        taskContent: newContent,
+        oldContent: oldContent,
+        toColumn: '',
+        timestamp: Date.now()
+      };
+      setActions([newAction, ...actions].slice(0, 10));
     }
-
-    
   };
 
   // Function to start editing a task
