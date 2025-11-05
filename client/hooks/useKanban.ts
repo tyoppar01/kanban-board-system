@@ -264,7 +264,7 @@ export const useKanban = () => {
     });
 
     // Check if this is a newly created task being named for the first time
-    if (oldContent === 'New task' && newContent !== 'New task') {
+    if (oldContent === 'New task') {
       // Find which column the task is in
       let columnName = 'To Do';
       for (const [colId, column] of Object.entries(data.columns)) {
@@ -274,12 +274,12 @@ export const useKanban = () => {
         }
       }
 
-      // Add "Created" action
+      // Add "Created" action with the actual content (even if it's still "New task")
       const newAction: Action = {
         id: `action-${Date.now()}`,
         type: 'created',
         taskId: taskId,
-        taskContent: newContent,
+        taskContent: newContent,  // Use the actual content the user entered
         toColumn: columnName,
         timestamp: Date.now()
       };

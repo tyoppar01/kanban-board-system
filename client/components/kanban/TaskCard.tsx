@@ -86,6 +86,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 onKeyDown={handleKeyDown}
+                onBlur={handleSave}
                 className="w-full px-2 py-1 text-gray-900 font-medium border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
