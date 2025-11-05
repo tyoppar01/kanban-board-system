@@ -48,6 +48,31 @@ export const taskApi = {
     
     const result: ApiResponse<BackendBoard> = await response.json();
     return result.data;
+  },
+
+  // PUT /api/task/move - Move a task
+  async moveTask(taskId: number, index: number, currentColumn: string, newColumn: string): Promise<BackendTask> {
+    const response = await fetch(`${API_BASE_URL}/task/move`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: taskId,
+        index,
+        currentColumn,
+        newColumn
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Move task failed:', response.status, errorText);
+      throw new Error(`Failed to move task: ${response.status}`);
+    }
+    
+    const result: ApiResponse<BackendTask> = await response.json();
+    return result.data;
   }
 };
 
