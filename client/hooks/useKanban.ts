@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Board, Task, ColorClasses, EditingState } from '../types/kanban.types';
 import { DropResult } from '@hello-pangea/dnd';
 import { Action, StorageState } from '../types/kanban.types';
@@ -63,6 +63,8 @@ export const useKanban = () => {
   const [data, setData] = useState<Board>(initialData);
   const [taskCounter, setTaskCounter] = useState<number>(7);
   const [actions, setActions] = useState<Action[]>([]);
+  const [pendingNewTasks, setPendingNewTasks] = useState<Set<string>>(new Set());
+  const hasLoadedInitialData = useRef(false);
 
   const [isHydrated, setIsHydrated] = useState(false);
   const [storageState, setStorageState] = useState<StorageState>({
@@ -112,6 +114,7 @@ export const useKanban = () => {
         ...prev,
         isLoading: false,
       }));
+      hasLoadedInitialData.current = true;
     } else {
       // Backend mode: Fetch from backend and save to localStorage
       const fetchBoardFromBackend = async () => {
@@ -125,8 +128,15 @@ export const useKanban = () => {
           const maxId = Math.max(...taskIds, 0);
           setTaskCounter(maxId + 1);
           
-          // Save to localStorage for offline support
+          // Load actions from localStorage (actions are client-side only)
           if (available) {
+            const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
+            console.log('Loading actions from localStorage:', savedActions);
+            if (savedActions && savedActions.length > 0) {
+              setActions(savedActions);
+            }
+            
+            // Save board data to localStorage for offline support
             setStorageData(STORAGE_KEYS.KANBAN_DATA, frontendBoard);
             setStorageData(STORAGE_KEYS.KANBAN_COUNTER, maxId + 1);
           }
@@ -147,6 +157,7 @@ export const useKanban = () => {
             ...prev,
             isLoading: false,
           }));
+          hasLoadedInitialData.current = true;
         }
       };
 
@@ -156,8 +167,9 @@ export const useKanban = () => {
 
   // save to storage function
   const saveToStorage = useCallback(() => {
-    if (!storageState.isAvailable) return;
+    if (!storageState.isAvailable || !hasLoadedInitialData.current) return;
 
+    console.log('Saving actions to localStorage:', actions);
     const success =
       setStorageData(STORAGE_KEYS.KANBAN_DATA, data) &&
       setStorageData(STORAGE_KEYS.KANBAN_COUNTER, taskCounter) &&
@@ -238,6 +250,9 @@ export const useKanban = () => {
     });
 
     setTaskCounter(taskCounter + 1);
+    
+    // Mark this task as pending (newly created, not yet named)
+    setPendingNewTasks(prev => new Set(prev).add(newTaskId));
 
     // Don't sync to backend yet - wait for user to enter task name
     
@@ -263,7 +278,14 @@ export const useKanban = () => {
     });
 
     // Check if this is a newly created task being named for the first time
-    if (oldContent === 'New task') {
+    if (pendingNewTasks.has(taskId)) {
+      // Remove from pending set
+      setPendingNewTasks(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+
       // Find which column the task is in
       let columnName = 'To Do';
       for (const [colId, column] of Object.entries(data.columns)) {
@@ -296,8 +318,8 @@ export const useKanban = () => {
         }
       }
     } 
-    // otherwise, if content actually changed and it's not a new task, record as edit
-    else if (oldContent !== newContent && oldContent !== 'New task') {
+    // otherwise, if content actually changed, record as edit
+    else if (oldContent !== newContent) {
       // Add "Edited" action
       const newAction: Action = {
         id: `action-${Date.now()}`,
@@ -361,7 +383,8 @@ const stopEditingTask = () => {
       type: 'deleted',
       taskId: taskId,
       taskContent: taskContent,
-      toColumn: column.name,
+      fromColumn: column.name,
+      toColumn: '',
       timestamp: Date.now()
     };
     setActions([newAction, ...actions].slice(0, 10));
