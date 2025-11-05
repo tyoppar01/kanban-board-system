@@ -240,24 +240,15 @@ export const useKanban = () => {
 
     setTaskCounter(taskCounter + 1);
 
-    // Sync with backend only if not in browser-only mode
-    if (!USE_BROWSER_ONLY) {
-      try {
-        const backendTask = transformTaskToBackend(newTaskId, 'New task', taskCounter);
-        await taskApi.createTask(backendTask);
-      } catch (error) {
-        console.error('Failed to create task on backend:', error);
-        // Task is still saved locally, will sync later
-      }
-    }
-
+    // Don't sync to backend yet - wait for user to enter task name
+    
     setTimeout(() => {
       startEditingTask(newTaskId);
     }, 100);
   };
 
   // update task content function
-  const updateTask = (taskId: string, newContent: string) => {
+  const updateTask = async (taskId: string, newContent: string) => {
     const oldContent = data.tasks[taskId]?.content || '';
 
     const updatedTasks = {
@@ -293,6 +284,18 @@ export const useKanban = () => {
         timestamp: Date.now()
       };
       setActions([newAction, ...actions].slice(0, 10));
+
+      // NOW sync with backend after user enters the task name
+      if (!USE_BROWSER_ONLY) {
+        try {
+          const numericId = parseInt(taskId.split('-')[1]);
+          const backendTask = transformTaskToBackend(taskId, newContent, numericId);
+          await taskApi.createTask(backendTask);
+        } catch (error) {
+          console.error('Failed to create task on backend:', error);
+          // Task is still saved locally, will sync later
+        }
+      }
     } 
     // otherwise, if content actually changed and it's not a new task, record as edit
     else if (oldContent !== newContent && oldContent !== 'New task') {
