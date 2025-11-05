@@ -65,14 +65,10 @@ export const moveTask = async (_req: ApiRequest, _res: Response) => {
     
     try {
         // pre-validation on mandatory field
-        const { params } = _req;
-        const id = params?.id;
-        const index = params?.index;
-        const currCol = params?.currentColumn;
-        const destCol = params?.newColumn;
+        const { id, index, currentColumn, newColumn } = _req.body;
 
         // validation of input strings
-        if (![currCol, destCol, index].every(v => v !== undefined && v !== "")) {
+        if (![currentColumn, newColumn, index].every(v => v !== undefined && v !== "")) {
             return sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
         }
 
@@ -84,14 +80,14 @@ export const moveTask = async (_req: ApiRequest, _res: Response) => {
         }
 
         // get board from services
-        const curr: string = currCol as string;
-        const dest: string = destCol as string;
+        const curr: string = currentColumn as string;
+        const dest: string = newColumn as string;
         const task = await relocateTask(taskId, newIndex, curr, dest);
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
             success: true,
-            message: `task of ${id} has been moved successfully from column: ${currCol} to column: ${destCol}`,
+            message: `task of ${id} has been moved successfully from column: ${currentColumn} to column: ${newColumn}`,
             data: task
         }
         sendSuccessResponse(_res, response);
