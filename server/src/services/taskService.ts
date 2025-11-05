@@ -2,6 +2,8 @@ import { Task } from "../models/task";
 import { boardRepo } from "../repos/boardRepo";
 import { taskRepo } from "../repos/taskRepo";
 
+type EditableTaskFields = Omit<Task, "id" | "createdDate">;
+
 /**
  * Add New Task (Service)
  * @param task 
@@ -89,21 +91,35 @@ export const relocateTask = async (id: number, index: number, currCol: string, d
     return relocatedTask;
 }
 
-export const editTask = async (task: Task): Promise<Task> => {
+export const editTask = async (target: Task): Promise<boolean> => {
 
   const board = await boardRepo.get();
 
-  task.modifiedDate ?? new Date().toISOString();
+  target.modifiedDate ?? new Date().toISOString();
 
-  const targetTask = board.taskList[task.id];
+  // modify targeted task via id in dictionary
+  const currTask = board.taskList[target.id];
 
-  if (!targetTask) throw new Error(`Task ${task.id} not found!`);
+  if (!currTask) throw new Error(`Task ${target.id} not found!`);
 
-  const updatedTask = taskRepo.update(task, board);
-
-  if (!updatedTask) {
-    throw new Error(`Task ${task.id} is not found in task list`);
+  // restrict changes based on EditableTaskFields
+  const partialUpdate: EditableTaskFields = {
+    title: target.title ?? currTask!.title,
+    description: target.description ?? currTask?.description,
+    modifiedDate: target.modifiedDate,
   }
 
-  return updatedTask;
+  // updated object task
+  const updatedTask: Task = { 
+    ...currTask, 
+    ...partialUpdate 
+  } as Task;
+
+  const result: boolean = taskRepo.update(updatedTask, board);
+
+  if (!result) {
+    throw new Error(`Task ${target.id} is not found in task list`);
+  }
+
+  return result;
 }

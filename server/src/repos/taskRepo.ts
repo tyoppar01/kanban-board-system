@@ -1,10 +1,7 @@
 import { Board } from "../models/board";
 import { Task } from "../models/task";
-import { boardRepo } from "./boardRepo";
 
 // ==================== Task Repo ===================== //
-
-type EditableTaskFields = Omit<Task, "id" | "createdDate">;
 
 export const taskRepo = {
 
@@ -97,27 +94,10 @@ export const taskRepo = {
    * @param board 
    * @returns 
    */
-  update: (target: Task, board: Board):Task => {
+  update: (target: Task, board: Board):boolean => {
 
-    // modify targeted task via id in dictionary
-    const currTask = board.taskList[target.id];
-    
-    // restrict changes based on EditableTaskFields
-    const partialUpdate: EditableTaskFields = {
-      title: target.title ?? currTask!.title,
-      description: target.description ?? currTask?.description,
-      modifiedDate: target.modifiedDate,
-    }
-
-    // updated object task
-    const updatedTask: Task = { 
-      ...currTask, 
-      ...partialUpdate 
-    } as Task;
-
-    board.taskList[target.id] = updatedTask;
-
-    return updatedTask;
+    board.taskList[target.id] = target;
+    return true;
   },
 
 };

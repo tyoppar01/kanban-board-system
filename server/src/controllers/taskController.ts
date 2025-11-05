@@ -5,7 +5,7 @@ import { sendFailedResponse, sendSuccessResponse } from "../../utils/apiResponse
 import { ApiStatus } from "../../utils/apiStatus";
 import { ErrorCode } from "../../utils/errorCode";
 import { Task } from "../models/task";
-import { addTask, relocateTask, removeTask } from "../services/taskService";
+import { addTask, editTask, relocateTask, removeTask } from "../services/taskService";
 
 /**
  * Create New Task
@@ -124,13 +124,14 @@ export const updateTask = async (_req: Request, _res: Response) => {
         if (!task.id || !task.title) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
         
         // get updated task from services
-        const updatedTask:Task = await editTask(task);
+        const result: boolean = await editTask(task);
+
+        if (!result) sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.ACTION_FAILED);
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
             success: true,
-            message: `task ${updatedTask.id} has been updated successfully`,
-            data: updatedTask
+            message: `task ${task.id} has been updated successfully`,
         }
         sendSuccessResponse(_res, response);
 
