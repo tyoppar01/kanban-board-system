@@ -6,6 +6,8 @@ import { getStorageData, setStorageData, STORAGE_KEYS, isLocalStorageAvailable }
 import { boardApi, taskApi } from '../services/api';
 import { transformBackendToFrontend, transformTaskToBackend, frontendToBackendColumnId } from '../utils/dataTransform';
 
+// Toggle between browser-only mode and backend integration
+const USE_BROWSER_ONLY = true; // Set to false to enable full backend integration
 
 // Initial data
 const initialData: Board = {
@@ -56,9 +58,6 @@ export const colorClasses: ColorClasses = {
     border: 'border-green-600'
   }
 };
-
-// Toggle between browser-only mode and backend integration
-const USE_BROWSER_ONLY = false; // Set to false to enable full backend integration
 
 export const useKanban = () => {
   const [data, setData] = useState<Board>(initialData);
