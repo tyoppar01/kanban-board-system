@@ -72,3 +72,15 @@ export function transformTaskToBackend(taskId: string, content: string, taskCoun
 export function extractTaskNumber(taskId: string): number {
   return parseInt(taskId.replace('task-', ''), 10);
 }
+
+/**
+ * Convert frontend column ID to backend column ID
+ */
+export function frontendToBackendColumnId(frontendColumnId: string): string {
+  const reverseMapping: Record<string, string> = {
+    'todo': 'todo',
+    'in-progress': 'ongoing',
+    'completed': 'done'
+  };
+  return reverseMapping[frontendColumnId] || frontendColumnId;
+}

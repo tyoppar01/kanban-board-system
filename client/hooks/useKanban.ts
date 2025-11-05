@@ -4,7 +4,7 @@ import { DropResult } from '@hello-pangea/dnd';
 import { Action, StorageState } from '../types/kanban.types';
 import { getStorageData, setStorageData, STORAGE_KEYS, isLocalStorageAvailable } from '@/utils/storage';
 import { boardApi, taskApi } from '../services/api';
-import { transformBackendToFrontend, transformTaskToBackend } from '../utils/dataTransform';
+import { transformBackendToFrontend, transformTaskToBackend, frontendToBackendColumnId } from '../utils/dataTransform';
 
 
 // Initial data
@@ -324,7 +324,7 @@ const stopEditingTask = () => {
 };
 
   // Handle drag and drop
-  const onDragEnd = (result: DropResult) => {
+  const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
     // If no destination, do nothing
@@ -361,6 +361,18 @@ const stopEditingTask = () => {
       };
 
       setData(newData);
+
+      // Sync move within same column to backend
+      if (!USE_BROWSER_ONLY) {
+        try {
+          const numericId = parseInt(draggableId.split('-')[1]);
+          const backendSourceColumn = frontendToBackendColumnId(source.droppableId);
+          const backendDestColumn = frontendToBackendColumnId(destination.droppableId);
+          await taskApi.moveTask(numericId, destination.index, backendSourceColumn, backendDestColumn);
+        } catch (error) {
+          console.error('Failed to sync move to backend:', error);
+        }
+      }
       return;
     }
 
@@ -402,6 +414,18 @@ const stopEditingTask = () => {
       timestamp: Date.now()
     };
     setActions([newAction, ...actions].slice(0, 10)); // Keep last 10 actions
+
+    // Sync move to backend
+    if (!USE_BROWSER_ONLY) {
+      try {
+        const numericId = parseInt(draggableId.split('-')[1]);
+        const backendSourceColumn = frontendToBackendColumnId(source.droppableId);
+        const backendDestColumn = frontendToBackendColumnId(destination.droppableId);
+        await taskApi.moveTask(numericId, destination.index, backendSourceColumn, backendDestColumn);
+      } catch (error) {
+        console.error('Failed to sync move to backend:', error);
+      }
+    }
   };
 
   return {
