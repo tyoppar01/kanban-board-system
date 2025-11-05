@@ -4,6 +4,8 @@ import { boardRepo } from "./boardRepo";
 
 // ==================== Task Repo ===================== //
 
+type EditableTaskFields = Omit<Task, "id" | "createdDate">;
+
 export const taskRepo = {
 
   /**
@@ -87,6 +89,35 @@ export const taskRepo = {
     board.columns[destCol] = newDestinationList;
 
     return board.taskList[taskId]!;
+  },
+
+  /**
+   * Update Task (Details)
+   * @param target 
+   * @param board 
+   * @returns 
+   */
+  update: (target: Task, board: Board):Task => {
+
+    // modify targeted task via id in dictionary
+    const currTask = board.taskList[target.id];
+    
+    // restrict changes based on EditableTaskFields
+    const partialUpdate: EditableTaskFields = {
+      title: target.title ?? currTask!.title,
+      description: target.description ?? currTask?.description,
+      modifiedDate: target.modifiedDate,
+    }
+
+    // updated object task
+    const updatedTask: Task = { 
+      ...currTask, 
+      ...partialUpdate 
+    } as Task;
+
+    board.taskList[target.id] = updatedTask;
+
+    return updatedTask;
   },
 
 };
