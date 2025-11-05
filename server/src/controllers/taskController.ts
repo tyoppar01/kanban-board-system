@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
+import { ApiRequest } from "../../types/request";
 import { ApiResponse } from "../../types/response";
 import { sendFailedResponse, sendSuccessResponse } from "../../utils/apiResponse";
 import { ApiStatus } from "../../utils/apiStatus";
 import { ErrorCode } from "../../utils/errorCode";
 import { Task } from "../models/task";
-import { addTask } from "../services/taskService";
+import { addTask, relocateTask, removeTask } from "../services/taskService";
 
 export const createTask = async (_req: Request, _res: Response) => {
     
@@ -15,18 +16,88 @@ export const createTask = async (_req: Request, _res: Response) => {
         // validation of input
         if (!id || !title) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
         
-        // get board from services
-        const board = await addTask(_req.body);
+        // get todolist from services
+        const todolist = await addTask(_req.body);
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
             success: true,
             message: "new task has been created successfully",
-            data: board
+            data: todolist
         }
         sendSuccessResponse(_res, response);
 
     } catch (err: any) {
         sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
     }
+}
+
+export const deleteTask = async (_req: ApiRequest, _res: Response) => {
+    
+    try {
+        // pre-validation on mandatory field
+        const { params } = _req;
+        const column = params?.column;
+        const id = params?.id;
+
+        // validation of input
+        if (!id || !column) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.UNKNOWN_ID);
+        
+        // get board from services
+        const taskId = Number(id);
+        const task = await removeTask(taskId, column as string);
+
+        // Generate GOOD Response
+        const response: ApiResponse<any> = {
+            success: true,
+            message: `task of ${id} has been deleted successfully`,
+            data: task
+        }
+        sendSuccessResponse(_res, response);
+
+    } catch (err: any) {
+        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
+    }
+    
+}
+
+export const moveTask = async (_req: ApiRequest, _res: Response) => {
+    
+    try {
+        // pre-validation on mandatory field
+        const { params } = _req;
+        const id = params?.id;
+        const index = params?.index;
+        const currCol = params?.currentColumn;
+        const destCol = params?.newColumn;
+
+        // validation of input strings
+        if (![currCol, destCol, index].every(v => v !== undefined && v !== "")) {
+            return sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
+        }
+
+        // validation of input numbers
+        const taskId = Number(id);
+        const newIndex = Number(index);
+        if (!Number.isInteger(newIndex) || newIndex < 0 || !Number.isInteger(taskId) || taskId < 0) {
+            return sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INDEX);
+        }
+
+        // get board from services
+        const curr: string = currCol as string;
+        const dest: string = destCol as string;
+        const task = await relocateTask(taskId, newIndex, curr, dest);
+
+        // Generate GOOD Response
+        const response: ApiResponse<any> = {
+            success: true,
+            message: `task of ${id} has been moved successfully from column: ${currCol} to column: ${destCol}`,
+            data: task
+        }
+        sendSuccessResponse(_res, response);
+
+    } catch (err: any) {
+        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
+    }
+    
 }
