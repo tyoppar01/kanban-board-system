@@ -88,3 +88,22 @@ export const relocateTask = async (id: number, index: number, currCol: string, d
 
     return relocatedTask;
 }
+
+export const editTask = async (task: Task): Promise<Task> => {
+
+  const board = await boardRepo.get();
+
+  task.modifiedDate ?? new Date().toISOString();
+
+  const targetTask = board.taskList[task.id];
+
+  if (!targetTask) throw new Error(`Task ${task.id} not found!`);
+
+  const updatedTask = taskRepo.update(task, board);
+
+  if (!updatedTask) {
+    throw new Error(`Task ${task.id} is not found in task list`);
+  }
+
+  return updatedTask;
+}
