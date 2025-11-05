@@ -7,27 +7,22 @@ import { boardApi, taskApi } from '../services/api';
 import { transformBackendToFrontend, transformTaskToBackend, frontendToBackendColumnId } from '../utils/dataTransform';
 
 // Toggle between browser-only mode and backend integration
-const USE_BROWSER_ONLY = true; // Set to false to enable full backend integration
+const USE_BROWSER_ONLY = false; // Set to false to enable full backend integration
 
-// Initial data
+// Empty initial data - will be loaded from backend
 const initialData: Board = {
-  tasks: {
-    'task-1': { id: 'task-1', content: 'Take out the garbage' },
-    'task-2': { id: 'task-2', content: 'Watch my favorite show' },
-    'task-3': { id: 'task-3', content: 'Charge my phone' },
-    'task-4': { id: 'task-4', content: 'Cook dinner' },
-  },
+  tasks: {},
   columns: {
     'todo': {
       id: 'todo',
       name: 'To Do',
-      tasks: ['task-2', 'task-3', 'task-4'],
+      tasks: [],
       columnColor: 'blue'
     },
     'in-progress': {
       id: 'in-progress',
       name: 'In Progress',
-      tasks: ['task-1'],
+      tasks: [],
       columnColor: 'yellow'
     },
     'completed': {
@@ -200,16 +195,39 @@ export const useKanban = () => {
   }, [data, taskCounter, actions, isHydrated, saveToStorage]);
 
   // clear storage function
-  const clearStorage = useCallback(() => {
-    if (typeof window === 'undefined') {
+  const clearStorage = useCallback(async () => {
+    if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEYS.KANBAN_DATA);
       localStorage.removeItem(STORAGE_KEYS.KANBAN_COUNTER);
       localStorage.removeItem(STORAGE_KEYS.KANBAN_ACTIONS);
 
-      // reset to intial state
-      setData(initialData);
-      setTaskCounter(7);
-      setActions([]); 
+      // Clear actions and pending tasks
+      setActions([]);
+      setPendingNewTasks(new Set());
+      
+      // Fetch fresh data from backend
+      if (!USE_BROWSER_ONLY) {
+        try {
+          const backendBoard = await boardApi.getBoard();
+          const frontendBoard = transformBackendToFrontend(backendBoard);
+          setData(frontendBoard);
+          
+          // Update task counter based on highest task ID
+          const taskIds = Object.keys(backendBoard.taskList).map(Number);
+          const maxId = Math.max(...taskIds, 0);
+          setTaskCounter(maxId + 1);
+        } catch (error) {
+          console.error('Failed to fetch board from backend:', error);
+          // Fallback to empty board if backend fails
+          setData(initialData);
+          setTaskCounter(1);
+        }
+      } else {
+        // Browser-only mode: reset to empty board
+        setData(initialData);
+        setTaskCounter(1);
+      }
+      
       setStorageState(prev => ({
         ...prev,
         lastSaved: undefined,
