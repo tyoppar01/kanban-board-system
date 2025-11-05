@@ -2,6 +2,8 @@ import { Task } from "../models/task";
 import { boardRepo } from "../repos/boardRepo";
 import { taskRepo } from "../repos/taskRepo";
 
+type EditableTaskFields = Omit<Task, "id" | "createdDate">;
+
 /**
  * Add New Task (Service)
  * @param task 
@@ -87,4 +89,37 @@ export const relocateTask = async (id: number, index: number, currCol: string, d
     }
 
     return relocatedTask;
+}
+
+export const editTask = async (target: Task): Promise<boolean> => {
+
+  const board = await boardRepo.get();
+
+  target.modifiedDate ?? new Date().toISOString();
+
+  // modify targeted task via id in dictionary
+  const currTask = board.taskList[target.id];
+
+  if (!currTask) throw new Error(`Task ${target.id} not found!`);
+
+  // restrict changes based on EditableTaskFields
+  const partialUpdate: EditableTaskFields = {
+    title: target.title ?? currTask!.title,
+    description: target.description ?? currTask?.description,
+    modifiedDate: target.modifiedDate,
+  }
+
+  // updated object task
+  const updatedTask: Task = { 
+    ...currTask, 
+    ...partialUpdate 
+  } as Task;
+
+  const result: boolean = taskRepo.update(updatedTask, board);
+
+  if (!result) {
+    throw new Error(`Task ${target.id} is not found in task list`);
+  }
+
+  return result;
 }

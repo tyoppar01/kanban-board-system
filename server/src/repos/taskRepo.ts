@@ -1,6 +1,5 @@
 import { Board } from "../models/board";
 import { Task } from "../models/task";
-import { boardRepo } from "./boardRepo";
 
 // ==================== Task Repo ===================== //
 
@@ -87,6 +86,18 @@ export const taskRepo = {
     board.columns[destCol] = newDestinationList;
 
     return board.taskList[taskId]!;
+  },
+
+  /**
+   * Update Task (Details)
+   * @param target 
+   * @param board 
+   * @returns 
+   */
+  update: (target: Task, board: Board):boolean => {
+
+    board.taskList[target.id] = target;
+    return true;
   },
 
 };
