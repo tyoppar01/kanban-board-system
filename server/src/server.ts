@@ -1,6 +1,5 @@
 import express = require("express");
 import http = require("http");
-import morgan from "morgan";
 import cors from "cors";
 import boardRouter from "./routes/boardRoutes";
 import taskRouter from "./routes/taskRoutes";
@@ -9,26 +8,6 @@ import taskRouter from "./routes/taskRoutes";
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use(morgan(`[:method :url][:status][:response-time ms]\nResponse: [:body\n]`));
-
-
-morgan.token("body", (req: any, res: any) => {
-  return res.locals.body ? JSON.stringify(res.locals.body) : "";
-});
-
-// middleware to intercept `res.send`
-app.use((_, res, next) => {
-  const oldSend = res.send;
-  res.send = function (body) {
-    res.locals.body = body; // store response for logging
-    return oldSend.call(this, JSON.stringify(body));
-  };
-  next();
-});
-
-
-
-
 
 // ====================== Router  ========================= //
 app.use("/api/board", boardRouter);  // all board endpoints
