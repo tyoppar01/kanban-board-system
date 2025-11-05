@@ -92,7 +92,7 @@ POST /api/task/move
 ```
 ### Description
 > Moves a task to a new column and/or position when dragged and dropped in the frontend Kanban board.
-The backend updates the column arrays accordingly and returns the updated board state.
+The backend updates the column arrays accordingly and return a boolean
 
 ### Request Body
 ```
@@ -109,7 +109,6 @@ The backend updates the column arrays accordingly and returns the updated board 
 {
     "success": true,
     "message": string
-    "data" : task
 }
 ```
 
@@ -153,6 +152,38 @@ Returns the deleted task details upon success.
 | Code  | Description                     |
 |-------|---------------------------------|
 | 200   | Task deleted successfully       |
+| 400   | Invalid request                 |
+| 500   | Internal server error occurred  |
+```
+
+
+### 🟨 (5) Update Task
+```
+DELETE /api/task/update
+```
+### Description
+> Update a task and return a boolean
+
+### Request Body
+```
+{
+  "task" : TaskObject
+}
+```
+
+### Response
+```
+{
+    "success": true,
+    "message": string
+}
+```
+
+### Status Code
+```
+| Code  | Description                     |
+|-------|---------------------------------|
+| 200   | Task updated successfully       |
 | 400   | Invalid request                 |
 | 500   | Internal server error occurred  |
 ```
