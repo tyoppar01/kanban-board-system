@@ -19,7 +19,8 @@ export default function KanbanBoard() {
     updateTask,
     deleteTask,
     storageState,
-    isHydrated
+    isHydrated,
+    clearStorage
   } = useKanban();
   
   // Show loading state until storage is loaded
@@ -36,7 +37,7 @@ export default function KanbanBoard() {
     <div className="min-h-screen bg-gray-50 p-8 flex flex-col">
 
       <div className="max-w-7xl mx-auto flex-1 w-full">
-        <Header actions={actions} />
+        <Header actions={actions} onReset={clearStorage} />
 
         <DragDropContext onDragEnd={onDragEnd}>
         {/* board container */}
