@@ -22,3 +22,9 @@ fi
 # Install project dependencies
 echo "📦 Installing project dependencies for front end..."
 cd client && npm install
+
+echo "📦 Installing project dependencies for backend....."
+cd ../server && npm install
+
+echo "completed both front and back dependencies........."
+cd ../
