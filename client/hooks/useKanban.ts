@@ -361,7 +361,8 @@ const stopEditingTask = () => {
       type: 'deleted',
       taskId: taskId,
       taskContent: taskContent,
-      toColumn: column.name,
+      fromColumn: column.name,
+      toColumn: '',
       timestamp: Date.now()
     };
     setActions([newAction, ...actions].slice(0, 10));
