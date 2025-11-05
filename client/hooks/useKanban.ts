@@ -309,6 +309,18 @@ export const useKanban = () => {
         timestamp: Date.now()
       };
       setActions([newAction, ...actions].slice(0, 10));
+
+      // Sync edit with backend
+      if (!USE_BROWSER_ONLY) {
+        try {
+          const numericId = parseInt(taskId.split('-')[1]);
+          const backendTask = transformTaskToBackend(taskId, newContent, numericId);
+          await taskApi.editTask(backendTask);
+        } catch (error) {
+          console.error('Failed to edit task on backend:', error);
+          // Task is still saved locally, will sync later
+        }
+      }
     }
   };
 
@@ -485,5 +497,6 @@ const stopEditingTask = () => {
     startEditingTask,
     stopEditingTask,
     updateTask,
+    deleteTask,
   };
 };
