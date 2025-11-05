@@ -63,6 +63,7 @@ export const useKanban = () => {
   const [data, setData] = useState<Board>(initialData);
   const [taskCounter, setTaskCounter] = useState<number>(7);
   const [actions, setActions] = useState<Action[]>([]);
+  const [pendingNewTasks, setPendingNewTasks] = useState<Set<string>>(new Set());
 
   const [isHydrated, setIsHydrated] = useState(false);
   const [storageState, setStorageState] = useState<StorageState>({
@@ -238,6 +239,9 @@ export const useKanban = () => {
     });
 
     setTaskCounter(taskCounter + 1);
+    
+    // Mark this task as pending (newly created, not yet named)
+    setPendingNewTasks(prev => new Set(prev).add(newTaskId));
 
     // Don't sync to backend yet - wait for user to enter task name
     
@@ -263,7 +267,14 @@ export const useKanban = () => {
     });
 
     // Check if this is a newly created task being named for the first time
-    if (oldContent === 'New task') {
+    if (pendingNewTasks.has(taskId)) {
+      // Remove from pending set
+      setPendingNewTasks(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+
       // Find which column the task is in
       let columnName = 'To Do';
       for (const [colId, column] of Object.entries(data.columns)) {
@@ -296,8 +307,8 @@ export const useKanban = () => {
         }
       }
     } 
-    // otherwise, if content actually changed and it's not a new task, record as edit
-    else if (oldContent !== newContent && oldContent !== 'New task') {
+    // otherwise, if content actually changed, record as edit
+    else if (oldContent !== newContent) {
       // Add "Edited" action
       const newAction: Action = {
         id: `action-${Date.now()}`,
