@@ -48,8 +48,9 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
                   <div className="flex items-start gap-3">
                     <div className={`w-2 h-2 rounded-full mt-2 ${
                       action.type === 'created' ? 'bg-blue-500' :
-                      action.type === 'edited' ? 'bg-yellow-500': 
-                      'bg-green-500'
+                      action.type === 'edited' ? 'bg-yellow-500':
+                      action.type === 'moved' ? 'bg-green-500':
+                      'bg-red-500'
                     }`} />
                     <div className="flex-1">
                       <p className="text-sm text-gray-900">
