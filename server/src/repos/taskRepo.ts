@@ -36,56 +36,29 @@ export const taskRepo = {
     return board.taskList[taskId]!;
   },
 
+
   /**
-   * Update Task (Drag and Drop feature)
+   * Update Column
    * @param taskId 
-   * @param index 
    * @param currCol 
+   * @param currList 
    * @param destCol 
+   * @param destList 
+   * @param board 
    * @returns 
    */
-  updateColumn: (taskId: number, index: number, currCol: string, destCol: string, board: Board): Task => {
-    
-    // Special handling for moving within the same column
-    if (currCol === destCol) {
-      const columnList = [...board.columns[currCol]!];
-      
-      // Find current position
-      const currentIndex = columnList.findIndex(id => id === taskId);
-      
-      if (currentIndex === -1) {
-        throw new Error(`Task ${taskId} not found in column ${currCol}`);
-      }
-      
-      // Remove from current position
-      columnList.splice(currentIndex, 1);
-      
-      // Insert at new position
-      columnList.splice(index, 0, taskId);
-      
-      // Update the board
-      board.columns[currCol] = columnList;
-      
-      return board.taskList[taskId]!;
-    }
-    
-    // retrieve current and destination arrays
-    const currentList = board.columns[currCol]!;
-    const destinationList = board.columns[destCol]!;
+  updateColumn: (
+        taskId: number, 
+        currCol: string, 
+        currList: number[], 
+        destCol: string, 
+        destList: number[], 
+        board: Board): boolean => {
 
-    // remove taskId from the column list
-    board.columns[currCol] = currentList.filter((id) => id !== taskId);
+    board.columns[currCol] = currList;
+    board.columns[destCol] = destList;
 
-    // insert task id at selected index at destination list
-    const newDestinationList: number[] = [
-      ...destinationList.slice(0, index),
-      taskId,
-      ...destinationList.slice(index)
-    ];
-
-    board.columns[destCol] = newDestinationList;
-
-    return board.taskList[taskId]!;
+    return true;
   },
 
   /**
