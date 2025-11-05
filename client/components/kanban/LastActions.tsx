@@ -59,7 +59,7 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
                           </>
                         ) : action.type === 'edited' ? (
                           <>
-                            Edited <span className="font-semibold">"{action.taskContent}"</span> from <span className="font-semibold">"{action.oldContent}"</span>
+                            Edited <span className="font-semibold">"{action.oldContent}"</span> to <span className="font-semibold">"{action.taskContent}"</span>
                           </>
                         ) : action.type === 'moved' ? (
                           <>
