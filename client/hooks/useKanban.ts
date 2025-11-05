@@ -6,6 +6,8 @@ import { getStorageData, setStorageData, STORAGE_KEYS, isLocalStorageAvailable }
 import { boardApi, taskApi } from '../services/api';
 import { transformBackendToFrontend, transformTaskToBackend, frontendToBackendColumnId } from '../utils/dataTransform';
 
+// Toggle between browser-only mode and backend integration
+const USE_BROWSER_ONLY = true; // Set to false to enable full backend integration
 
 // Initial data
 const initialData: Board = {
@@ -56,9 +58,6 @@ export const colorClasses: ColorClasses = {
     border: 'border-green-600'
   }
 };
-
-// Toggle between browser-only mode and backend integration
-const USE_BROWSER_ONLY = false; // Set to false to enable full backend integration
 
 export const useKanban = () => {
   const [data, setData] = useState<Board>(initialData);
@@ -264,7 +263,7 @@ export const useKanban = () => {
     });
 
     // Check if this is a newly created task being named for the first time
-    if (oldContent === 'New task' && newContent !== 'New task') {
+    if (oldContent === 'New task') {
       // Find which column the task is in
       let columnName = 'To Do';
       for (const [colId, column] of Object.entries(data.columns)) {
@@ -274,12 +273,12 @@ export const useKanban = () => {
         }
       }
 
-      // Add "Created" action
+      // Add "Created" action with the actual content (even if it's still "New task")
       const newAction: Action = {
         id: `action-${Date.now()}`,
         type: 'created',
         taskId: taskId,
-        taskContent: newContent,
+        taskContent: newContent,  // Use the actual content the user entered
         toColumn: columnName,
         timestamp: Date.now()
       };
