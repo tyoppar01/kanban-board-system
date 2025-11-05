@@ -96,9 +96,9 @@ export const taskApi = {
     return result.data;
   },
 
-  // PUT /api/task/edit - Edit a task
-  async editTask(task: BackendTask): Promise<BackendTask> {
-    const response = await fetch(`${API_BASE_URL}/task/edit`, {
+  // PUT /api/task/update - Edit/Update a task
+  async editTask(task: BackendTask): Promise<boolean> {
+    const response = await fetch(`${API_BASE_URL}/task/update`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -110,8 +110,8 @@ export const taskApi = {
       throw new Error('Failed to edit task');
     }
     
-    const result: ApiResponse<BackendTask> = await response.json();
-    return result.data;
+    const result: ApiResponse<any> = await response.json();
+    return result.success;
   }
 };
 
