@@ -47,6 +47,29 @@ export const taskRepo = {
    */
   updateColumn: (taskId: number, index: number, currCol: string, destCol: string, board: Board): Task => {
     
+    // Special handling for moving within the same column
+    if (currCol === destCol) {
+      const columnList = [...board.columns[currCol]!];
+      
+      // Find current position
+      const currentIndex = columnList.findIndex(id => id === taskId);
+      
+      if (currentIndex === -1) {
+        throw new Error(`Task ${taskId} not found in column ${currCol}`);
+      }
+      
+      // Remove from current position
+      columnList.splice(currentIndex, 1);
+      
+      // Insert at new position
+      columnList.splice(index, 0, taskId);
+      
+      // Update the board
+      board.columns[currCol] = columnList;
+      
+      return board.taskList[taskId]!;
+    }
+    
     // retrieve current and destination arrays
     const currentList = board.columns[currCol]!;
     const destinationList = board.columns[destCol]!;
