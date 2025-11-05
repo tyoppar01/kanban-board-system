@@ -36,9 +36,7 @@ export const deleteTask = async (_req: ApiRequest, _res: Response) => {
     
     try {
         // pre-validation on mandatory field
-        const { params } = _req;
-        const column = params?.column;
-        const id = params?.id;
+        const { column, id } = _req.body;
 
         // validation of input
         if (!id || !column) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.UNKNOWN_ID);
