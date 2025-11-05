@@ -75,6 +75,7 @@ export const taskApi = {
     return result.data;
   },
   
+  // DELETE /api/task/delete - Delete a task
   async deleteTask(taskId: number, column: string): Promise<BackendTask> {
     const response = await fetch(`${API_BASE_URL}/task/delete`, {
       method: 'DELETE',
@@ -95,6 +96,7 @@ export const taskApi = {
     return result.data;
   },
 
+  // PUT /api/task/edit - Edit a task
   async editTask(task: BackendTask): Promise<BackendTask> {
     const response = await fetch(`${API_BASE_URL}/task/edit`, {
       method: 'PUT',
