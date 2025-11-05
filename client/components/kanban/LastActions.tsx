@@ -61,9 +61,13 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
                           <>
                             Edited <span className="font-semibold">"{action.taskContent}"</span> from <span className="font-semibold">"{action.oldContent}"</span>
                           </>
-                        ) : (
+                        ) : action.type === 'moved' ? (
                           <>
                             Moved <span className="font-semibold">"{action.taskContent}"</span> from {action.fromColumn} to {action.toColumn}
+                          </>
+                        ) : (
+                          <>
+                            Deleted <span className="font-semibold">"{action.taskContent}"</span> from {action.fromColumn}
                           </>
                         )}
                       </p>
