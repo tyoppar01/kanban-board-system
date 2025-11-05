@@ -73,6 +73,45 @@ export const taskApi = {
     
     const result: ApiResponse<BackendTask> = await response.json();
     return result.data;
+  },
+  
+  // DELETE /api/task/delete - Delete a task
+  async deleteTask(taskId: number, column: string): Promise<BackendTask> {
+    const response = await fetch(`${API_BASE_URL}/task/delete`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: taskId,
+        column
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete task');
+    }
+    
+    const result: ApiResponse<BackendTask> = await response.json();
+    return result.data;
+  },
+
+  // PUT /api/task/edit - Edit a task
+  async editTask(task: BackendTask): Promise<BackendTask> {
+    const response = await fetch(`${API_BASE_URL}/task/edit`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ task }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to edit task');
+    }
+    
+    const result: ApiResponse<BackendTask> = await response.json();
+    return result.data;
   }
 };
 

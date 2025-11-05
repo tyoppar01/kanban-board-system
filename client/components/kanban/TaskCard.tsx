@@ -1,27 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { Task } from '../../types/kanban.types';
-import { Pencil, Check, X } from 'lucide-react';
+import { Pencil, X } from 'lucide-react';
 import { colorClasses } from '../../hooks/useKanban';
 
 interface TaskCardProps {
   task: Task;
   index: number;
+  columnId: string;
   columnColor: string;
   isEditing: boolean;
   onStartEdit: () => void;
   onStopEdit: () => void;
   onUpdate: (content: string) => void;
+  onDelete: () => void;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({
   task,
   index,
+  columnId,
   columnColor,
   isEditing,
   onStartEdit,
   onStopEdit,
-  onUpdate
+  onUpdate,
+  onDelete
 }) => {
   const [editContent, setEditContent] = useState(task.content);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -98,16 +102,28 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   {task.id}
                 </div>
                 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStartEdit();
-                  }}
-                  className="p-1 text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all"
-                  title="Edit task"
-                >
-                  <Pencil className="w-3 h-3" />
-                </button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStartEdit();
+                    }}
+                    className="p-1 text-gray-400 hover:text-blue-600"
+                    title="Edit task"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                    className="p-1 text-gray-400 hover:text-red-600"
+                    title="Delete task"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               
               <div className="text-gray-900 font-medium">

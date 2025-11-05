@@ -309,6 +309,18 @@ export const useKanban = () => {
         timestamp: Date.now()
       };
       setActions([newAction, ...actions].slice(0, 10));
+
+      // Sync edit with backend
+      if (!USE_BROWSER_ONLY) {
+        try {
+          const numericId = parseInt(taskId.split('-')[1]);
+          const backendTask = transformTaskToBackend(taskId, newContent, numericId);
+          await taskApi.editTask(backendTask);
+        } catch (error) {
+          console.error('Failed to edit task on backend:', error);
+          // Task is still saved locally, will sync later
+        }
+      }
     }
   };
 
@@ -321,6 +333,51 @@ const startEditingTask = (taskId: string) => {
 const stopEditingTask = () => {
   setEditingState({ isEditing: false, taskId: null });
 };
+
+  const deleteTask = async (taskId: string, columnId: string) => {
+    const column = data.columns[columnId];
+    const newTaskIds = column.tasks.filter(id => id !== taskId);
+
+    const updatedColumns = {
+      ...data.columns,
+      [columnId]: {
+        ...column,
+        tasks: newTaskIds
+      }
+    };
+
+    const {[taskId]: _, ...remainingTasks} = data.tasks;
+
+    setData({
+      ...data,
+      tasks: remainingTasks,
+      columns: updatedColumns
+    });
+
+    // Add "Deleted" action
+    const taskContent = data.tasks[taskId]?.content || '';
+    const newAction: Action = {
+      id: `action-${Date.now()}`,
+      type: 'deleted',
+      taskId: taskId,
+      taskContent: taskContent,
+      toColumn: column.name,
+      timestamp: Date.now()
+    };
+    setActions([newAction, ...actions].slice(0, 10));
+
+    // sync deletion to backend
+    if (!USE_BROWSER_ONLY) {
+      try {
+        const numericId = parseInt(taskId.split('-')[1]);
+        const backendColumnId = frontendToBackendColumnId(columnId);
+        await taskApi.deleteTask(numericId, backendColumnId);
+      } catch (error) {
+        console.error('Failed to delete task on backend:', error);
+        // Task is still deleted locally, will sync later
+      }
+    }
+  };
 
   // Handle drag and drop
   const onDragEnd = async (result: DropResult) => {
@@ -440,5 +497,6 @@ const stopEditingTask = () => {
     startEditingTask,
     stopEditingTask,
     updateTask,
+    deleteTask,
   };
 };

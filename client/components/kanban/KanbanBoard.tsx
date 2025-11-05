@@ -17,6 +17,7 @@ export default function KanbanBoard() {
     startEditingTask,
     stopEditingTask,
     updateTask,
+    deleteTask,
     storageState,
     isHydrated
   } = useKanban();
@@ -56,6 +57,7 @@ export default function KanbanBoard() {
                 onStartEdit={startEditingTask}
                 onStopEdit={stopEditingTask}
                 onUpdateTask={updateTask}
+                onDeleteTask={deleteTask}
               />
             );
           })}
