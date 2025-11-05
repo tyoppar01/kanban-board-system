@@ -11,7 +11,7 @@ export const taskRepo = {
    * @param task 
    * @returns 
    */
-  add: (board: Board, task: Task): Record<number, Task> => {
+  add: (task: Task, board: Board): Record<number, Task> => {
 
     // append id into todo column list
     board.columns["todo"]!.push(task.id);
