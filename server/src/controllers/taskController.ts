@@ -33,7 +33,7 @@ export const createTask = async (_req: Request, _res: Response) => {
         sendSuccessResponse(_res, response);
 
     } catch (err: any) {
-        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
+        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, err.message);
     }
 }
 
@@ -64,7 +64,7 @@ export const deleteTask = async (_req: ApiRequest, _res: Response) => {
         sendSuccessResponse(_res, response);
 
     } catch (err: any) {
-        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
+        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, err.message);
     }
     
 }
@@ -104,7 +104,7 @@ export const moveTask = async (_req: ApiRequest, _res: Response) => {
         sendSuccessResponse(_res, response);
 
     } catch (err: any) {
-        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
+        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, err.message);
     }
     
 }
@@ -136,6 +136,6 @@ export const updateTask = async (_req: Request, _res: Response) => {
         sendSuccessResponse(_res, response);
 
     } catch (err: any) {
-        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
+        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, err.message);
     }
 }

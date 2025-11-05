@@ -22,6 +22,11 @@ export const addTask = async (task: Task): Promise<Record<number, Task>> => {
         throw new Error("board has no todo list, check in-memory cache");
     }
 
+    // ensure no task existed with duplicated id
+    if (board.taskList[task.id]) {
+        throw new Error("task has already existed, no duplicated task id is allowed to be added");
+    }
+
     // add into taskList and columnList
     const taskList = taskRepo.add(task, board);
     return taskList;
