@@ -64,15 +64,17 @@ export const removeTask = async (id: number, column: string): Promise<Task> => {
  * @param destCol 
  * @returns 
  */
-export const relocateTask = async (id: number, index: number, currCol: string, destCol: string): Promise<Task> => {
+export const relocateTask = async (taskId: number, index: number, currCol: string, destCol: string): Promise<boolean> => {
 
     const board = await boardRepo.get();
 
     const currentList = board.columns[currCol];
     const destinationList = board.columns[destCol];
 
+    // pre-validation of existing task is located at appropriate location
+
     // if current list not exist or task id not found in list
-    if (!currentList || !currentList.includes(id)) throw new Error(`Column ${currCol} not found!`);
+    if (!currentList || !currentList.includes(taskId)) throw new Error(`Column ${currCol} not found!`);
     
     // if destination list not exist
     if (!destinationList) throw new Error(`Column ${destCol} not found!`);
@@ -81,14 +83,45 @@ export const relocateTask = async (id: number, index: number, currCol: string, d
     if (index < 0 || index > destinationList.length) throw new Error(`Invalid index ${index}: must be between 0 and ${destinationList.length}`);
     
 
-    const relocatedTask:Task = taskRepo.updateColumn(id, index, currCol, destCol, board);
+    // copy version of column only (used by both cases)
+    const columnList = [...board.columns[currCol]!];
 
-    // ensure that it is preserved, unless implement otherwise
-    if (!relocatedTask) {
-      throw new Error(`Task ${id} is not found in task list`);
+    // If is moved within same column, reorder the sequence only
+    if (currCol === destCol) {
+
+      // Find current position
+      const currentIndex = columnList.findIndex(id => id === taskId);
+
+      if (currentIndex === -1) throw new Error(`Task ${taskId} not found in column ${currCol}`);
+
+      // reorder current array
+      columnList.splice(currentIndex, 1);
+      columnList.splice(index, 0, taskId);
+
+      const result: boolean = taskRepo.updateColumn(taskId, currCol, columnList, destCol, columnList, board);
+
+      if (!result) throw new Error(`Task ${taskId} is not moved in task list, operation has failed`);
+
+      return result;
     }
 
-    return relocatedTask;
+    // Else, arrange on 2 different columns
+    const newOriginList: number[] = columnList.filter((id) => id !== taskId);
+
+    // create new column to insert task id at selected index at destination list
+    const newDestList: number[] = [
+      ...destinationList.slice(0, index),
+      taskId,
+      ...destinationList.slice(index)
+    ];
+
+    // update column
+    const result: boolean = taskRepo.updateColumn(taskId, currCol, newOriginList, destCol, newDestList, board);
+
+    // ensure that it is preserved, unless implement otherwise
+    if (!result) throw new Error(`Task ${taskId} is not moved in task list, operation has failed`);
+    
+    return result;
 }
 
 export const editTask = async (target: Task): Promise<boolean> => {
