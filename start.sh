@@ -26,5 +26,25 @@ cd client && npm install
 echo "📦 Installing project dependencies for backend....."
 cd ../server && npm install
 
-echo "completed both front and back dependencies........."
+echo "✅ Completed both front and back dependencies"
 cd ../
+
+echo ""
+echo "🚀 Starting both client and server..."
+echo ""
+
+# Start server in background
+echo "Starting server on http://localhost:8080..."
+(cd server && npm run dev) &
+
+# Start client in background
+echo "Starting client on http://localhost:3000..."
+(cd client && npm run dev) &
+
+echo ""
+echo "✅ Both services are starting..."
+echo "Press Ctrl+C to stop both services"
+echo ""
+
+# Wait for both processes
+wait
