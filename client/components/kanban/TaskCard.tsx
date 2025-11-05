@@ -7,21 +7,25 @@ import { colorClasses } from '../../hooks/useKanban';
 interface TaskCardProps {
   task: Task;
   index: number;
+  columnId: string;
   columnColor: string;
   isEditing: boolean;
   onStartEdit: () => void;
   onStopEdit: () => void;
   onUpdate: (content: string) => void;
+  onDelete: () => void;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({
   task,
   index,
+  columnId,
   columnColor,
   isEditing,
   onStartEdit,
   onStopEdit,
-  onUpdate
+  onUpdate,
+  onDelete
 }) => {
   const [editContent, setEditContent] = useState(task.content);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -112,7 +116,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      // placeholder for delete functionality
+                      onDelete();
                     }}
                     className="p-1 text-gray-400 hover:text-red-600"
                     title="Delete task"

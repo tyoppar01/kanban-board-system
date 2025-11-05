@@ -103,7 +103,7 @@ export const taskApi = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(task),
+      body: JSON.stringify({ task }),
     });
     
     if (!response.ok) {

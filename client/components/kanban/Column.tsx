@@ -10,6 +10,7 @@ interface ColumnProps {
   onStartEdit: (taskId: string) => void;
   onStopEdit: () => void;
   onUpdateTask: (taskId: string, content: string) => void;
+  onDeleteTask: (taskId: string, columnId: string) => void;
 }
 
 export const Column: React.FC<ColumnProps> = ({ 
@@ -18,7 +19,8 @@ export const Column: React.FC<ColumnProps> = ({
   editingTaskId,
   onStartEdit,
   onStopEdit,
-  onUpdateTask
+  onUpdateTask,
+  onDeleteTask
 }) => {
   return (
     <div key={column.id} className="flex flex-col">
@@ -45,11 +47,13 @@ export const Column: React.FC<ColumnProps> = ({
                 key={task.id}
                 task={task}
                 index={index}
+                columnId={column.id}
                 columnColor={column.columnColor || 'gray'}
                 isEditing={editingTaskId === task.id}
                 onStartEdit={() => onStartEdit(task.id)}
                 onStopEdit={onStopEdit}
                 onUpdate={(content) => onUpdateTask(task.id, content)}
+                onDelete={() => onDeleteTask(task.id, column.id)}
               />
             ))}
             {provided.placeholder}
