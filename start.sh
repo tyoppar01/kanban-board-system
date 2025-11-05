@@ -25,7 +25,6 @@ echo -e "-----------------------------------------${RESET}\n"
 
 sleep 1
 
-
 echo "🔍 Checking Node.js and npm versions..."
 
 # Check Node.js version
@@ -56,10 +55,6 @@ cd ../
 
 echo ""
 echo "🚀 Starting both client and server..."
-echo ""
-
-echo ""
-echo -e "${GREEN}  ▶ Starting app...${RESET}"
 echo ""
 
 # Start server in background
