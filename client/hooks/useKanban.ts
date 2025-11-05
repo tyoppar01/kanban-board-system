@@ -57,6 +57,9 @@ export const colorClasses: ColorClasses = {
   }
 };
 
+// Toggle between browser-only mode and backend integration
+const USE_BROWSER_ONLY = false; // Set to false to enable full backend integration
+
 export const useKanban = () => {
   const [data, setData] = useState<Board>(initialData);
   const [taskCounter, setTaskCounter] = useState<number>(7);
@@ -87,46 +90,69 @@ export const useKanban = () => {
       isAvailable: available,
     }));
 
-    // Try to load from localStorage first for offline support
-    if (available) {
-      const savedData = getStorageData(STORAGE_KEYS.KANBAN_DATA, null);
-      const savedCounter = getStorageData(STORAGE_KEYS.KANBAN_COUNTER, 7);
-      const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
+    if (USE_BROWSER_ONLY) {
+      // Browser-only mode: Load from localStorage only
+      if (available) {
+        const savedData = getStorageData(STORAGE_KEYS.KANBAN_DATA, null);
+        const savedCounter = getStorageData(STORAGE_KEYS.KANBAN_COUNTER, 7);
+        const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
 
-      if (savedData) {
-        setData(savedData);
+        if (savedData) {
+          setData(savedData);
+        }
+        if (savedCounter) {
+          setTaskCounter(savedCounter);
+        }
+        if (savedActions) {
+          setActions(savedActions);
+        }
       }
-      if (savedCounter) {
-        setTaskCounter(savedCounter);
-      }
-      if (savedActions) {
-        setActions(savedActions);
-      }
+      
+      // Mark as loaded immediately in browser-only mode
+      setStorageState(prev => ({
+        ...prev,
+        isLoading: false,
+      }));
+    } else {
+      // Backend mode: Fetch from backend and save to localStorage
+      const fetchBoardFromBackend = async () => {
+        try {
+          const backendBoard = await boardApi.getBoard();
+          const frontendBoard = transformBackendToFrontend(backendBoard);
+          setData(frontendBoard);
+          
+          // Update task counter based on highest task ID
+          const taskIds = Object.keys(backendBoard.taskList).map(Number);
+          const maxId = Math.max(...taskIds, 0);
+          setTaskCounter(maxId + 1);
+          
+          // Save to localStorage for offline support
+          if (available) {
+            setStorageData(STORAGE_KEYS.KANBAN_DATA, frontendBoard);
+            setStorageData(STORAGE_KEYS.KANBAN_COUNTER, maxId + 1);
+          }
+        } catch (error) {
+          console.error('Failed to fetch board from backend:', error);
+          // Fallback to localStorage if backend fails
+          if (available) {
+            const savedData = getStorageData(STORAGE_KEYS.KANBAN_DATA, null);
+            const savedCounter = getStorageData(STORAGE_KEYS.KANBAN_COUNTER, 7);
+            const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
+
+            if (savedData) setData(savedData);
+            if (savedCounter) setTaskCounter(savedCounter);
+            if (savedActions) setActions(savedActions);
+          }
+        } finally {
+          setStorageState(prev => ({
+            ...prev,
+            isLoading: false,
+          }));
+        }
+      };
+
+      fetchBoardFromBackend();
     }
-
-    // Fetch from backend API
-    const fetchBoardFromBackend = async () => {
-      try {
-        const backendBoard = await boardApi.getBoard();
-        const frontendBoard = transformBackendToFrontend(backendBoard);
-        setData(frontendBoard);
-        
-        // Update task counter based on highest task ID
-        const taskIds = Object.keys(backendBoard.taskList).map(Number);
-        const maxId = Math.max(...taskIds, 0);
-        setTaskCounter(maxId + 1);
-      } catch (error) {
-        console.error('Failed to fetch board from backend:', error);
-        // If backend fails, we'll use localStorage data or initialData
-      } finally {
-        setStorageState(prev => ({
-          ...prev,
-          isLoading: false,
-        }));
-      }
-    };
-
-    fetchBoardFromBackend();
   }, [isHydrated]);
 
   // save to storage function
@@ -214,13 +240,15 @@ export const useKanban = () => {
 
     setTaskCounter(taskCounter + 1);
 
-    // Sync with backend
-    try {
-      const backendTask = transformTaskToBackend(newTaskId, 'New task', taskCounter);
-      await taskApi.createTask(backendTask);
-    } catch (error) {
-      console.error('Failed to create task on backend:', error);
-      // Task is still saved locally, will sync later
+    // Sync with backend only if not in browser-only mode
+    if (!USE_BROWSER_ONLY) {
+      try {
+        const backendTask = transformTaskToBackend(newTaskId, 'New task', taskCounter);
+        await taskApi.createTask(backendTask);
+      } catch (error) {
+        console.error('Failed to create task on backend:', error);
+        // Task is still saved locally, will sync later
+      }
     }
 
     setTimeout(() => {
