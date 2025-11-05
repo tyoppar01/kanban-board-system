@@ -7,6 +7,11 @@ import { ErrorCode } from "../../utils/errorCode";
 import { Task } from "../models/task";
 import { addTask, relocateTask, removeTask } from "../services/taskService";
 
+/**
+ * Create New Task
+ * @param _req 
+ * @param _res 
+ */
 export const createTask = async (_req: Request, _res: Response) => {
     
     try {
@@ -32,6 +37,11 @@ export const createTask = async (_req: Request, _res: Response) => {
     }
 }
 
+/**
+ * Delete Existing Task
+ * @param _req 
+ * @param _res 
+ */
 export const deleteTask = async (_req: ApiRequest, _res: Response) => {
     
     try {
@@ -59,6 +69,9 @@ export const deleteTask = async (_req: ApiRequest, _res: Response) => {
     
 }
 
+/**
+ * Move Existing Task
+ */
 export const moveTask = async (_req: ApiRequest, _res: Response) => {
     
     try {
@@ -94,4 +107,34 @@ export const moveTask = async (_req: ApiRequest, _res: Response) => {
         sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
     }
     
+}
+
+/**
+ * Update Existing Task
+ * @param _req 
+ * @param _res 
+ */
+export const updateTask = async (_req: Request, _res: Response) => {
+    
+    try {
+        // retrieve a task object
+        const { task } = _req.body as { task: Task};
+
+        // validation of input where title and id are not empty
+        if (!task.id || !task.title) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
+        
+        // get updated task from services
+        const updatedTask:Task = await editTask(task);
+
+        // Generate GOOD Response
+        const response: ApiResponse<any> = {
+            success: true,
+            message: `task ${updatedTask.id} has been updated successfully`,
+            data: updatedTask
+        }
+        sendSuccessResponse(_res, response);
+
+    } catch (err: any) {
+        sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.SYSTEM_ERROR);
+    }
 }
