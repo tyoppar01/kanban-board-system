@@ -44,7 +44,6 @@ No body required
 | Code  | Description                     |
 |-------|---------------------------------|
 | 200   | Board fetched successfully      |
-| 204   | Board is empty, no content      |
 | 500   | Internal server error occurred  |
 ```
 
