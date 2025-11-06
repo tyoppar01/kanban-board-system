@@ -32,7 +32,7 @@ export default function KanbanBoard() {
     setStorageData(STORAGE_KEYS.STORAGE_MODE, mode);
     setShowModal(false);
   };
-  
+
   // Use the custom hook for all kanban logic (always call hooks at top level)
   const { 
     data, 
@@ -108,7 +108,7 @@ export default function KanbanBoard() {
 
       {/* Footer */}
       <footer className="mt-auto pt-16 text-center text-gray-500 text-sm max-w-7xl mx-auto w-full">
-        Built by Jasper and Najiha
+        &copy; 2025 Built by Jasper and Najiha. All rights reserved.
       </footer>
 
       <AddTaskButton onAddTask={addTask} />
