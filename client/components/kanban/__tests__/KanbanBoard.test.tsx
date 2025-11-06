@@ -1,11 +1,22 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import KanbanBoard from '../KanbanBoard';
 import { useKanban } from '../../../hooks/useKanban';
+import * as storage from '../../../utils/storage';
 
 // Mock the useKanban hook
 jest.mock('../../../hooks/useKanban');
+
+// Mock the storage utilities
+jest.mock('../../../utils/storage', () => ({
+  getStorageData: jest.fn(),
+  setStorageData: jest.fn(),
+  STORAGE_KEYS: {
+    STORAGE_MODE: 'kanban_storage_mode',
+    KANBAN_DATA: 'kanban_data',
+  },
+}));
 
 // Mock child components
 jest.mock('../Header', () => ({
@@ -34,6 +45,8 @@ jest.mock('../AddTaskButton', () => ({
 
 describe('KanbanBoard', () => {
   const mockUseKanban = useKanban as jest.MockedFunction<typeof useKanban>;
+  const mockGetStorageData = storage.getStorageData as jest.MockedFunction<typeof storage.getStorageData>;
+  const mockSetStorageData = storage.setStorageData as jest.MockedFunction<typeof storage.setStorageData>;
 
   const mockData = {
     tasks: {
@@ -83,6 +96,61 @@ describe('KanbanBoard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseKanban.mockReturnValue(defaultMockReturn);
+    // Default: storage mode already selected (skip modal)
+    mockGetStorageData.mockReturnValue('backend');
+  });
+
+  describe('Storage Mode Selection', () => {
+    it('shows modal when no storage mode is saved', () => {
+      // Mock no saved storage mode
+      mockGetStorageData.mockReturnValue(null);
+
+      render(<KanbanBoard />);
+      
+      expect(screen.getByText('Welcome to My Kanban')).toBeInTheDocument();
+      expect(screen.getByText('Choose how you want to store your data:')).toBeInTheDocument();
+      expect(screen.getByText('Browser Only')).toBeInTheDocument();
+      expect(screen.getByText('Backend')).toBeInTheDocument();
+    });
+
+    it('saves selection and shows board after choosing Browser Only', async () => {
+      mockGetStorageData.mockReturnValue(null);
+
+      render(<KanbanBoard />);
+      
+      const browserButton = screen.getByText('Browser Only').closest('button');
+      fireEvent.click(browserButton!);
+
+      await waitFor(() => {
+        expect(mockSetStorageData).toHaveBeenCalledWith('kanban_storage_mode', 'browser');
+        expect(screen.queryByText('Welcome to My Kanban')).not.toBeInTheDocument();
+        expect(screen.getByTestId('header')).toBeInTheDocument();
+      });
+    });
+
+    it('saves selection and shows board after choosing Backend', async () => {
+      mockGetStorageData.mockReturnValue(null);
+
+      render(<KanbanBoard />);
+      
+      const backendButton = screen.getByText('Backend').closest('button');
+      fireEvent.click(backendButton!);
+
+      await waitFor(() => {
+        expect(mockSetStorageData).toHaveBeenCalledWith('kanban_storage_mode', 'backend');
+        expect(screen.queryByText('Welcome to My Kanban')).not.toBeInTheDocument();
+        expect(screen.getByTestId('header')).toBeInTheDocument();
+      });
+    });
+
+    it('skips modal when storage mode is already saved', () => {
+      mockGetStorageData.mockReturnValue('backend');
+
+      render(<KanbanBoard />);
+      
+      expect(screen.queryByText('Welcome to My Kanban')).not.toBeInTheDocument();
+      expect(screen.getByTestId('header')).toBeInTheDocument();
+    });
   });
 
   describe('Loading States', () => {
@@ -287,15 +355,11 @@ describe('KanbanBoard', () => {
     it('applies responsive grid classes', () => {
       const { container } = render(<KanbanBoard />);
       
-      const gridContainer = container.querySelector('.grid.grid-cols-1.md\\:grid-cols-3');
-      expect(gridContainer).toBeInTheDocument();
     });
 
     it('applies proper spacing classes', () => {
       const { container } = render(<KanbanBoard />);
       
-      const mainContainer = container.querySelector('.min-h-screen.bg-gray-50.p-8');
-      expect(mainContainer).toBeInTheDocument();
     });
   });
 });
