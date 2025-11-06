@@ -166,7 +166,7 @@ DELETE /api/task/update
 ### Request Body
 ```
 {
-  "task" : TaskObject
+  "task" : Object
 }
 ```
 
