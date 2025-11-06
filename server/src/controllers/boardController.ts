@@ -5,12 +5,12 @@ import { ApiStatus } from "../utils/apiStatus";
 import { ErrorCode } from "../utils/errorCode";
 import { BoardService } from "../services/boardService";
 
-const boardService = BoardService.getInstance();
+
 
 export const getBoard = async function (_req: Request, _res: Response){
 
     try {
-        // GET board
+        const boardService = BoardService.getInstance();
         const board = await boardService.getFullBoard();
 
         // Generate GOOD Response
