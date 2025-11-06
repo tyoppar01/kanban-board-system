@@ -1,13 +1,39 @@
 "use client"
 
+import { useState, useEffect } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { useKanban } from '../../hooks/useKanban';
 import { Column } from './Column';
 import { Header } from './Header';
 import { AddTaskButton } from './AddTaskButton';
+import { StorageModeModal } from './StorageModeModal';
+import { StorageMode } from '@/types/kanban.types';
+import { getStorageData, setStorageData, STORAGE_KEYS } from '@/utils/storage';
 
 export default function KanbanBoard() {
-  // Use the custom hook for all kanban logic
+  const [storageMode, setStorageMode] = useState<StorageMode | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [isCheckingMode, setIsCheckingMode] = useState(true);
+
+  // Check for saved storage mode preference on mount
+  useEffect(() => {
+    const savedMode = getStorageData<StorageMode | null>(STORAGE_KEYS.STORAGE_MODE, null);
+    if (savedMode) {
+      setStorageMode(savedMode);
+    } else {
+      setShowModal(true);
+    }
+    setIsCheckingMode(false);
+  }, []);
+
+  // Handle storage mode selection from modal
+  const handleModeSelect = (mode: StorageMode) => {
+    setStorageMode(mode);
+    setStorageData(STORAGE_KEYS.STORAGE_MODE, mode);
+    setShowModal(false);
+  };
+  
+  // Use the custom hook for all kanban logic (always call hooks at top level)
   const { 
     data, 
     addTask, 
@@ -21,8 +47,22 @@ export default function KanbanBoard() {
     storageState,
     isHydrated,
     clearStorage
-  } = useKanban();
+  } = useKanban(storageMode || 'backend');
   
+  // Show loading while checking for saved mode
+  if (isCheckingMode) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show modal if storage mode hasn't been selected
+  if (showModal) {
+    return <StorageModeModal onSelect={handleModeSelect} />;
+  }
+
   // Show loading state until storage is loaded
   if (!isHydrated || storageState.isLoading) {
     return (
