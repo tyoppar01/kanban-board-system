@@ -183,6 +183,6 @@ DELETE /api/task/update
 | Code  | Description                     |
 |-------|---------------------------------|
 | 200   | Task updated successfully       |
-| 400   | Invalid request                 |
+| 400   | Invalid Task ID                 |
 | 500   | Internal server error occurred  |
 ```
