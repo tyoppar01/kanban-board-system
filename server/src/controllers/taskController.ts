@@ -5,7 +5,9 @@ import { sendFailedResponse, sendSuccessResponse } from "../../utils/apiResponse
 import { ApiStatus } from "../../utils/apiStatus";
 import { ErrorCode } from "../../utils/errorCode";
 import { Task } from "../models/task";
-import { addTask, editTask, relocateTask, removeTask } from "../services/taskService";
+import { TaskService } from "../services/taskService";
+
+const taskService: TaskService = TaskService.getInstance();
 
 /**
  * Create New Task
@@ -22,7 +24,7 @@ export const createTask = async (_req: Request, _res: Response) => {
         if (!id || !title) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
         
         // get todolist from services
-        const todolist = await addTask(_req.body);
+        const todolist = await taskService.addTask(_req.body);
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
@@ -53,7 +55,7 @@ export const deleteTask = async (_req: ApiRequest, _res: Response) => {
         
         // get board from services
         const taskId = Number(id);
-        const task = await removeTask(taskId, column as string);
+        const task = await taskService.removeTask(taskId, column as string);
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
@@ -71,6 +73,9 @@ export const deleteTask = async (_req: ApiRequest, _res: Response) => {
 
 /**
  * Move Existing Task
+ * @param _req 
+ * @param _res 
+ * @returns 
  */
 export const moveTask = async (_req: ApiRequest, _res: Response) => {
     
@@ -93,7 +98,7 @@ export const moveTask = async (_req: ApiRequest, _res: Response) => {
         // get board from services
         const curr: string = currentColumn as string;
         const dest: string = newColumn as string;
-        const task = await relocateTask(taskId, newIndex, curr, dest);
+        const task = await taskService.relocateTask(taskId, newIndex, curr, dest);
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
@@ -124,7 +129,7 @@ export const updateTask = async (_req: Request, _res: Response) => {
         if (!task.id || !task.title) sendFailedResponse(_res, ApiStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
         
         // get updated task from services
-        const result: boolean = await editTask(task);
+        const result: boolean = await taskService.editTask(task);
 
         if (!result) sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, ErrorCode.ACTION_FAILED);
 
@@ -138,4 +143,5 @@ export const updateTask = async (_req: Request, _res: Response) => {
     } catch (err: any) {
         sendFailedResponse(_res, ApiStatus.SYSTEM_ERROR, err.message);
     }
+    
 }

@@ -19,12 +19,23 @@ const board: Board = {
 
 // ================== Board Repo =================== //
 
-export const boardRepo = {
+export class BoardRepo {
 
-  get: async (): Promise<Board> => {
+  private static instance: BoardRepo;
+
+  constructor() {}
+
+  static getInstance(): BoardRepo {
+    if (!BoardRepo.instance) {
+      BoardRepo.instance = new BoardRepo();
+    }
+    return BoardRepo.instance;
+  }
+
+  async get(): Promise<Board> {
     return new Promise((resolve) => {
       setTimeout(() => resolve(board), 100); 
     });
-  },
+  }
 
 };
