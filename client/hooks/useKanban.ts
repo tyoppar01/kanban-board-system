@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Board, Task, ColorClasses, EditingState } from '../types/kanban.types';
+import { Board, Task, ColorClasses, EditingState, StorageMode } from '../types/kanban.types';
 import { DropResult } from '@hello-pangea/dnd';
 import { Action, StorageState } from '../types/kanban.types';
 import { getStorageData, setStorageData, STORAGE_KEYS, isLocalStorageAvailable } from '@/utils/storage';
 import { boardApi, taskApi } from '../services/api';
 import { transformBackendToFrontend, transformTaskToBackend, frontendToBackendColumnId } from '../utils/dataTransform';
-
-// Toggle between browser-only mode and backend integration
-const USE_BROWSER_ONLY = false; // Set to false to enable full backend integration
 
 // Empty initial data - will be loaded from backend
 const initialData: Board = {
@@ -54,7 +51,7 @@ export const colorClasses: ColorClasses = {
   }
 };
 
-export const useKanban = () => {
+export const useKanban = (storageMode: StorageMode = 'backend') => {
   const [data, setData] = useState<Board>(initialData);
   const [taskCounter, setTaskCounter] = useState<number>(7);
   const [actions, setActions] = useState<Action[]>([]);
@@ -70,6 +67,9 @@ export const useKanban = () => {
     isEditing: false,
     taskId: null,
   });
+
+  // Determine mode based on parameter
+  const USE_BROWSER_ONLY = storageMode === 'browser';
 
   // hydration effect
   useEffect(() => {
