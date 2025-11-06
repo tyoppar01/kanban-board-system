@@ -1,14 +1,11 @@
 import { Board } from "../models/board";
 import { BoardRepo } from "../repos/boardRepo";
 
-
-const boardRepo = BoardRepo.getInstance();
-
 export class BoardService {
 
       private static instance: BoardService;
 
-      constructor() {}
+      constructor(private boardRepo: BoardRepo = BoardRepo.getInstance()) {}
 
       static getInstance(): BoardService {
             if (!BoardService.instance) {
@@ -18,7 +15,7 @@ export class BoardService {
             }
 
       async getFullBoard(): Promise<Board> { 
-            return await boardRepo.get();
+            return await this.boardRepo.get();
       };
 
 }

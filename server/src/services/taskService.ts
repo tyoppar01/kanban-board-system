@@ -4,14 +4,11 @@ import { TaskRepo } from "../repos/taskRepo";
 
 type EditableTaskFields = Omit<Task, "id" | "createdDate">;
 
-const taskRepo: TaskRepo = TaskRepo.getInstance();
-const boardRepo: BoardRepo = BoardRepo.getInstance();
-
 export class TaskService {
 
   private static instance: TaskService;
 
-  constructor() {}
+  constructor(private taskRepo: TaskRepo = TaskRepo.getInstance(), private boardRepo: BoardRepo = BoardRepo.getInstance()) {}
 
   static getInstance(): TaskService {
     if (!TaskService.instance) {
@@ -31,7 +28,7 @@ export class TaskService {
     task.createdDate ?? new Date().toISOString();
 
     // get board object
-    const board = await boardRepo.get();
+    const board = await this.boardRepo.get();
 
     // ensure todo column list before entering repo to add task
     if (! board.columns["todo"]) {
@@ -44,7 +41,7 @@ export class TaskService {
     }
 
     // add into taskList and columnList
-    const taskList = taskRepo.add(task, board);
+    const taskList = this.taskRepo.add(task, board);
     return taskList;
   }
 
@@ -57,7 +54,7 @@ export class TaskService {
   async removeTask(id: number, column: string): Promise<Task>{
 
     // get board object
-    const board = await boardRepo.get();
+    const board = await this.boardRepo.get();
 
     // iterate the column list to remove task id
     // NOTE: task is preserved in taskList for further restore implementation
@@ -67,7 +64,7 @@ export class TaskService {
     }
 
     // remove task from task list only
-    const deletedTask:Task = taskRepo.remove(id, column, board);
+    const deletedTask:Task = this.taskRepo.remove(id, column, board);
 
     // ensure that it is preserved, unless implement otherwise
     if (!deletedTask) {
@@ -87,7 +84,7 @@ export class TaskService {
    */
   async relocateTask(taskId: number, index: number, currCol: string, destCol: string): Promise<boolean> {
 
-      const board = await boardRepo.get();
+      const board = await this.boardRepo.get();
 
       const currentList = board.columns[currCol];
       const destinationList = board.columns[destCol];
@@ -119,7 +116,7 @@ export class TaskService {
         columnList.splice(currentIndex, 1);
         columnList.splice(index, 0, taskId);
 
-        const result: boolean = taskRepo.updateColumn(taskId, currCol, columnList, destCol, columnList, board);
+        const result: boolean = this.taskRepo.updateColumn(taskId, currCol, columnList, destCol, columnList, board);
 
         if (!result) throw new Error(`Task ${taskId} is not moved in task list, operation has failed`);
 
@@ -137,7 +134,7 @@ export class TaskService {
       ];
 
       // update column
-      const result: boolean = taskRepo.updateColumn(taskId, currCol, newOriginList, destCol, newDestList, board);
+      const result: boolean = this.taskRepo.updateColumn(taskId, currCol, newOriginList, destCol, newDestList, board);
 
       // ensure that it is preserved, unless implement otherwise
       if (!result) throw new Error(`Task ${taskId} is not moved in task list, operation has failed`);
@@ -152,7 +149,7 @@ export class TaskService {
    */
   async editTask(target: Task): Promise<boolean> {
 
-    const board = await boardRepo.get();
+    const board = await this.boardRepo.get();
 
     target.modifiedDate ?? new Date().toISOString();
 
@@ -174,7 +171,7 @@ export class TaskService {
       ...partialUpdate 
     } as Task;
 
-    const result: boolean = taskRepo.update(updatedTask, board);
+    const result: boolean = this.taskRepo.update(updatedTask, board);
 
     if (!result) {
       throw new Error(`Task ${target.id} is not found in task list`);
