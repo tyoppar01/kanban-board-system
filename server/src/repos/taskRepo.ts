@@ -3,14 +3,25 @@ import { Task } from "../models/task";
 
 // ==================== Task Repo ===================== //
 
-export const taskRepo = {
+export class TaskRepo {
+
+  private static instance: TaskRepo;
+
+  constructor() {}
+
+  static getInstance(): TaskRepo {
+    if (!TaskRepo.instance) {
+      TaskRepo.instance = new TaskRepo();
+    }
+    return TaskRepo.instance;
+  }
 
   /**
    * Add New Task
    * @param task 
    * @returns 
    */
-  add: (task: Task, board: Board): Record<number, Task> => {
+  add(task: Task, board: Board): Record<number, Task> {
 
     // append id into todo column list
     board.columns["todo"]!.push(task.id);
@@ -19,7 +30,7 @@ export const taskRepo = {
     board.taskList[task.id] = task;
 
     return board.taskList;
-  },
+  }
 
   /**
    * Remove an existing task
@@ -27,14 +38,14 @@ export const taskRepo = {
    * @param column 
    * @returns 
    */
-  remove: (taskId: number, column: string, board: Board): Task => {
+  remove(taskId: number, column: string, board: Board): Task {
     
     // remove taskId from the column list
     board.columns[column] = board.columns[column]!.filter((id) => id !== taskId);
 
     // return the object
     return board.taskList[taskId]!;
-  },
+  }
 
 
   /**
@@ -47,19 +58,19 @@ export const taskRepo = {
    * @param board 
    * @returns 
    */
-  updateColumn: (
+  updateColumn(
         taskId: number, 
         currCol: string, 
         currList: number[], 
         destCol: string, 
         destList: number[], 
-        board: Board): boolean => {
+        board: Board): boolean{
 
     board.columns[currCol] = currList;
     board.columns[destCol] = destList;
 
     return true;
-  },
+  }
 
   /**
    * Update Task (Details)
@@ -67,10 +78,10 @@ export const taskRepo = {
    * @param board 
    * @returns 
    */
-  update: (target: Task, board: Board):boolean => {
+  update(target: Task, board: Board):boolean {
 
     board.taskList[target.id] = target;
     return true;
-  },
+  }
 
 };

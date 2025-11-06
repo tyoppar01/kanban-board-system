@@ -3,13 +3,15 @@ import { ApiResponse } from "../../types/response";
 import { sendFailedResponse, sendSuccessResponse } from "../../utils/apiResponse";
 import { ApiStatus } from "../../utils/apiStatus";
 import { ErrorCode } from "../../utils/errorCode";
-import { getFullBoard } from "../services/boardService";
+import { BoardService } from "../services/boardService";
+
+const boardService = BoardService.getInstance();
 
 export const getBoard = async function (_req: Request, _res: Response){
 
     try {
         // GET board
-        const board = await getFullBoard();
+        const board = await boardService.getFullBoard();
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
