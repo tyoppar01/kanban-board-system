@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   KANBAN_DATA: 'kanban_board_data',
   KANBAN_ACTIONS: 'kanban_board_actions',
   KANBAN_COUNTER: 'kanban_board_task_counter',
+  STORAGE_MODE: 'kanban_storage_mode',
 } as const;
 
 /**
