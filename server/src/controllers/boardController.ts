@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { ApiResponse } from "../../types/response";
-import { sendFailedResponse, sendSuccessResponse } from "../../utils/apiResponse";
-import { ApiStatus } from "../../utils/apiStatus";
-import { ErrorCode } from "../../utils/errorCode";
+import { ApiResponse } from "../types/response";
+import { sendFailedResponse, sendSuccessResponse } from "../utils/apiResponse";
+import { ApiStatus } from "../utils/apiStatus";
+import { ErrorCode } from "../utils/errorCode";
 import { BoardService } from "../services/boardService";
 
 const boardService = BoardService.getInstance();
