@@ -45,9 +45,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const handleSave = () => {
     if (editContent.trim()) {
+      // Has content - save it
       onUpdate(editContent.trim());
     } else {
-      setEditContent(task.content); // Revert if empty
+      // Empty string
+      if (task.content === 'New task') {
+        // If it was a new task, keep it as "New task" and save
+        setEditContent('New task'); // Update local state too
+        onUpdate('New task');
+      } else {
+        // If it was an existing task, revert to previous content (don't save)
+        setEditContent(task.content);
+      }
     }
     onStopEdit();
   };
