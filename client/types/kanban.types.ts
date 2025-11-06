@@ -53,3 +53,6 @@ export interface EditingState {
   isEditing: boolean;
   taskId: string | null; 
 }
+
+// Storage mode type
+export type StorageMode = 'browser' | 'backend';
