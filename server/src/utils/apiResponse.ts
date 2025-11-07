@@ -13,6 +13,7 @@ import { ErrorCode } from "./errorCode";
  * @returns 
  */
 export const sendSuccessResponse = <T extends ApiResponse<any>>(res: Response, response:T) => {
+  console.log(response);
   return res.status(ApiStatus.SUCCESS).json(response);
 };
 
@@ -26,5 +27,6 @@ export const sendSuccessResponse = <T extends ApiResponse<any>>(res: Response, r
  * @returns 
  */
 export const sendFailedResponse = <T extends ErrorCode>(res: Response, status: ApiStatus, errorCode: T) => {
+  console.log(errorCode);
   return res.status(status).json( { success: false, message: errorCode } );
 };

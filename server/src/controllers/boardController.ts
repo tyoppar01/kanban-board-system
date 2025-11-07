@@ -9,6 +9,8 @@ import { BoardService } from "../services/boardService";
 
 export const getBoard = async function (_req: Request, _res: Response){
 
+    console.log("Receiving request to get board");
+
     try {
         const boardService = BoardService.getInstance();
         const board = await boardService.getFullBoard();

@@ -14,6 +14,8 @@ import { TaskService } from "../services/taskService";
  */
 export const createTask = async (_req: Request, _res: Response) => {
     
+    console.log("Receiving request to create task");
+
     try {
         // pre-validation on mandatory field
         const { id, title, description, createdDate }:Task = _req.body;
@@ -45,6 +47,8 @@ export const createTask = async (_req: Request, _res: Response) => {
  */
 export const deleteTask = async (_req: Request, _res: Response) => {
     
+    console.log("Receiving request to delete task");
+
     try {
         // pre-validation on mandatory field
         const { column, id } = _req.body;
@@ -78,6 +82,8 @@ export const deleteTask = async (_req: Request, _res: Response) => {
  * @returns 
  */
 export const moveTask = async (_req: Request, _res: Response) => {
+
+    console.log("Receiving request to move task");
     
     try {
         // pre-validation on mandatory field
@@ -122,6 +128,8 @@ export const moveTask = async (_req: Request, _res: Response) => {
  */
 export const updateTask = async (_req: Request, _res: Response) => {
     
+    console.log("Receiving request to update task");
+
     try {
         // retrieve a task object
         const { task } = _req.body as { task: Task};
