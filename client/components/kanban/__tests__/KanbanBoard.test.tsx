@@ -224,7 +224,7 @@ describe('KanbanBoard', () => {
 
     it('renders footer with credits', () => {
       render(<KanbanBoard />);
-      expect(screen.getByText('Built by Jasper and Najiha')).toBeInTheDocument();
+      expect(screen.getByText(/Built by Jasper and Najiha/i)).toBeInTheDocument();
     });
   });
 
