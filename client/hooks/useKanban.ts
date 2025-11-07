@@ -86,6 +86,15 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       isAvailable: available,
     }));
 
+    // Helper function to finish loading
+    const finishLoading = () => {
+      setStorageState(prev => ({
+        ...prev,
+        isLoading: false,
+      }));
+      hasLoadedInitialData.current = true;
+    };
+
     if (USE_BROWSER_ONLY) {
       // Browser-only mode: Load from localStorage only
       if (available) {
@@ -93,23 +102,12 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
         const savedCounter = getStorageData(STORAGE_KEYS.KANBAN_COUNTER, 7);
         const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
 
-        if (savedData) {
-          setData(savedData);
-        }
-        if (savedCounter) {
-          setTaskCounter(savedCounter);
-        }
-        if (savedActions) {
-          setActions(savedActions);
-        }
+        if (savedData) setData(savedData);
+        if (savedCounter) setTaskCounter(savedCounter);
+        if (savedActions) setActions(savedActions);
       }
       
-      // Mark as loaded immediately in browser-only mode
-      setStorageState(prev => ({
-        ...prev,
-        isLoading: false,
-      }));
-      hasLoadedInitialData.current = true;
+      finishLoading();
     } else {
       // Backend mode: Fetch from backend and save to localStorage
       const fetchBoardFromBackend = async () => {
@@ -148,11 +146,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
             if (savedActions) setActions(savedActions);
           }
         } finally {
-          setStorageState(prev => ({
-            ...prev,
-            isLoading: false,
-          }));
-          hasLoadedInitialData.current = true;
+          finishLoading();
         }
       };
 
@@ -162,6 +156,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
 
   // save to storage function
   const saveToStorage = useCallback(() => {
+    // prevent saving data when storage is not available or initial load not done
     if (!storageState.isAvailable || !hasLoadedInitialData.current) return;
 
     console.log('Saving actions to localStorage:', actions);
@@ -170,6 +165,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       setStorageData(STORAGE_KEYS.KANBAN_COUNTER, taskCounter) &&
       setStorageData(STORAGE_KEYS.KANBAN_ACTIONS, actions);
 
+    // if saving success is true
     if (success) {
       setStorageState(prev => ({
         ...prev,
@@ -241,17 +237,21 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
 
   // Function to add a new task
   const addTask = async () => {
+    // create new task with unique ID
     const newTaskId = `task-${taskCounter}`;
     const newTask: Task = { id: newTaskId, content: 'New task' };
 
+    // get current todo column
     const todoColumn = data.columns['todo'];
     const newTaskIds = [...todoColumn.tasks, newTaskId];
 
+    // create json object for new tasks for board
     const updatedTasks = {
       ...data.tasks,
       [newTaskId]: newTask,
     };
 
+    // create json object for new columns for board
     const updatedColumns = {
       ...data.columns,
       todo: {
@@ -273,14 +273,19 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     setPendingNewTasks(prev => new Set(prev).add(newTaskId));
 
     // Don't sync to backend yet - wait for user to enter task name
-    
+    // delay to ensure React finish rendering before focusing
     setTimeout(() => {
       startEditingTask(newTaskId);
+      // setEditingState isEditing true for this taskId
     }, 100);
   };
 
   // update task content function
   const updateTask = async (taskId: string, newContent: string) => {
+    console.log('🐛 updateTask called:', { taskId, newContent });
+    console.log('🐛 Current tasks:', Object.keys(data.tasks));
+    console.log('🐛 Pending tasks:', Array.from(pendingNewTasks));
+    
     const oldContent = data.tasks[taskId]?.content || '';
 
     const updatedTasks = {
@@ -290,6 +295,9 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
         content: newContent
       }
     };
+    
+    console.log('🐛 Updated tasks:', Object.keys(updatedTasks));
+    
     setData({
       ...data,
       tasks: updatedTasks
@@ -297,10 +305,14 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
 
     // Check if this is a newly created task being named for the first time
     if (pendingNewTasks.has(taskId)) {
+      console.log('🐛 Task IS pending, removing from set:', taskId);
+      
       // Remove from pending set
       setPendingNewTasks(prev => {
         const newSet = new Set(prev);
+        console.log('🐛 Before delete:', Array.from(prev));
         newSet.delete(taskId);
+        console.log('🐛 After delete:', Array.from(newSet));
         return newSet;
       });
 
@@ -327,11 +339,13 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       // NOW sync with backend after user enters the task name
       if (!USE_BROWSER_ONLY) {
         try {
+          console.log('🐛 Syncing to backend:', { taskId, newContent });
           const numericId = parseInt(taskId.split('-')[1]);
           const backendTask = transformTaskToBackend(taskId, newContent, numericId);
           await taskApi.createTask(backendTask);
+          console.log('🐛 Backend task created successfully');
         } catch (error) {
-          console.error('Failed to create task on backend:', error);
+          console.error('🐛 Failed to create task on backend:', error);
           // Task is still saved locally, will sync later
         }
       }
@@ -365,14 +379,14 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
   };
 
   // Function to start editing a task
-const startEditingTask = (taskId: string) => {
-  setEditingState({ isEditing: true, taskId });
-};
+  const startEditingTask = (taskId: string) => {
+    setEditingState({ isEditing: true, taskId });
+  };
 
-// Function to stop editing
-const stopEditingTask = () => {
-  setEditingState({ isEditing: false, taskId: null });
-};
+  // Function to stop editing
+  const stopEditingTask = () => {
+    setEditingState({ isEditing: false, taskId: null });
+  };
 
   const deleteTask = async (taskId: string, columnId: string) => {
     const column = data.columns[columnId];
@@ -422,9 +436,10 @@ const stopEditingTask = () => {
 
   // Handle drag and drop
   const onDragEnd = async (result: DropResult) => {
+    console.log('Drag end result:', result);
     const { destination, source, draggableId } = result;
 
-    // If no destination, do nothing
+    // If no destination, do nothing (dropped outside)
     if (!destination) return;
 
     // If dropped in the same position, do nothing
