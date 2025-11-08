@@ -57,13 +57,18 @@ echo ""
 echo "🚀 Starting both client and server..."
 echo ""
 
+# Build client for production (required for next start)
+echo "🔨 Building client for production..."
+cd client && npm run build
+cd ../
+
 # Start server in background
 echo "Starting server on http://localhost:8080..."
 (cd server && npm run start) &
 
 # Start client in background
 echo "Starting client on http://localhost:3000..."
-(cd client && npm run dev) &
+(cd client && npm run start) &
 
 echo ""
 echo "✅ Both services are starting..."
