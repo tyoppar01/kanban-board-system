@@ -59,7 +59,7 @@ echo ""
 
 # Start server in background
 echo "Starting server on http://localhost:8080..."
-(cd server && npm run dev) &
+(cd server && npm run start) &
 
 # Start client in background
 echo "Starting client on http://localhost:3000..."
