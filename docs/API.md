@@ -1,5 +1,7 @@
 # 🗂️ Kanban Board API Documentation
 
+# 🟥 Deprecated due to tech shift from REST API to GraphQL 🟥
+
 This document describes the available REST API endpoints for the Kanban Board backend.
 The API allows clients to fetch boards, add tasks, and move tasks between columns.
 
