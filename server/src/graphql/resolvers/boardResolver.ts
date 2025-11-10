@@ -1,9 +1,14 @@
-import boardRouter from "../../routes/boardRoutes";
+import { BoardService } from "../../services/boardService";
 
 export const boardResolver = {
 
     Query: {
-        boards: () => boardRouter
+
+        // get full board
+        board: async () => await BoardService.getInstance().getFullBoard()
+
+        
+
     }
 
 }
