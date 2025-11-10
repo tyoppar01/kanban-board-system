@@ -1,0 +1,51 @@
+# ==================== Types ==================== #
+
+type Board {
+  id: ID
+  taskList: [Task!]!
+  columns: [Column!]!
+  order: [String!]!
+}
+
+type Column {
+  id: String!
+  taskIds: [Int!]!
+}
+
+type Task {
+  id: Int!
+  title: String!
+  description: String
+  createdDate: String
+  modifiedDate: String
+}
+
+# ==================== Input Types ==================== #
+
+input TaskInput {
+  id: Int
+  title: String!
+  description: String
+  createdDate: String
+  modifiedDate: String
+}
+
+# ==================== Queries ==================== #
+
+type Query {
+  board: Board!
+  task(id: Int!): Task
+}
+
+# ==================== Mutations ==================== #
+
+type Mutation {
+
+  addTask(task: TaskInput!): Task!
+
+  removeTask(id: Int!, column: String!): Task!
+
+  relocateTask(taskId: Int!, index: Int!, currCol: String!, destCol: String!): Boolean!
+
+  editTask(task: TaskInput!): Boolean!
+}

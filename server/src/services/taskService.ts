@@ -1,6 +1,7 @@
 import { Task } from "../models/task";
 import { BoardRepo } from "../repos/boardRepo";
 import { TaskRepo } from "../repos/taskRepo";
+import { ErrorCode } from "../utils/errorCode";
 
 type EditableTaskFields = Omit<Task, "id" | "createdDate">;
 
@@ -22,7 +23,9 @@ export class TaskService {
    * @param task 
    * @returns 
    */
-  async addTask(task: Task): Promise<Record<number, Task>> {
+  async addTask(task: Task): Promise<Task> {
+
+    if (!task.id || !task.title) throw new Error(ErrorCode.INVALID_INPUT)
 
     // add new date
     task.createdDate ?? new Date().toISOString();
@@ -42,7 +45,7 @@ export class TaskService {
 
     // add into taskList and columnList
     const taskList = this.taskRepo.add(task, board);
-    return taskList;
+    return task;
   }
 
   /**
@@ -52,6 +55,10 @@ export class TaskService {
    * @returns 
    */
   async removeTask(id: number, column: string): Promise<Task>{
+
+    if (!id || !column) {
+      throw new Error(ErrorCode.INVALID_INPUT);
+    }
 
     // get board object
     const board = await this.boardRepo.get();
@@ -83,6 +90,10 @@ export class TaskService {
    * @returns 
    */
   async relocateTask(taskId: number, index: number, currCol: string, destCol: string): Promise<boolean> {
+
+      if (![currCol, destCol, index].every(v => v !== undefined && v !== "")) {
+        throw new Error(ErrorCode.INVALID_INPUT)
+      }
 
       const board = await this.boardRepo.get();
 
@@ -148,6 +159,10 @@ export class TaskService {
    * @returns 
    */
   async editTask(target: Task): Promise<boolean> {
+
+    if (!target.id || !target.title) {
+      throw new Error(ErrorCode.INVALID_INPUT)
+    }
 
     const board = await this.boardRepo.get();
 

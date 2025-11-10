@@ -25,13 +25,13 @@ export const createTask = async (_req: Request, _res: Response) => {
         
         // get todolist from services
         const taskService: TaskService = TaskService.getInstance();
-        const todolist = await taskService.addTask(_req.body);
+        const newTask = await taskService.addTask(_req.body);
 
         // Generate GOOD Response
         const response: ApiResponse<any> = {
             success: true,
             message: "new task has been created successfully",
-            data: todolist
+            data: newTask
         }
         sendSuccessResponse(_res, response);
 
