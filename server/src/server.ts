@@ -1,17 +1,15 @@
 import express = require("express");
 import http = require("http");
+import { ApolloServer } from "@apollo/server";
+import { expressMiddleware } from "@as-integrations/express5";
 import cors from "cors";
-import boardRouter from "./routes/boardRoutes";
-import taskRouter from "./routes/taskRoutes";
+import resolvers from "./graphql/resolvers/index";
+import typeDefs from "./graphql/typeDefs";
 
 // ==================== Middleware ======================== //
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-// ====================== Router  ========================= //
-app.use("/api/board", boardRouter);  // all board endpoints
-app.use("/api/task", taskRouter);    // all task endpoints
 
 // =================== Health Check ======================= //
 app.get("/", (req, res) => {
@@ -19,19 +17,32 @@ app.get("/", (req, res) => {
   res.status(200).json({ success: true, message: "Server is running" });
 });
 
-// ===================== Error Check ========================= //
-
-
-
 // =================== Server Setup ======================= //
 
-const PORT = 8080;
-const server = app.listen(PORT, () => 
-  console.log(`✅ Express Server running on http://localhost:${PORT}`)
-);
+async function startServer() {
 
-// timeout configuration
-server.requestTimeout = 120000;     
-server.headersTimeout = 60000;      
-server.keepAliveTimeout = 10000;    
-server.timeout = 0;    
+  const server = new ApolloServer({ typeDefs, resolvers });
+
+  await server.start();
+
+  app.use(
+    "/graphql",
+    cors<cors.CorsRequest>(),
+    express.json(),
+    expressMiddleware(server)
+  );
+
+  const httpServer = http.createServer(app);
+  httpServer.listen(PORT, () => {
+    console.log(`🚀 GraphQL Server ready at http://localhost:${PORT}/graphql`);
+  });
+
+  // timeout configuration
+  httpServer.requestTimeout = 120000;
+  httpServer.headersTimeout = 60000;
+  httpServer.keepAliveTimeout = 10000;
+  httpServer.timeout = 0;
+}
+
+const PORT = 8080;
+startServer();

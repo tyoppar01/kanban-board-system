@@ -7,8 +7,6 @@ export const boardResolver = {
         // get full board
         board: async () => await BoardService.getInstance().getFullBoard()
 
-        
-
     }
 
 }

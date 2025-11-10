@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon",
-    "start": "ts-node src/server.ts & ts-node src/index.ts",
+    "start": "ts-node src/server.ts",
     "build": "tsc",
     "test": "jest --coverage"
   },
