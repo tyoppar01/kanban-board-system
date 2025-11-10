@@ -1,11 +1,10 @@
 // tests/services/taskService.test.ts
 
-import { TaskService } from "../../src/services/taskService";
-import { TaskRepo } from "../../src/repos/taskRepo";
-import { BoardRepo } from "../../src/repos/boardRepo";
-import { Task } from "../../src/models/task";
 import { Board } from "../../src/models/board";
-import { ErrorCode } from "../../src/utils/errorCode";
+import { Task } from "../../src/models/task";
+import { BoardRepo } from "../../src/repos/boardRepo";
+import { TaskRepo } from "../../src/repos/taskRepo";
+import { TaskService } from "../../src/services/taskService";
 
 // Mock Repos
 jest.mock("../../src/repos/taskRepo", () => ({
@@ -210,7 +209,7 @@ describe("TaskService", () => {
 
       await expect(taskService.editTask({ id: 1 } as Task))
         .rejects
-        .toThrow("Task 1  reocrd is not found");
+        .toThrow("Input is invalid, please try again");
     });
 
     it("should throw if taskRepo.update() returns false (update failure)", async () => {
