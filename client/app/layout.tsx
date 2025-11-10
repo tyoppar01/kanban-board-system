@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ApolloProvider } from "@apollo/client/react";
-import client from "../graphql/apolloClient";
+import ApolloWrapper from "../components/ApolloWrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,9 +22,9 @@ export default function RootLayout({
   return (
       <html lang="en">
         <body className={`${inter.variable} antialiased`}>
-              <ApolloProvider client={client}>
+              <ApolloWrapper>
                 {children}
-              </ApolloProvider>
+              </ApolloWrapper>
         </body>
       </html>
   );
