@@ -2,11 +2,6 @@
 import { Board } from "../models/board"
 import { Task } from "../models/task"
 
-export const mcokTask: Record<number, Task> = {
-  1: { id: 1, title: "Setup project" },
-  2: { id: 2, title: "Design schema" },
-};
-
 export const board: Board = {
   taskList: {
     1: { id: 1, title: "Setup project structure" },

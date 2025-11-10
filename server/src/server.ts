@@ -11,12 +11,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// =================== Health Check ======================= //
-app.get("/", (req, res) => {
-  console.log("✅ GET / triggered OK");
-  res.status(200).json({ success: true, message: "Server is running" });
-});
-
 // =================== Server Setup ======================= //
 
 async function startServer() {

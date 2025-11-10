@@ -1,12 +1,12 @@
 type Board {
   id: ID
   taskList: [Task!]!      
-  columns: [Column!]!         
+  columns: [Column!]!   
   order: [String!]!
 }
 
 type Column {
-  name: String!
+  id: String!
   taskIds: [Int!]!
 }
 
