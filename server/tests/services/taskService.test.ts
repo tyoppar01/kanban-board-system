@@ -1,11 +1,10 @@
 // tests/services/taskService.test.ts
 
-import { TaskService } from "../../src/services/taskService";
-import { TaskRepo } from "../../src/repos/taskRepo";
-import { BoardRepo } from "../../src/repos/boardRepo";
-import { Task } from "../../src/models/task";
 import { Board } from "../../src/models/board";
-import { ErrorCode } from "../../src/utils/errorCode";
+import { Task } from "../../src/models/task";
+import { BoardRepo } from "../../src/repos/boardRepo";
+import { TaskRepo } from "../../src/repos/taskRepo";
+import { TaskService } from "../../src/services/taskService";
 
 // Mock Repos
 jest.mock("../../src/repos/taskRepo", () => ({
@@ -76,7 +75,7 @@ describe("TaskService", () => {
 
       await expect(taskService.addTask(newTask))
         .rejects
-        .toThrow("board has no todo list, check in-memory cache");
+        .toThrow("Column [todo] reocrd is not found");
     });
 
     it("should throw if task ID already exists", async () => {
@@ -90,7 +89,7 @@ describe("TaskService", () => {
 
       await expect(taskService.addTask(newTask))
         .rejects
-        .toThrow("task has already existed, no duplicated task id is allowed to be added");
+        .toThrow("task has already existed");
     });
   });
 
@@ -113,7 +112,7 @@ describe("TaskService", () => {
 
       await expect(taskService.removeTask(1, "todo"))
         .rejects
-        .toThrow("Column todo not found!");
+        .toThrow("Column todo reocrd is not found");
     });
 
     it("should throw if task not found", async () => {
@@ -123,7 +122,7 @@ describe("TaskService", () => {
 
       await expect(taskService.removeTask(1, "todo"))
         .rejects
-        .toThrow("Task 1 is not found in task list");
+        .toThrow("Task 1 reocrd is not found");
     });
   });
 
@@ -162,7 +161,7 @@ describe("TaskService", () => {
 
       await expect(taskService.relocateTask(1, 0, "todo", "done"))
         .rejects
-        .toThrow("Column todo not found!");
+        .toThrow("Column todo reocrd is not found");
     });
 
     it("should throw if destination column does not exist", async () => {
@@ -171,7 +170,7 @@ describe("TaskService", () => {
 
       await expect(taskService.relocateTask(1, 0, "todo", "done"))
         .rejects
-        .toThrow("Column done not found!");
+        .toThrow("Column done reocrd is not found");
     });
 
     it("should throw on invalid index", async () => {
@@ -183,7 +182,7 @@ describe("TaskService", () => {
 
       await expect(taskService.relocateTask(1, 5, "todo", "done"))
         .rejects
-        .toThrow("Invalid index 5: must be between 0 and 0");
+        .toThrow("index provided has exceed the range limit Invalid index: 5: Expected index: [0, 0]");
     });
   });
 
@@ -210,7 +209,7 @@ describe("TaskService", () => {
 
       await expect(taskService.editTask({ id: 1 } as Task))
         .rejects
-        .toThrow(ErrorCode.INVALID_INPUT);
+        .toThrow("Input is invalid, please try again");
     });
 
     it("should throw if taskRepo.update() returns false (update failure)", async () => {
@@ -222,7 +221,7 @@ describe("TaskService", () => {
 
         await expect(taskService.editTask({ id: 1, title: "New Task" } as any))
             .rejects
-            .toThrow("Task 1 is not found in task list");
+            .toThrow("Task 1  reocrd is not found");
     });
 
   });
