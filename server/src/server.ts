@@ -27,7 +27,7 @@ app.get("/", (req, res) => {
 
 const PORT = 8080;
 const server = app.listen(PORT, () => 
-  console.log(`✅ Server running on http://localhost:${PORT}`)
+  console.log(`✅ Express Server running on http://localhost:${PORT}`)
 );
 
 // timeout configuration
