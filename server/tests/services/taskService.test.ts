@@ -5,6 +5,7 @@ import { TaskRepo } from "../../src/repos/taskRepo";
 import { BoardRepo } from "../../src/repos/boardRepo";
 import { Task } from "../../src/models/task";
 import { Board } from "../../src/models/board";
+import { ErrorCode } from "../../src/utils/errorCode";
 
 // Mock Repos
 jest.mock("../../src/repos/taskRepo", () => ({
@@ -61,7 +62,7 @@ describe("TaskService", () => {
 
       expect(mockBoardRepo.get).toHaveBeenCalled();
       expect(mockTaskRepo.add).toHaveBeenCalledWith(newTask, board);
-      expect(result).toEqual({ 1: newTask });
+      expect(result).toEqual(newTask);
     });
 
     it("should throw if 'todo' column does not exist", async () => {
@@ -209,7 +210,7 @@ describe("TaskService", () => {
 
       await expect(taskService.editTask({ id: 1 } as Task))
         .rejects
-        .toThrow("Task 1 not found!");
+        .toThrow(ErrorCode.INVALID_INPUT);
     });
 
     it("should throw if taskRepo.update() returns false (update failure)", async () => {
