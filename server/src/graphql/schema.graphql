@@ -1,0 +1,23 @@
+type Board {
+  id: ID
+  taskList: [Task!]!      
+  columns: [Column!]!         
+  order: [String!]!
+}
+
+type Column {
+  name: String!
+  taskIds: [Int!]!
+}
+
+type Task {
+  id: Int!
+  title: String!
+  description: String
+  createdDate: String
+  modifiedDate: String
+}
+
+type Query {
+  board: Board!
+}
