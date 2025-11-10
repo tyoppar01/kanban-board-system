@@ -2,6 +2,7 @@ import { Task } from "../models/task";
 import { BoardRepo } from "../repos/boardRepo";
 import { TaskRepo } from "../repos/taskRepo";
 import { ErrorCode } from "../utils/errorCode";
+import { logResponse, MethodName } from "../utils/loggerResponse";
 
 type EditableTaskFields = Omit<Task, "id" | "createdDate">;
 
@@ -35,16 +36,17 @@ export class TaskService {
 
     // ensure todo column list before entering repo to add task
     if (! board.columns["todo"]) {
-      throw new Error("board has no todo list, check in-memory cache");
+      throw new Error(`Column [todo] ${ErrorCode.RECORD_NOT_FOUND}`);
     }
 
     // ensure no task existed with duplicated id
     if (board.taskList[task.id]) {
-      throw new Error("task has already existed, no duplicated task id is allowed to be added");
+      throw new Error(ErrorCode.TASK_EXISTED);
     }
 
     // add into taskList and columnList
-    const taskList = this.taskRepo.add(task, board);
+    const output = this.taskRepo.add(task, board);
+    logResponse(MethodName.ADD_TASK, output);
     return task;
   }
 
@@ -67,7 +69,7 @@ export class TaskService {
     // NOTE: task is preserved in taskList for further restore implementation
     // throw Error if column is not exist
     if (!board.columns[column]) {
-      throw new Error(`Column ${column} not found!`);
+      throw new Error(`Column ${column} ${ErrorCode.RECORD_NOT_FOUND}`);
     }
 
     // remove task from task list only
@@ -75,9 +77,9 @@ export class TaskService {
 
     // ensure that it is preserved, unless implement otherwise
     if (!deletedTask) {
-      throw new Error(`Task ${id} is not found in task list`);
+      throw new Error(`Task ${id} ${ErrorCode.RECORD_NOT_FOUND}`);
     }
-
+    logResponse(MethodName.REMOVE_TASK, deletedTask);
     return deletedTask;
   }
 
@@ -103,13 +105,13 @@ export class TaskService {
       // pre-validation of existing task is located at appropriate location
 
       // if current list not exist or task id not found in list
-      if (!currentList || !currentList.includes(taskId)) throw new Error(`Column ${currCol} not found!`);
+      if (!currentList || !currentList.includes(taskId)) throw new Error(`Column ${currCol} ${ErrorCode.RECORD_NOT_FOUND}`);
       
       // if destination list not exist
-      if (!destinationList) throw new Error(`Column ${destCol} not found!`);
+      if (!destinationList) throw new Error(`Column ${destCol} ${ErrorCode.RECORD_NOT_FOUND}`);
     
       // if index out of bound
-      if (index < 0 || index > destinationList.length) throw new Error(`Invalid index ${index}: must be between 0 and ${destinationList.length}`);
+      if (index < 0 || index > destinationList.length) throw new Error(`${ErrorCode.OUT_OF_RANGE} Invalid index: ${index}: Expected index: [0, ${destinationList.length}]`);
       
 
       // copy version of column only (used by both cases)
@@ -121,7 +123,7 @@ export class TaskService {
         // Find current position
         const currentIndex = columnList.findIndex(id => id === taskId);
 
-        if (currentIndex === -1) throw new Error(`Task ${taskId} not found in column ${currCol}`);
+        if (currentIndex === -1) throw new Error(`Task ${taskId} ${ErrorCode.RECORD_NOT_FOUND}`);
 
         // reorder current array
         columnList.splice(currentIndex, 1);
@@ -129,8 +131,8 @@ export class TaskService {
 
         const result: boolean = this.taskRepo.updateColumn(taskId, currCol, columnList, destCol, columnList, board);
 
-        if (!result) throw new Error(`Task ${taskId} is not moved in task list, operation has failed`);
-
+        if (!result) throw new Error(ErrorCode.ACTION_FAILED);
+        logResponse(MethodName.MOVE_TASK, result);
         return result;
       }
 
@@ -148,8 +150,8 @@ export class TaskService {
       const result: boolean = this.taskRepo.updateColumn(taskId, currCol, newOriginList, destCol, newDestList, board);
 
       // ensure that it is preserved, unless implement otherwise
-      if (!result) throw new Error(`Task ${taskId} is not moved in task list, operation has failed`);
-      
+      if (!result) throw new Error(ErrorCode.ACTION_FAILED);
+      logResponse(MethodName.MOVE_TASK, result);
       return result;
   }
 
@@ -171,7 +173,7 @@ export class TaskService {
     // modify targeted task via id in dictionary
     const currTask = board.taskList[target.id];
 
-    if (!currTask) throw new Error(`Task ${target.id} not found!`);
+    if (!currTask) throw new Error(`Task ${target.id}  ${ErrorCode.RECORD_NOT_FOUND}`);
 
     // restrict changes based on EditableTaskFields
     const partialUpdate: EditableTaskFields = {
@@ -189,8 +191,10 @@ export class TaskService {
     const result: boolean = this.taskRepo.update(updatedTask, board);
 
     if (!result) {
-      throw new Error(`Task ${target.id} is not found in task list`);
+      throw new Error(`Task ${target.id}  ${ErrorCode.RECORD_NOT_FOUND}`);
     }
+
+    logResponse(MethodName.EDIT_TASK, result);
 
     return result;
   }

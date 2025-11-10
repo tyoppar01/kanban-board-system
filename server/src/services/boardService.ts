@@ -1,5 +1,6 @@
 import { Board } from "../models/board";
 import { BoardRepo } from "../repos/boardRepo";
+import { logResponse, MethodName } from "../utils/loggerResponse";
 
 export class BoardService {
 
@@ -15,7 +16,9 @@ export class BoardService {
             }
 
       async getFullBoard(): Promise<Board> { 
-            return await this.boardRepo.get();
+            const output = await this.boardRepo.get();
+            logResponse(MethodName.GET_BOARD, output);
+            return output;
       };
 
 }
