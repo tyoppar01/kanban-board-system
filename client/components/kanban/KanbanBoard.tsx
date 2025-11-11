@@ -6,6 +6,7 @@ import { useKanban } from '../../hooks/useKanban';
 import { Column } from './Column';
 import { Header } from './Header';
 import { AddTaskButton } from './AddTaskButton';
+import { AddColumnButton } from './AddColumnButton';
 import { StorageModeModal } from './StorageModeModal';
 import { StorageMode } from '@/types/kanban.types';
 import { getStorageData, setStorageData, STORAGE_KEYS } from '@/utils/storage';
@@ -36,7 +37,8 @@ export default function KanbanBoard() {
   // Use the custom hook for all kanban logic (always call hooks at top level)
   const { 
     data, 
-    addTask, 
+    addTask,
+    addColumn,
     onDragEnd, 
     actions,
     editingState,
@@ -80,8 +82,17 @@ export default function KanbanBoard() {
         <Header actions={actions} onReset={clearStorage} />
 
         <DragDropContext onDragEnd={onDragEnd}>
-        {/* board container */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* board container - dynamic grid based on column count */}
+        <div 
+          className={`grid gap-6 ${
+            data?.columnOrder?.length === 1 ? 'grid-cols-1' :
+            data?.columnOrder?.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
+            data?.columnOrder?.length === 3 ? 'grid-cols-1 md:grid-cols-3' :
+            data?.columnOrder?.length === 4 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' :
+            data?.columnOrder?.length === 5 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5' :
+            'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'
+          }`}
+        >
           {/* render columns */}
           {data && data.columnOrder && data.columnOrder.map(columnId => {
             const column = data.columns[columnId];
@@ -105,6 +116,15 @@ export default function KanbanBoard() {
         </div>
         </DragDropContext>
       </div>
+
+      {/* Floating Add Column Button - appears on right side hover */}
+      {data && (
+        <AddColumnButton 
+          onAddColumn={addColumn}
+          columnCount={data.columnOrder?.length || 0}
+          maxColumns={6}
+        />
+      )}
 
       {/* Footer */}
       <footer className="mt-auto pt-16 text-center text-gray-500 text-sm max-w-7xl mx-auto w-full">
