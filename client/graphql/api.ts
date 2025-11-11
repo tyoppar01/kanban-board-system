@@ -66,6 +66,24 @@ const EDIT_TASK = gql`
   }
 `;
 
+const ADD_COLUMN = gql`
+  mutation AddColumn($name: String!) {
+    addColumn(name: $name) {
+      taskList {
+        id
+        title
+        description
+        createdDate
+      }
+      columns {
+        id
+        taskIds
+      }
+      order
+    }
+  }
+`;
+
 export const boardApi = {
   // Fetch the entire board using GraphQL
   async getBoard(): Promise<BackendBoard> {
@@ -186,6 +204,42 @@ export const taskApi = {
     }
 
     return true;
+  }
+};
+
+export const columnApi = {
+  // Add a new column using GraphQL
+  async addColumn(columnName: string): Promise<BackendBoard> {
+    const { data } = await client.mutate<{ addColumn: { taskList: any[], columns: any[], order: string[] } }>({
+      mutation: ADD_COLUMN,
+      variables: { name: columnName }
+    });
+
+    if (!data || !data.addColumn) {
+      throw new Error('Failed to add column via GraphQL');
+    }
+
+    // Transform GraphQL response to BackendBoard format
+    const taskList: Record<number, BackendTask> = {};
+    data.addColumn.taskList.forEach((task: any) => {
+      taskList[task.id] = {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        createdDate: task.createdDate ? new Date(task.createdDate) : undefined,
+      };
+    });
+
+    const columns: Record<string, number[]> = {};
+    data.addColumn.columns.forEach((col: any) => {
+      columns[col.id] = col.taskIds;
+    });
+
+    return {
+      taskList,
+      columns,
+      order: data.addColumn.order,
+    };
   }
 };
 
