@@ -2,6 +2,59 @@ import { Board, Task } from '../types/kanban.types';
 import { BackendBoard, BackendTask } from '../services/api';
 
 /**
+ * Convert column ID to display name
+ */
+export function formatColumnName(columnId: string): string {
+  return columnId
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Assign color to column based on column ID and order index
+ */
+export function getColumnColor(columnId: string, orderIndex?: number): string {
+  // Default columns always get specific colors
+  const defaultColors: Record<string, string> = {
+    'todo': 'blue',
+    'ongoing': 'yellow',
+    'done': 'green',
+  };
+  
+  if (defaultColors[columnId]) {
+    return defaultColors[columnId];
+  }
+  
+  // For custom columns, use order index if provided, otherwise hash
+  const customColors = ['pink', 'teal', 'indigo', 'red'];
+  
+  if (orderIndex !== undefined) {
+    // Count how many default columns come before this one
+    const defaultColumnCount = ['todo', 'ongoing', 'done'].filter((_, idx) => idx < orderIndex).length;
+    const customIndex = orderIndex - defaultColumnCount;
+    return customColors[customIndex % customColors.length];
+  }
+  
+  // Fallback to hash if no index provided
+  const hash = columnId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return customColors[hash % customColors.length];
+}
+
+/**
+ * Normalize column name to create a valid column ID
+ */
+export function normalizeColumnName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')        // replace spaces with hyphens
+    .replace(/[^a-z0-9-]/g, '')  // remove special characters
+    .replace(/-+/g, '-')         // replace multiple hyphens with single
+    .replace(/^-|-$/g, '');      // remove leading/trailing hyphens
+}
+
+/**
  * Convert backend board structure to frontend board structure
  */
 export function transformBackendToFrontend(backendBoard: BackendBoard): Board {
@@ -14,38 +67,23 @@ export function transformBackendToFrontend(backendBoard: BackendBoard): Board {
     };
   });
 
-  // Map backend column IDs to frontend column IDs
-  const columnMapping: Record<string, string> = {
-    'todo': 'todo',
-    'ongoing': 'in-progress',
-    'done': 'completed'
-  };
-
-  // Transform columns
+  // Transform columns - use backend column IDs directly, no mapping
   const columns: Board['columns'] = {};
-  Object.entries(backendBoard.columns).forEach(([backendColumnId, taskIds]) => {
-    const frontendColumnId = columnMapping[backendColumnId] || backendColumnId;
+  
+  // Use order array to get proper index for color assignment
+  backendBoard.order.forEach((columnId, orderIndex) => {
+    const taskIds = backendBoard.columns[columnId] || [];
     
-    const columnName = frontendColumnId === 'todo' ? 'To Do' 
-                      : frontendColumnId === 'in-progress' ? 'In Progress'
-                      : 'Completed';
-    
-    const columnColor = frontendColumnId === 'todo' ? 'blue'
-                       : frontendColumnId === 'in-progress' ? 'yellow'
-                       : 'green';
-
-    columns[frontendColumnId] = {
-      id: frontendColumnId,
-      name: columnName,
+    columns[columnId] = {
+      id: columnId,
+      name: formatColumnName(columnId),
       tasks: taskIds.map(id => `task-${id}`),
-      columnColor: columnColor,
+      columnColor: getColumnColor(columnId, orderIndex),
     };
   });
 
-  // Transform order array
-  const frontendOrder = backendBoard.order.map(
-    backendId => columnMapping[backendId] || backendId
-  );
+  // Use backend order directly
+  const frontendOrder = backendBoard.order;
 
   return {
     tasks,
@@ -75,12 +113,8 @@ export function extractTaskNumber(taskId: string): number {
 
 /**
  * Convert frontend column ID to backend column ID
+ * Since we're not mapping anymore, just return the same ID
  */
 export function frontendToBackendColumnId(frontendColumnId: string): string {
-  const reverseMapping: Record<string, string> = {
-    'todo': 'todo',
-    'in-progress': 'ongoing',
-    'completed': 'done'
-  };
-  return reverseMapping[frontendColumnId] || frontendColumnId;
+  return frontendColumnId;
 }
