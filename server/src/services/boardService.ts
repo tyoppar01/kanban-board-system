@@ -1,5 +1,6 @@
 import { Board } from "../models/board";
 import { BoardRepo } from "../repos/boardRepo";
+import { ErrorCode } from "../utils/errorCode";
 import { logResponse, MethodName } from "../utils/loggerResponse";
 
 export class BoardService {
@@ -20,6 +21,13 @@ export class BoardService {
             logResponse(MethodName.GET_BOARD, output);
             return output;
       };
+
+      async addColumn(colName: string): Promise<Board> {
+            const board: Board = await this.boardRepo.get();
+            if (board.columns[colName]) throw new Error(ErrorCode.INVALID_INPUT);
+            const output = this.boardRepo.setColumn(colName, board);
+            return output;
+      }
 
 }
 

@@ -22,4 +22,12 @@ export class BoardRepo {
     });
   }
 
+  async setColumn(colName: string, board: Board): Promise<Board> {
+
+    board.columns[colName] = []
+    board.order.push(colName)
+
+    return board;
+  }
+
 };
