@@ -25,7 +25,9 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "graphql": "^16.12.0",
-    "graphql-tag": "^2.12.6"
+    "graphql-tag": "^2.12.6",
+    "mongodb": "^7.0.0",
+    "mongoose": "^8.19.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
