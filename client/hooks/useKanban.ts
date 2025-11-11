@@ -3,8 +3,8 @@ import { Board, Task, ColorClasses, EditingState, StorageMode } from '../types/k
 import { DropResult } from '@hello-pangea/dnd';
 import { Action, StorageState } from '../types/kanban.types';
 import { getStorageData, setStorageData, STORAGE_KEYS, isLocalStorageAvailable } from '@/utils/storage';
-import { boardApi, taskApi } from '../graphql/api';
-import { transformBackendToFrontend, transformTaskToBackend, frontendToBackendColumnId } from '../utils/dataTransform';
+import { boardApi, taskApi, columnApi } from '../graphql/api';
+import { transformBackendToFrontend, transformTaskToBackend, frontendToBackendColumnId, normalizeColumnName, formatColumnName, getColumnColor } from '../utils/dataTransform';
 
 // Empty initial data - will be loaded from backend
 const initialData: Board = {
@@ -48,6 +48,26 @@ export const colorClasses: ColorClasses = {
     bg: 'bg-green-600',
     text: 'text-green-600',
     border: 'border-green-600'
+  },
+  'pink': {
+    bg: 'bg-pink-500',
+    text: 'text-pink-500',
+    border: 'border-pink-500'
+  },
+  'teal': {
+    bg: 'bg-teal-500',
+    text: 'text-teal-500',
+    border: 'border-teal-500'
+  },
+  'indigo': {
+    bg: 'bg-indigo-600',
+    text: 'text-indigo-600',
+    border: 'border-indigo-600'
+  },
+  'red': {
+    bg: 'bg-red-600',
+    text: 'text-red-600',
+    border: 'border-red-600'
   }
 };
 
@@ -378,6 +398,61 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     }
   };
 
+  // Add a new column
+  const addColumn = async (columnName: string) => {
+    const currentColumnCount = Object.keys(data.columns).length;
+    
+    // Validation: max 6 columns
+    if (currentColumnCount >= 6) {
+      throw new Error('Maximum 6 columns allowed');
+    }
+
+    // Normalize column name to create column ID
+    const columnId = normalizeColumnName(columnName);
+    
+    // Validation: check if column already exists
+    if (data.columns[columnId]) {
+      throw new Error('A column with this name already exists');
+    }
+
+    // Get the new column's order index
+    const newOrderIndex = data.columnOrder.length;
+
+    // Create new column
+    const newColumn = {
+      id: columnId,
+      name: formatColumnName(columnId), // Use the formatted name
+      tasks: [],
+      columnColor: getColumnColor(columnId, newOrderIndex),
+    };
+
+    // Update local state immediately
+    const updatedColumns = {
+      ...data.columns,
+      [columnId]: newColumn,
+    };
+
+    const updatedColumnOrder = [...data.columnOrder, columnId];
+
+    setData({
+      ...data,
+      columns: updatedColumns,
+      columnOrder: updatedColumnOrder,
+    });
+
+    // Sync with backend if not in browser-only mode
+    if (!USE_BROWSER_ONLY) {
+      try {
+        const backendBoard = await columnApi.addColumn(columnId);
+        const transformedBoard = transformBackendToFrontend(backendBoard);
+        setData(transformedBoard);
+      } catch (error) {
+        console.error('Failed to add column on backend:', error);
+        throw new Error('Failed to add column. Please try again.');
+      }
+    }
+  };
+
   // Function to start editing a task
   const startEditingTask = (taskId: string) => {
     setEditingState({ isEditing: true, taskId });
@@ -544,6 +619,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     data,
     taskCounter,
     addTask,
+    addColumn,
     onDragEnd,
     actions,
     storageState,
