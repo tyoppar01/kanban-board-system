@@ -1,108 +1,194 @@
-// to be aligned with new mutations from apollo server
+// GraphQL client for backend communication
+import client from '../graphql/apolloClient';
+import { gql } from '@apollo/client';
 
-import { gql }  from '@apollo/client';
-import client from './apolloClient';
-import type { Board, Task } from '@/types/kanban.types';
+interface BackendTask {
+  id: number;
+  title: string;
+  description?: string;
+  createdDate?: Date;
+}
 
+interface BackendBoard {
+  taskList: Record<number, BackendTask>;
+  columns: Record<string, number[]>;
+  order: string[];
+}
+
+// GraphQL Queries and Mutations
 const GET_BOARD = gql`
   query GetBoard {
     board {
-      columns {
+      taskList {
         id
         title
+        description
+        createdDate
+      }
+      columns {
+        id
         taskIds
       }
-      tasks {
-        id
-        content
-      }
+      order
     }
   }
 `;
 
 const ADD_TASK = gql`
-  mutation AddTask($columnId: ID!, $content: String!) {
-    addTask(columnId: $columnId, content: $content) {
+  mutation AddTask($task: TaskInput!) {
+    addTask(task: $task) {
       id
-      content
+      title
+      description
+      createdDate
     }
   }
 `;
 
 const MOVE_TASK = gql`
-  mutation MoveTask($taskId: ID!, $fromColumnId: ID!, $toColumnId: ID!, $index: Int!) {
-    moveTask(taskId: $taskId, fromColumnId: $fromColumnId, toColumnId: $toColumnId, index: $index)
-  }
-`; 
-
-const UPDATE_TASK = gql`
-  mutation UpdateTask($taskId: ID!, $content: String!) {
-    updateTask(taskId: $taskId, content: $content) {
-      id
-      content
-    }
+  mutation RelocateTask($taskId: Int!, $index: Int!, $currCol: String!, $destCol: String!) {
+    relocateTask(taskId: $taskId, index: $index, currCol: $currCol, destCol: $destCol)
   }
 `;
 
 const DELETE_TASK = gql`
-  mutation DeleteTask($taskId: ID!) {
-    deleteTask(taskId: $taskId)
+  mutation RemoveTask($id: Int!, $column: String!) {
+    removeTask(id: $id, column: $column) {
+      id
+      title
+    }
   }
-`;  
+`;
+
+const EDIT_TASK = gql`
+  mutation EditTask($task: TaskInput!) {
+    editTask(task: $task)
+  }
+`;
 
 export const boardApi = {
-  async getBoard() {
-    const { data } = await client.query<Board>({ query: GET_BOARD });
-    if (!data) {
-        throw new Error('No board data returned from server');
+  // Fetch the entire board using GraphQL
+  async getBoard(): Promise<BackendBoard> {
+    const { data } = await client.query<{ board: { taskList: any[], columns: any[], order: string[] } }>({
+      query: GET_BOARD,
+      fetchPolicy: 'network-only', // Always fetch fresh data
+    });
+    
+    if (!data || !data.board) {
+      throw new Error('Failed to fetch board from GraphQL');
     }
-    return data;
+
+    // Transform GraphQL response to BackendBoard format
+    const taskList: Record<number, BackendTask> = {};
+    data.board.taskList.forEach((task: any) => {
+      taskList[task.id] = {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        createdDate: task.createdDate ? new Date(task.createdDate) : undefined,
+      };
+    });
+
+    const columns: Record<string, number[]> = {};
+    data.board.columns.forEach((col: any) => {
+      columns[col.id] = col.taskIds;
+    });
+
+    return {
+      taskList,
+      columns,
+      order: data.board.order,
+    };
   }
 };
 
 export const taskApi = {
-    async createTask(columnId: string, content: string) {
-        const { data } = await client.mutate<Task>({
-            mutation: ADD_TASK, // GraphQL mutation for adding a task
-            variables: { columnId, content },
-        });
-        if (!data) {
-            throw new Error('No task data returned from server');
-        }
-        return data;
-    },
+  // Create a new task using GraphQL
+  async createTask(task: BackendTask): Promise<BackendBoard> {
+    
+    const taskInput = {
+      id: task.id,
+      title: task.title,
+      description: task.description || '',
+      createdDate: new Date().toISOString(),
+    };
+        
+    const { data } = await client.mutate<{ addTask: { id: number, title: string, description?: string } }>({
+      mutation: ADD_TASK,
+      variables: { task: taskInput }
+    });
 
-    async moveTask(taskId: string, fromColumnId: string, toColumnId: string, index: number) {
-        // Implement the GraphQL mutation for moving a task here
-        const { data } = await client.mutate<{ moveTask: boolean }>({
-            mutation: MOVE_TASK,
-            variables: { taskId, fromColumnId, toColumnId, index },
-        });
-        if (!data || !data.moveTask) {
-            throw new Error('Failed to move task');
-        }
-        return data.moveTask; // returns true if successful
-    },
-
-    async updateTask(taskId: string, content: string) {
-        const { data } = await client.mutate<Task>({
-            mutation: UPDATE_TASK,
-            variables: { taskId, content },
-        });
-        if (!data) {
-            throw new Error('No task data returned from server');
-        }
-        return data;
-    },
-
-    async deleteTask(taskId: string) {
-        const { data } = await client.mutate<{ deleteTask: boolean }>({
-            mutation: DELETE_TASK,
-            variables: { taskId },
-        });
-        if (!data || !data.deleteTask) {
-            throw new Error('Failed to delete task');
-        }
-        return data.deleteTask; // returns true if successful
+    if (!data || !data.addTask) {
+      throw new Error('Failed to create task via GraphQL');
     }
-}
+    
+    // After creating task, fetch the updated board
+    return await boardApi.getBoard();
+  },
+
+  // Move a task using GraphQL
+  async moveTask(taskId: number, index: number, currentColumn: string, newColumn: string): Promise<BackendTask> {
+    const { data } = await client.mutate<{ relocateTask: boolean }>({
+      mutation: MOVE_TASK,
+      variables: {
+        taskId,
+        index,
+        currCol: currentColumn,
+        destCol: newColumn,
+      }
+    });
+
+    if (!data || data.relocateTask !== true) {
+      throw new Error('Failed to move task via GraphQL');
+    }
+
+    // Return a placeholder task (GraphQL only returns boolean)
+    return { id: taskId, title: '', description: '' };
+  },
+  
+  // Delete a task using GraphQL
+  async deleteTask(taskId: number, column: string): Promise<BackendTask> {
+    const { data } = await client.mutate<{ removeTask: { id: number, title: string } }>({
+      mutation: DELETE_TASK,
+      variables: {
+        id: taskId,
+        column,
+      }
+    });
+
+    if (!data || !data.removeTask) {
+      throw new Error('Failed to delete task via GraphQL');
+    }
+
+    return {
+      id: data.removeTask.id,
+      title: data.removeTask.title,
+      description: '',
+    };
+  },
+
+  // Edit/Update a task using GraphQL
+  async editTask(task: BackendTask): Promise<boolean> {
+    const { data } = await client.mutate<{ editTask: boolean }>({
+      mutation: EDIT_TASK,
+      variables: {
+        task: {
+          id: task.id,
+          title: task.title,
+          description: task.description || '',
+          modifiedDate: new Date().toISOString(),
+        }
+      }
+    });
+
+    if (!data || data.editTask !== true) {
+      throw new Error('Failed to edit task via GraphQL');
+    }
+
+    return true;
+  }
+};
+
+// Export types for use in components
+export type { BackendTask, BackendBoard };
+
