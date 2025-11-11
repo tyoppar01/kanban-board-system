@@ -1,6 +1,5 @@
 // src/utils/db.ts
 import { Board } from "../models/board"
-import { Task } from "../models/task"
 
 export const board: Board = {
   taskList: {
