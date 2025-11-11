@@ -30,9 +30,9 @@ export function getColumnColor(columnId: string, orderIndex?: number): string {
   const customColors = ['pink', 'teal', 'indigo', 'red'];
   
   if (orderIndex !== undefined) {
-    // Count how many default columns come before this one
-    const defaultColumnCount = ['todo', 'ongoing', 'done'].filter((_, idx) => idx < orderIndex).length;
-    const customIndex = orderIndex - defaultColumnCount;
+    // orderIndex 3 > custom color 0, orderIndex 4 > custom color 1, etc.
+    // Assumes first 3 positions are default columns
+    const customIndex = Math.max(0, orderIndex - 3);
     return customColors[customIndex % customColors.length];
   }
   
