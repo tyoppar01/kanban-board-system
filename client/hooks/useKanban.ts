@@ -3,7 +3,7 @@ import { Board, Task, ColorClasses, EditingState, StorageMode } from '../types/k
 import { DropResult } from '@hello-pangea/dnd';
 import { Action, StorageState } from '../types/kanban.types';
 import { getStorageData, setStorageData, STORAGE_KEYS, isLocalStorageAvailable } from '@/utils/storage';
-import { boardApi, taskApi } from '../services/api';
+import { boardApi, taskApi } from '../graphql/api';
 import { transformBackendToFrontend, transformTaskToBackend, frontendToBackendColumnId } from '../utils/dataTransform';
 
 // Empty initial data - will be loaded from backend

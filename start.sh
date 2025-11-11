@@ -53,6 +53,19 @@ cd ../server && npm install
 echo "✅ Completed both front and back dependencies"
 cd ../
 
+# Install Playwright system dependencies (required for headless browser testing)
+echo "🎭 Installing Playwright system dependencies..."
+
+# listing all packages then grepping for one of them to check if installed
+if ! dpkg -l | grep -q libgtk-3-0; then
+  echo "Installing required system packages..."
+  sudo apt-get update
+  sudo apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libnss3 libxss1 libasound2 libxtst6 xauth xvfb libnspr4
+  echo "✅ Playwright dependencies installed"
+else
+  echo "✅ Playwright dependencies already installed"
+fi
+
 echo ""
 echo "🚀 Starting both client and server..."
 echo ""
