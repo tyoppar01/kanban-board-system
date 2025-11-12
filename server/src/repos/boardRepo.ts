@@ -32,11 +32,23 @@ export class BoardRepo {
   }
 
   async setColumn(colName: string, board: IBoard): Promise<IBoard> {
+    try {
+      const updatedBoard = await Board.findOneAndUpdate(
+        {},
+        {
+          $set: {
+            [`columns.${colName}`]: [],
+            order: [...board.order, colName]
+          }
+        },
+        { new: true }
+      ).lean();
 
-    board.columns[colName] = []
-    board.order.push(colName)
-
-    return board;
+      return updatedBoard as IBoard;
+      
+    } catch (error) {
+      throw new Error("Failed to add column to board");
+    }
   }
 
 };
