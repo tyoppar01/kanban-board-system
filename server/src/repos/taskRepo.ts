@@ -1,5 +1,5 @@
-import { Board } from "../models/board";
-import { Task } from "../models/task";
+import { IBoard } from "../models/interface/board";
+import { ITask } from "../models/interface/task";
 
 // ==================== Task Repo ===================== //
 
@@ -21,7 +21,7 @@ export class TaskRepo {
    * @param task 
    * @returns 
    */
-  add(task: Task, board: Board): Record<number, Task> {
+  add(task: ITask, board: IBoard): Record<number, ITask> {
 
     // append id into todo column list
     board.columns["todo"]!.push(task.id);
@@ -38,7 +38,7 @@ export class TaskRepo {
    * @param column 
    * @returns 
    */
-  remove(taskId: number, column: string, board: Board): Task {
+  remove(taskId: number, column: string, board: IBoard): ITask {
     
     // remove taskId from the column list
     board.columns[column] = board.columns[column]!.filter((id) => id !== taskId);
@@ -64,7 +64,7 @@ export class TaskRepo {
         currList: number[], 
         destCol: string, 
         destList: number[], 
-        board: Board): boolean{
+        board: IBoard): boolean{
 
     board.columns[currCol] = currList;
     board.columns[destCol] = destList;
@@ -78,7 +78,7 @@ export class TaskRepo {
    * @param board 
    * @returns 
    */
-  update(target: Task, board: Board):boolean {
+  update(target: ITask, board: IBoard):boolean {
 
     board.taskList[target.id] = target;
     return true;
