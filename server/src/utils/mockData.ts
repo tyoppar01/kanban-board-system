@@ -1,7 +1,4 @@
-// src/utils/db.ts
-import { Board } from "../models/board"
-
-export const board: Board = {
+export const board = {
   taskList: {
     1: { id: 1, title: "Setup project structure" },
     2: { id: 2, title: "Implement Express routes" },
