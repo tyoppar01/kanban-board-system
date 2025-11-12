@@ -1,5 +1,5 @@
-import { Board } from '../../src/models/board';
-import { Task } from '../../src/models/task';
+import { Board } from '../../src/models/interface/board';
+import { Task } from '../../src/models/interface/task';
 import { TaskRepo } from '../../src/repos/taskRepo';
 
 describe(`TaskRepo`, () => {

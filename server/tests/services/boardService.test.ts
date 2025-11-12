@@ -1,5 +1,5 @@
 import { BoardService } from "../../src/services/boardService";
-import { Board } from "../../src/models/board";
+import { Board } from "../../src/models/interface/board";
 import { BoardRepo } from "../../src/repos/boardRepo";
 
 jest.mock("../../src/repos/boardRepo", () => ({

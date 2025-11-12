@@ -3,7 +3,7 @@ import { ApiResponse } from "../types/response";
 import { sendFailedResponse, sendSuccessResponse } from "../utils/apiResponse";
 import { ApiStatus } from "../utils/apiStatus";
 import { ErrorCode } from "../utils/errorCode";
-import { Task } from "../models/task";
+import { Task } from "../models/interface/task";
 import { TaskService } from "../services/taskService";
 
 
