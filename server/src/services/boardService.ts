@@ -1,4 +1,4 @@
-import { Board } from "../models/board";
+import { IBoard } from "../models/interface/board";
 import { BoardRepo } from "../repos/boardRepo";
 import { ErrorCode } from "../utils/errorCode";
 import { logResponse, MethodName } from "../utils/loggerResponse";
@@ -16,14 +16,20 @@ export class BoardService {
             return BoardService.instance;
             }
 
-      async getFullBoard(): Promise<Board> { 
-            const output = await this.boardRepo.get();
+      async getFullBoard(): Promise<IBoard> { 
+            const board = await this.boardRepo.get();
+            const output: IBoard = {
+                  id: board.id,
+                  taskList: board.taskList,
+                  columns: board.columns,
+                  order: board.order
+            } as IBoard;
             logResponse(MethodName.GET_BOARD, output);
             return output;
       };
 
-      async addColumn(colName: string): Promise<Board> {
-            const board: Board = await this.boardRepo.get();
+      async addColumn(colName: string): Promise<IBoard> {
+            const board: IBoard = await this.boardRepo.get();
             if (board.columns[colName]) throw new Error(ErrorCode.INVALID_INPUT);
             const output = this.boardRepo.setColumn(colName, board);
             return output;
