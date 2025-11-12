@@ -1,10 +1,10 @@
-import { Task } from "../models/task";
+import { ITask } from "../models/interface/task";
 import { BoardRepo } from "../repos/boardRepo";
 import { TaskRepo } from "../repos/taskRepo";
 import { ErrorCode } from "../utils/errorCode";
 import { logResponse, MethodName } from "../utils/loggerResponse";
 
-type EditableTaskFields = Omit<Task, "id" | "createdDate">;
+type EditableTaskFields = Omit<ITask, "id" | "createdDate">;
 
 export class TaskService {
 
@@ -24,7 +24,7 @@ export class TaskService {
    * @param task 
    * @returns 
    */
-  async addTask(task: Task): Promise<Task> {
+  async addTask(task: ITask): Promise<ITask> {
 
     if (!task.id || !task.title) throw new Error(ErrorCode.INVALID_INPUT)
 
@@ -56,7 +56,7 @@ export class TaskService {
    * @param column 
    * @returns 
    */
-  async removeTask(id: number, column: string): Promise<Task>{
+  async removeTask(id: number, column: string): Promise<ITask>{
 
     if (!id || !column) {
       throw new Error(ErrorCode.INVALID_INPUT);
@@ -73,7 +73,7 @@ export class TaskService {
     }
 
     // remove task from task list only
-    const deletedTask:Task = this.taskRepo.remove(id, column, board);
+    const deletedTask:ITask = this.taskRepo.remove(id, column, board);
 
     // ensure that it is preserved, unless implement otherwise
     if (!deletedTask) {
@@ -160,7 +160,7 @@ export class TaskService {
    * @param target 
    * @returns 
    */
-  async editTask(target: Task): Promise<boolean> {
+  async editTask(target: ITask): Promise<boolean> {
 
     if (!target.id || !target.title) {
       throw new Error(ErrorCode.INVALID_INPUT)
@@ -183,10 +183,10 @@ export class TaskService {
     }
 
     // updated object task
-    const updatedTask: Task = { 
+    const updatedTask: ITask = { 
       ...currTask, 
       ...partialUpdate 
-    } as Task;
+    } as ITask;
 
     const result: boolean = this.taskRepo.update(updatedTask, board);
 
