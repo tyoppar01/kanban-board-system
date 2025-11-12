@@ -24,7 +24,6 @@ export class BoardService {
                   columns: board.columns,
                   order: board.order
             } as IBoard;
-            logResponse(MethodName.GET_BOARD, output);
             return output;
       };
 

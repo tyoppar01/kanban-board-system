@@ -45,7 +45,7 @@ export class TaskService {
     }
 
     // add into taskList and columnList
-    const output = this.taskRepo.add(task, board);
+    const output = this.taskRepo.add(task);
     logResponse(MethodName.ADD_TASK, output);
     return task;
   }
@@ -56,7 +56,7 @@ export class TaskService {
    * @param column 
    * @returns 
    */
-  async removeTask(id: number, column: string): Promise<ITask>{
+  async removeTask(id: number, column: string): Promise<boolean>{
 
     if (!id || !column) {
       throw new Error(ErrorCode.INVALID_INPUT);
@@ -73,14 +73,14 @@ export class TaskService {
     }
 
     // remove task from task list only
-    const deletedTask:ITask = this.taskRepo.remove(id, column, board);
+    const result = await this.taskRepo.remove(id, column, board);
 
     // ensure that it is preserved, unless implement otherwise
-    if (!deletedTask) {
+    if (!result) {
       throw new Error(`Task ${id} ${ErrorCode.RECORD_NOT_FOUND}`);
     }
-    logResponse(MethodName.REMOVE_TASK, deletedTask);
-    return deletedTask;
+    logResponse(MethodName.REMOVE_TASK, result);
+    return result;
   }
 
   /**
@@ -129,7 +129,7 @@ export class TaskService {
         columnList.splice(currentIndex, 1);
         columnList.splice(index, 0, taskId);
 
-        const result: boolean = this.taskRepo.updateColumn(taskId, currCol, columnList, destCol, columnList, board);
+        const result = this.taskRepo.updateColumn(taskId, currCol, columnList, destCol, columnList);
 
         if (!result) throw new Error(ErrorCode.ACTION_FAILED);
         logResponse(MethodName.MOVE_TASK, result);
@@ -147,7 +147,7 @@ export class TaskService {
       ];
 
       // update column
-      const result: boolean = this.taskRepo.updateColumn(taskId, currCol, newOriginList, destCol, newDestList, board);
+      const result = this.taskRepo.updateColumn(taskId, currCol, newOriginList, destCol, newDestList);
 
       // ensure that it is preserved, unless implement otherwise
       if (!result) throw new Error(ErrorCode.ACTION_FAILED);
@@ -188,7 +188,7 @@ export class TaskService {
       ...partialUpdate 
     } as ITask;
 
-    const result: boolean = this.taskRepo.update(updatedTask, board);
+    const result = this.taskRepo.update(updatedTask);
 
     if (!result) {
       throw new Error(`Task ${target.id}  ${ErrorCode.RECORD_NOT_FOUND}`);
