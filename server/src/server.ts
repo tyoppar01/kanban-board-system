@@ -5,6 +5,7 @@ import { expressMiddleware } from "@as-integrations/express5";
 import cors from "cors";
 import { resolvers } from "./graphql/resolvers";
 import typeDefs from "./graphql/typeDefs";
+import { conenctMongoose } from "./database";
 
 // ==================== Middleware ======================== //
 const app = express();
@@ -20,6 +21,8 @@ app.get("/", (req, res) => {
 // =================== Server Setup ======================= //
 
 async function startServer() {
+
+  await conenctMongoose();
 
   const server = new ApolloServer({ typeDefs, resolvers });
 
@@ -45,4 +48,4 @@ async function startServer() {
 }
 
 const PORT = 8080;
-startServer();
+startServer().catch(console.error);
