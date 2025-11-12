@@ -56,7 +56,7 @@ export class TaskService {
    * @param column 
    * @returns 
    */
-  async removeTask(id: number, column: string): Promise<boolean>{
+  async removeTask(id: number, column: string): Promise<ITask>{
 
     if (!id || !column) {
       throw new Error(ErrorCode.INVALID_INPUT);
@@ -72,15 +72,15 @@ export class TaskService {
       throw new Error(`Column ${column} ${ErrorCode.RECORD_NOT_FOUND}`);
     }
 
-    // remove task from task list only
-    const result = await this.taskRepo.remove(id, column, board);
+    // remove task from column and taskList
+    const deletedTask: ITask = await this.taskRepo.remove(id, column, board);
 
     // ensure that it is preserved, unless implement otherwise
-    if (!result) {
+    if (!deletedTask) {
       throw new Error(`Task ${id} ${ErrorCode.RECORD_NOT_FOUND}`);
     }
-    logResponse(MethodName.REMOVE_TASK, result);
-    return result;
+    logResponse(MethodName.REMOVE_TASK, deletedTask);
+    return deletedTask;
   }
 
   /**

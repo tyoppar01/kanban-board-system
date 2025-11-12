@@ -25,7 +25,7 @@ export class TaskRepo {
       await Board.findOneAndUpdate(
         {},
         {
-          $push: { [`columns.todo`]: task.id },
+          $push: { "columns.todo": task.id },
           $set: { [`taskList.${task.id}`]: task }
         },
         { new: true }
@@ -46,21 +46,29 @@ export class TaskRepo {
    * @param board 
    * @returns 
    */
-  async remove(taskId: number, column: string, board: IBoard): Promise<boolean> {
+  async remove(taskId: number, column: string, board: IBoard): Promise<ITask> {
     try {
+      // Get the task before removing it
       const task = board.taskList[taskId];
 
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
+      }
+
+      // Remove taskId from the column and from taskList
       await Board.findOneAndUpdate(
         {},
         {
-          $pull: { [`columns.${column}`]: taskId }
+          $pull: { [`columns.${column}`]: taskId },
+          $unset: { [`taskList.${taskId}`]: "" }
         },
         { new: true }
       );
 
-      return true;
+      return task;
 
     } catch (error) {
+      console.error("Error removing task:", error);
       throw new Error("Failed to remove task");
     }
   }
@@ -82,13 +90,14 @@ export class TaskRepo {
         destCol: string, 
         destList: number[]): Promise<boolean>{
     try {
+      const updateFields: any = {};
+      updateFields[`columns.${currCol}`] = currList;
+      updateFields[`columns.${destCol}`] = destList;
+
       await Board.findOneAndUpdate(
         {},
         {
-          $set: {
-            [`columns.${currCol}`]: currList,
-            [`columns.${destCol}`]: destList
-          }
+          $set: updateFields
         },
         { new: true }
       );
