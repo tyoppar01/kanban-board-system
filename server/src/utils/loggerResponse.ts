@@ -15,16 +15,27 @@ import { ErrorCode } from "./errorCode";
 export const logResponse = (methodName: MethodName, data: any, success: boolean = true) => {
 
     if (success) {
-        console.log(`[${methodName}] Operation has conducted successfully\n [Output: ${data}]`);
+        console.log(`[${methodName}] [SUCCESS] [${Date}]\n [Output: ${data}]`);
     } else {
-        console.error(`[${methodName}] Operation has failed to be executed\n [Output: ${data}]`);
+        console.error(`[${methodName}] [FAILED] [${Date}]\n [Output: ${data}]`);
     }
 };
+
+export const logProcess = (methodName: MethodName, className: ClassName, data: any) => {
+    console.log(`[${methodName}] [${className}] [${Date}] [Data: ${data}]`);
+}
 
 export enum MethodName {
     GET_BOARD = "GET /BOARD",
     ADD_TASK =  "POST /TASK",
     EDIT_TASK = "PUT /TASK Edit",
     MOVE_TASK = "PUT /TASK DnD",
-    REMOVE_TASK = "DELETE /TASK"
+    REMOVE_TASK = "DELETE /TASK",
+    ADD_COL = "POST /COLUMN"
+}
+
+export enum ClassName {
+    SERVICE = "SERVICE",
+    REPO = "REPOSITORY",
+    RESOLVE = "RESOLVER"
 }
