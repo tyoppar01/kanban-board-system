@@ -1,5 +1,6 @@
 import { IBoard } from "../models/interface/board";
 import { ITask } from "../models/interface/task";
+import { Board } from "../models/schemaModel";
 
 // ==================== Task Repo ===================== //
 
@@ -10,9 +11,7 @@ export class TaskRepo {
   constructor() {}
 
   static getInstance(): TaskRepo {
-    if (!TaskRepo.instance) {
-      TaskRepo.instance = new TaskRepo();
-    }
+    if (!TaskRepo.instance) TaskRepo.instance = new TaskRepo();
     return TaskRepo.instance;
   }
 
@@ -21,30 +20,49 @@ export class TaskRepo {
    * @param task 
    * @returns 
    */
-  add(task: ITask, board: IBoard): Record<number, ITask> {
+  async add(task: ITask): Promise<ITask> {
+    try {
+      await Board.findOneAndUpdate(
+        {},
+        {
+          $push: { [`columns.todo`]: task.id },
+          $set: { [`taskList.${task.id}`]: task }
+        },
+        { new: true }
+      ).lean();
 
-    // append id into todo column list
-    board.columns["todo"]!.push(task.id);
+      return task;
 
-    // get taskList where consists of tasks
-    board.taskList[task.id] = task;
-
-    return board.taskList;
+    } catch (error) {
+      console.error("Error adding task:", error);
+      throw new Error("Failed to add task");
+    }
   }
 
   /**
    * Remove an existing task
    * @param taskId 
    * @param column 
+   * @param board 
    * @returns 
    */
-  remove(taskId: number, column: string, board: IBoard): ITask {
-    
-    // remove taskId from the column list
-    board.columns[column] = board.columns[column]!.filter((id) => id !== taskId);
+  async remove(taskId: number, column: string, board: IBoard): Promise<boolean> {
+    try {
+      const task = board.taskList[taskId];
 
-    // return the object
-    return board.taskList[taskId]!;
+      await Board.findOneAndUpdate(
+        {},
+        {
+          $pull: { [`columns.${column}`]: taskId }
+        },
+        { new: true }
+      );
+
+      return true;
+
+    } catch (error) {
+      throw new Error("Failed to remove task");
+    }
   }
 
 
@@ -55,33 +73,55 @@ export class TaskRepo {
    * @param currList 
    * @param destCol 
    * @param destList 
-   * @param board 
    * @returns 
    */
-  updateColumn(
+  async updateColumn(
         taskId: number, 
         currCol: string, 
         currList: number[], 
         destCol: string, 
-        destList: number[], 
-        board: IBoard): boolean{
+        destList: number[]): Promise<boolean>{
+    try {
+      await Board.findOneAndUpdate(
+        {},
+        {
+          $set: {
+            [`columns.${currCol}`]: currList,
+            [`columns.${destCol}`]: destList
+          }
+        },
+        { new: true }
+      );
 
-    board.columns[currCol] = currList;
-    board.columns[destCol] = destList;
+      return true;
 
-    return true;
+    } catch (error) {
+      throw new Error("Failed to update columns");
+    }
   }
 
   /**
    * Update Task (Details)
    * @param target 
-   * @param board 
    * @returns 
    */
-  update(target: ITask, board: IBoard):boolean {
+  async update(target: ITask):Promise<boolean> {
+    try {
+      await Board.findOneAndUpdate(
+        {},
+        {
+          $set: {
+            [`taskList.${target.id}`]: target
+          }
+        },
+        { new: true }
+      );
 
-    board.taskList[target.id] = target;
-    return true;
+      return true;
+
+    } catch (error) {
+      throw new Error("Failed to update task");
+    }
   }
 
 };
