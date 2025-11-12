@@ -1,4 +1,4 @@
-import { Task } from "../../models/task";
+import { ITask } from "../../models/interface/task";
 import { TaskService } from "../../services/taskService";
 
 const service: TaskService = TaskService.getInstance();
@@ -7,7 +7,7 @@ export const taskResolver = {
 
   Mutation: {
 
-    addTask: async (_: any, { task }: { task: Task }) => {
+    addTask: async (_: any, { task }: { task: ITask }) => {
       return await service.addTask(task);
     },
 
@@ -19,7 +19,7 @@ export const taskResolver = {
       return await service.relocateTask(taskId, index, currCol, destCol);
     },
 
-    editTask: async (_: any, { task }: { task: Task }) => {
+    editTask: async (_: any, { task }: { task: ITask }) => {
       return await service.editTask(task);
     },
 
