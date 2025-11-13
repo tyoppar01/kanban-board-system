@@ -34,7 +34,7 @@ input TaskInput {
 
 type Query {
   board: Board!
-  task(id: Int!): Task
+  # task(id: Int!): Task
 }
 
 # ==================== Mutations ==================== #
@@ -45,7 +45,7 @@ type Mutation {
 
   addTask(task: TaskInput!): Task!
 
-  removeTask(id: Int!, column: String!): Task!
+  removeTask(id: Int!, column: String!): Boolean!
 
   relocateTask(taskId: Int!, index: Int!, currCol: String!, destCol: String!): Boolean!
 
@@ -55,7 +55,7 @@ type Mutation {
 
   addColumn(name: String!): Board!
 
-  removeColumn(name: String!):  Board!
+  removeColumn(name: String!):  Boolean!
 
   moveColumn(name: String!, destIndex: Int!): Boolean!
 

@@ -30,7 +30,7 @@ export const columnResolver = {
             return { taskList, columns, order: board.order };
         },
 
-        removeColumn: async (_: any, { name }: { name: string }) => {
+        removeColumn: async (_: any, { name }: { name: string }): Promise<boolean> => {
 
             logProcess(MethodName.REMOVE_COL, ClassName.RESOLVE, name);
             const output: boolean = await ColumnService.getInstance().removeColumn(name);
@@ -38,10 +38,10 @@ export const columnResolver = {
             return output;
         },
 
-        moveColumn: async (_: any, { name, destIndex }: { name: string, destIndex: number }) => {
+        moveColumn: async (_: any, { name, destIndex }: { name: string, destIndex: number }): Promise<boolean> => {
 
             logProcess(MethodName.MOVE_COL, ClassName.RESOLVE, name);
-            const output = await ColumnService.getInstance().moveColumn(name,destIndex);
+            const output: boolean  = await ColumnService.getInstance().moveColumn(name,destIndex);
             logResponse(MethodName.MOVE_COL, output);
             return output;
         }
