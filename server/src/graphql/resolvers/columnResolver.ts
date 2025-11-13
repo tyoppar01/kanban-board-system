@@ -4,7 +4,7 @@ import { ClassName, MethodName, logProcess, logResponse } from "../../utils/logg
 
 export const columnResolver = { 
 
-      Mutation: {
+    Mutation: {
 
         addColumn: async (_: any, { name }: { name: string }) => {
 
@@ -33,25 +33,17 @@ export const columnResolver = {
         removeColumn: async (_: any, { name }: { name: string }) => {
 
             logProcess(MethodName.REMOVE_COL, ClassName.RESOLVE, name);
-            const board: IBoard = await ColumnService.getInstance().removeColumn(name);
+            const output: boolean = await ColumnService.getInstance().removeColumn(name);
+            logResponse(MethodName.REMOVE_COL, output);
+            return output;
+        },
 
-            const taskList = Object.values(board.taskList || {})
-                .filter(task => task != null) 
-                .map(task => ({
-                    id: String(task.id),
-                    title: task.title,
-                    description: task.description,
-                    createdDate: task.createdDate?.toISOString() ?? null,
-                    modifiedDate: task.modifiedDate?.toISOString() ?? null,
-                }));
+        moveColumn: async (_: any, { name, destIndex }: { name: string, destIndex: number }) => {
 
-            const columns = Object.entries(board.columns)
-                .filter(column => column != null)
-                .map(([id, taskIds]) => ({ id, taskIds})
-            );
-
-            logResponse(MethodName.REMOVE_COL, { taskList, columns, order: board.order });
-            return { taskList, columns, order: board.order };
+            logProcess(MethodName.MOVE_COL, ClassName.RESOLVE, name);
+            const output = await ColumnService.getInstance().moveColumn(name,destIndex);
+            logResponse(MethodName.MOVE_COL, output);
+            return output;
         }
     }
 
