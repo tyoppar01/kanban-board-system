@@ -26,7 +26,7 @@ test.describe('Kanban Board', () => {
 
   test('should load the kanban board page', async ({ page }) => {
     // Wait a bit for any animations or loading states
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
     
     // Check if the main container is visible
     const mainContainer = page.locator('div.min-h-screen.bg-gray-50').first();
