@@ -451,6 +451,17 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
         throw new Error('Failed to add column. Please try again.');
       }
     }
+
+    // add action for column addition
+    const newAction: Action = {
+      id: `action-${Date.now()}`,
+      type: 'created-column',
+      taskId: '',
+      taskContent: '',
+      toColumn: formatColumnName(columnId),
+      timestamp: Date.now()
+    };
+    setActions([newAction, ...actions].slice(0, 10));
   };
 
   const deleteColumn = async (columnId: string) => {

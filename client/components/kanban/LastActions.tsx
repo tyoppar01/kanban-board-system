@@ -47,9 +47,9 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
                 <div key={action.id} className="p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start gap-3">
                     <div className={`w-2 h-2 rounded-full mt-2 ${
-                      action.type === 'created' ? 'bg-blue-500' :
-                      action.type === 'edited' ? 'bg-yellow-500':
-                      action.type === 'moved' ? 'bg-green-500':
+                      action.type.includes('created') ? 'bg-blue-500' :
+                      action.type.includes('edited') ? 'bg-yellow-500':
+                      action.type.includes('moved') ? 'bg-green-500':
                       'bg-red-500'
                     }`} />
                     <div className="flex-1">
@@ -66,9 +66,21 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
                           <>
                             Moved <span className="font-semibold">"{action.taskContent}"</span> from {action.fromColumn} to {action.toColumn}
                           </>
-                        ) : (
+                        ) : action.type === 'deleted' ? (
                           <>
                             Deleted <span className="font-semibold">"{action.taskContent}"</span> from {action.fromColumn}
+                          </>
+                        ) : action.type === 'created-column' ? (
+                          <>
+                            Added new column <span className="font-semibold">"{action.toColumn}"</span>
+                          </>
+                        ) : action.type === 'deleted-column' ? (
+                          <>
+                            Deleted column <span className="font-semibold">"{action.fromColumn}"</span>
+                          </>
+                        ) : (
+                          <>
+                            Edited column <span className="font-semibold">"{action.fromColumn}"</span>
                           </>
                         )}
                       </p>

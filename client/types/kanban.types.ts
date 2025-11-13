@@ -39,7 +39,7 @@ export interface StorageState {
 // Action interface
 export interface Action {
   id: string;
-  type: 'created' | 'moved' | 'edited' | 'deleted' | 'added-column' | 'deleted-column' | 'moved-column';
+  type: 'created' | 'moved' | 'edited' | 'deleted' | 'created-column' | 'deleted-column' | 'moved-column';
   taskId: string;
   taskContent: string;
   oldContent?: string;
