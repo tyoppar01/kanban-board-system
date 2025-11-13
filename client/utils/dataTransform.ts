@@ -19,7 +19,7 @@ export function getColumnColor(columnId: string, orderIndex?: number): string {
   const defaultColors: Record<string, string> = {
     'todo': 'blue',
     'ongoing': 'yellow',
-    'done': 'green',
+    'completed': 'green',
   };
   
   if (defaultColors[columnId]) {

@@ -84,6 +84,18 @@ const ADD_COLUMN = gql`
   }
 `;
 
+const DELETE_COLUMN = gql`
+  mutation removeColumn($name: String!) {
+    removeColumn(name: $name)
+  }
+`;
+
+const MOVE_COLUMN = gql`
+  mutation MoveColumn($name: String!, $destIndex: Int!) {
+    moveColumn(name: $name, destIndex: $destIndex)
+  }
+`;
+
 export const boardApi = {
   // Fetch the entire board using GraphQL
   async getBoard(): Promise<BackendBoard> {
@@ -240,6 +252,34 @@ export const columnApi = {
       columns,
       order: data.addColumn.order,
     };
+  },
+
+  async deleteColumn(columnName: string): Promise<BackendBoard> {
+    const { data } = await client.mutate<{ removeColumn: boolean }>({
+      mutation: DELETE_COLUMN,
+      variables: { name: columnName }
+    });
+
+    if (!data || !data.removeColumn) {
+      throw new Error('Failed to delete column via GraphQL');
+    }
+
+    // Fetch the updated board since mutation returns boolean
+    return await boardApi.getBoard();
+  },
+
+  async moveColumn(columnName: string, newIndex: number): Promise<BackendBoard> {
+    const { data } = await client.mutate<{ moveColumn: boolean }>({
+      mutation: MOVE_COLUMN,
+      variables: { name: columnName, destIndex: newIndex }  // Map newIndex to destIndex for backend
+    });
+
+    if (!data || !data.moveColumn) {
+      throw new Error('Failed to move column via GraphQL');
+    }
+
+    // Since mutation returns boolean, fetch the updated board
+    return await boardApi.getBoard();
   }
 };
 
