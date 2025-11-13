@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { DragDropContext } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { useKanban } from '../../hooks/useKanban';
 import { Column } from './Column';
 import { Header } from './Header';
@@ -83,39 +83,46 @@ export default function KanbanBoard() {
         <Header actions={actions} onReset={clearStorage} />
 
         <DragDropContext onDragEnd={onDragEnd}>
-        {/* board container - dynamic grid based on column count */}
-        <div 
-          className={`grid gap-6 ${
-            data?.columnOrder?.length === 1 ? 'grid-cols-1' :
-            data?.columnOrder?.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
-            data?.columnOrder?.length === 3 ? 'grid-cols-1 md:grid-cols-3' :
-            data?.columnOrder?.length === 4 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' :
-            data?.columnOrder?.length === 5 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5' :
-            'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'
-          }`}
-        >
-          {/* render columns */}
-          {data && data.columnOrder && data.columnOrder.map(columnId => {
-            const column = data.columns[columnId];
-            if (!column || !column.tasks) return null;
-            
-            const tasks = column.tasks.map(taskId => data.tasks[taskId]).filter(Boolean);
+          <Droppable droppableId="all-columns" direction="horizontal" type="column">
+            {(provided) => (
+              <div 
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className={`grid gap-6 ${
+                  data?.columnOrder?.length === 1 ? 'grid-cols-1' :
+                  data?.columnOrder?.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
+                  data?.columnOrder?.length === 3 ? 'grid-cols-1 md:grid-cols-3' :
+                  data?.columnOrder?.length === 4 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' :
+                  data?.columnOrder?.length === 5 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5' :
+                  'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'
+                }`}
+              >
+                {/* render columns */}
+                {data && data.columnOrder && data.columnOrder.map((columnId, index) => {
+                  const column = data.columns[columnId];
+                  if (!column || !column.tasks) return null;
+                  
+                  const tasks = column.tasks.map(taskId => data.tasks[taskId]).filter(Boolean);
 
-            return (
-              <Column 
-                key={column.id} 
-                column={column} 
-                tasks={tasks}
-                editingTaskId={editingState.taskId}
-                onStartEdit={startEditingTask}
-                onStopEdit={stopEditingTask}
-                onUpdateTask={updateTask}
-                onDeleteTask={deleteTask}
-                handleDelete={deleteColumn}
-              />
-            );
-          })}
-        </div>
+                  return (
+                    <Column 
+                      key={column.id} 
+                      column={column} 
+                      tasks={tasks}
+                      index={index}
+                      editingTaskId={editingState.taskId}
+                      onStartEdit={startEditingTask}
+                      onStopEdit={stopEditingTask}
+                      onUpdateTask={updateTask}
+                      onDeleteTask={deleteTask}
+                      handleDelete={deleteColumn}
+                    />
+                  );
+                })}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
         </DragDropContext>
       </div>
 
