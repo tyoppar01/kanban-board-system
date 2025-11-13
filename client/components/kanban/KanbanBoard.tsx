@@ -46,6 +46,7 @@ export default function KanbanBoard() {
     stopEditingTask,
     updateTask,
     deleteTask,
+    deleteColumn,
     storageState,
     isHydrated,
     clearStorage
@@ -110,6 +111,7 @@ export default function KanbanBoard() {
                 onStopEdit={stopEditingTask}
                 onUpdateTask={updateTask}
                 onDeleteTask={deleteTask}
+                handleDelete={deleteColumn}
               />
             );
           })}
