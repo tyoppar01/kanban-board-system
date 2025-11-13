@@ -51,7 +51,7 @@ export class BoardRepo {
     }
   }
 
-  async removeColumn(colName: string): Promise<IBoard> {
+  async removeColumn(colName: string): Promise<boolean> {
     try {
       const updatedBoard = await Board.findOneAndUpdate(
         {},
@@ -62,10 +62,41 @@ export class BoardRepo {
         { new: true }
       ).lean();
 
-      return updatedBoard as IBoard;
+      return true;
 
     } catch (error) {
       throw new Error("Failed to remove column from board");
+    }
+  }
+
+  async moveCol(colName: string, destIndex: number, orderArr: string[]): Promise<boolean> {
+    try {
+      const newOrder = [...orderArr];
+      const currIndex = newOrder.indexOf(colName);
+      
+      if (currIndex === -1) {
+        throw new Error(`Column ${colName} not found in order`);
+      }
+
+      // Remove column from current position
+      newOrder.splice(currIndex, 1);
+      
+      // Insert column at destination index
+      newOrder.splice(destIndex, 0, colName);
+
+      // Update the board with new order
+      const updatedBoard = await Board.findOneAndUpdate(
+        {},
+        {
+          $set: { order: newOrder }
+        },
+        { new: true }
+      ).lean();
+
+      return true;
+
+    } catch (error) {
+      throw new Error("Failed to move column");
     }
   }
 

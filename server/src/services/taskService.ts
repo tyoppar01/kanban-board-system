@@ -129,7 +129,7 @@ export class TaskService {
         columnList.splice(currentIndex, 1);
         columnList.splice(index, 0, taskId);
 
-        const result = this.taskRepo.updateColumn(taskId, currCol, columnList, destCol, columnList);
+        const result = await this.taskRepo.updateColumn(taskId, currCol, columnList, destCol, columnList);
 
         if (!result) throw new Error(ErrorCode.ACTION_FAILED);
         logResponse(MethodName.MOVE_TASK, result);
@@ -147,7 +147,7 @@ export class TaskService {
       ];
 
       // update column
-      const result = this.taskRepo.updateColumn(taskId, currCol, newOriginList, destCol, newDestList);
+      const result = await this.taskRepo.updateColumn(taskId, currCol, newOriginList, destCol, newDestList);
 
       // ensure that it is preserved, unless implement otherwise
       if (!result) throw new Error(ErrorCode.ACTION_FAILED);
@@ -188,7 +188,7 @@ export class TaskService {
       ...partialUpdate 
     } as ITask;
 
-    const result = this.taskRepo.update(updatedTask);
+    const result = await this.taskRepo.update(updatedTask);
 
     if (!result) {
       throw new Error(`Task ${target.id}  ${ErrorCode.RECORD_NOT_FOUND}`);
