@@ -2,6 +2,7 @@ import { Droppable } from '@hello-pangea/dnd';
 import { Column as ColumnType, Task } from '../../types/kanban.types';
 import { TaskCard } from './TaskCard';
 import { colorClasses } from '../../hooks/useKanban';
+import { X } from 'lucide-react';
 
 interface ColumnProps {
   column: ColumnType;
@@ -11,6 +12,7 @@ interface ColumnProps {
   onStopEdit: () => void;
   onUpdateTask: (taskId: string, content: string) => void;
   onDeleteTask: (taskId: string, columnId: string) => void;
+  handleDelete: (columnId: string) => void;
 }
 
 export const Column: React.FC<ColumnProps> = ({ 
@@ -20,16 +22,25 @@ export const Column: React.FC<ColumnProps> = ({
   onStartEdit,
   onStopEdit,
   onUpdateTask,
-  onDeleteTask
+  onDeleteTask,
+  handleDelete
 }) => {
   return (
     <div key={column.id} className="flex flex-col">
       {/* Column header */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="group flex items-center justify-between w-full mb-4">
+      <div className="flex items-center gap-3">
         <span className={`${colorClasses[column.columnColor as keyof typeof colorClasses]?.bg || 'bg-gray-500'} text-white w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm`}>
           {tasks.length}
         </span>
         <h2 className="text-2xl font-bold text-gray-900">{column.name}</h2>
+        </div>
+        <button 
+            onClick={() => handleDelete(column.id)}
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 mr-2"
+          >
+            <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Droppable area for tasks */}
