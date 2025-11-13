@@ -1,6 +1,5 @@
-import { BoardService } from "../../src/services/boardService";
-import { Board } from "../../src/models/interface/board";
 import { BoardRepo } from "../../src/repos/boardRepo";
+import { BoardService } from "../../src/services/boardService";
 
 jest.mock("../../src/repos/boardRepo", () => ({
   BoardRepo: {
@@ -19,7 +18,6 @@ describe("BoardService", () => {
 
     // When BoardRepo.getInstance() is called, return mockBoardRepo
     (BoardRepo.getInstance as jest.Mock).mockReturnValue(mockBoardRepo);
-
     (BoardService as any).instance = null;
   });
   
@@ -33,15 +31,26 @@ describe("BoardService", () => {
     expect(instance1).toBe(instance2);
   });
   
+  
   it("should call boardRepo.get() and return its result", async () => {
-    const mockBoard: Board = { taskList: {}, columns: {}, order: [] };
+    const mockBoard = { 
+      id: 1,
+      taskList: {}, 
+      columns: {}, 
+      order: [] 
+    };
     mockBoardRepo.get.mockResolvedValue(mockBoard);
 
     const service = BoardService.getInstance();
     const result = await service.getFullBoard();
 
     expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
-    expect(result).toEqual(mockBoard);
+    expect(result).toEqual({
+      id: 1,
+      taskList: {},
+      columns: {},
+      order: []
+    });
   });
 
 
