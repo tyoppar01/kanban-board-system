@@ -46,6 +46,7 @@ export interface Action {
   fromColumn?: string;
   toColumn: string;
   timestamp: number;
+  newIndex?: number;
 }
 
 // editing state
