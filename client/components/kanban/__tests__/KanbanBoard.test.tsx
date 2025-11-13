@@ -91,6 +91,8 @@ describe('KanbanBoard', () => {
     storageState: { isLoading: false, error: undefined, isAvailable: true },
     isHydrated: true,
     clearStorage: jest.fn(),
+    deleteColumn: jest.fn(),
+    addColumn: jest.fn(),
   };
 
   beforeEach(() => {
