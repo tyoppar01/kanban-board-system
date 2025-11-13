@@ -51,4 +51,22 @@ export class BoardRepo {
     }
   }
 
+  async removeColumn(colName: string): Promise<IBoard> {
+    try {
+      const updatedBoard = await Board.findOneAndUpdate(
+        {},
+        {
+          $pull: { order: colName },
+          $unset: { [`columns.${colName}`]: "" }
+        },
+        { new: true }
+      ).lean();
+
+      return updatedBoard as IBoard;
+
+    } catch (error) {
+      throw new Error("Failed to remove column from board");
+    }
+  }
+
 };
