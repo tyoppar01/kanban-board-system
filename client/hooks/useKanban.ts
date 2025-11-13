@@ -507,6 +507,47 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     setActions([newAction, ...actions].slice(0, 10));
   }; 
 
+  const moveColumn = async (columnName: string, newIndex: number) => {
+    const currentIndex = data.columnOrder.indexOf(columnName);
+    if (currentIndex === -1) {
+      throw new Error('Column not found');
+    }
+
+    const newColumnOrder = Array.from(data.columnOrder);
+    newColumnOrder.splice(currentIndex, 1);
+    newColumnOrder.splice(newIndex, 0, columnName);
+
+    setData({
+      ...data,
+      columnOrder: newColumnOrder,
+    });
+
+    if (!USE_BROWSER_ONLY) {
+      try {
+        const backendColumnName = frontendToBackendColumnId(columnName);
+        const backendBoard = await columnApi.moveColumn(backendColumnName, newIndex);
+        const transformedBoard = transformBackendToFrontend(backendBoard);
+        setData(transformedBoard);
+      } catch (error) {
+        console.error('Failed to move column on backend:', error);
+        throw new Error('Failed to move column. Please try again.');
+      }
+    }
+
+    // add action for column move
+    const newAction: Action = {
+      id: `action-${Date.now()}`,
+      type: 'moved-column',
+      taskId: '',
+      taskContent: '',
+      fromColumn: formatColumnName(columnName),
+      toColumn: formatColumnName(columnName),
+      newIndex: newIndex, 
+      timestamp: Date.now()
+    };
+    setActions([newAction, ...actions].slice(0, 10));
+  };
+
   // Function to start editing a task
   const startEditingTask = (taskId: string) => {
     setEditingState({ isEditing: true, taskId });
@@ -566,7 +607,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
   // Handle drag and drop
   const onDragEnd = async (result: DropResult) => {
     console.log('Drag end result:', result);
-    const { destination, source, draggableId } = result;
+    const { destination, source, draggableId, type } = result;
 
     // If no destination, do nothing (dropped outside)
     if (!destination) return;
@@ -579,6 +620,14 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       return;
     }
 
+    // Handle column reordering
+    if (type === 'column') {
+      const columnId = draggableId.replace('column-', '');
+      await moveColumn(columnId, destination.index);
+      return;
+    }
+
+    // Handle task drag and drop (existing code)
     const startColumn = data.columns[source.droppableId];
     const finishColumn = data.columns[destination.droppableId];
 
