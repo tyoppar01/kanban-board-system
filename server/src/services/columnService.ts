@@ -9,11 +9,9 @@ export class ColumnService {
       constructor(private boardRepo: BoardRepo = BoardRepo.getInstance()) {}
 
       static getInstance(): ColumnService {
-            if (!ColumnService.instance) {
-                  ColumnService.instance = new ColumnService();
-            }
+            if (!ColumnService.instance) ColumnService.instance = new ColumnService();
             return ColumnService.instance;
-            }
+      }
 
       async addColumn(colName: string): Promise<IBoard> {
             const board: IBoard = await this.boardRepo.get();
