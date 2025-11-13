@@ -78,9 +78,13 @@ export const LastActions: React.FC<LastActionsProps> = ({ actions, onClose }) =>
                           <>
                             Deleted column <span className="font-semibold">"{action.fromColumn}"</span>
                           </>
+                        ) : action.type === 'moved-column' ? (
+                          <>
+                            Moved column <span className="font-semibold">"{action.fromColumn}"</span> to position <span className="font-semibold">{action.newIndex !== undefined ? action.newIndex + 1 : '?'}</span>
+                          </>
                         ) : (
                           <>
-                            Edited column <span className="font-semibold">"{action.fromColumn}"</span>
+                            Unknown action
                           </>
                         )}
                       </p>
