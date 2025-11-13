@@ -110,11 +110,3 @@ export function transformTaskToBackend(taskId: string, content: string, taskCoun
 export function extractTaskNumber(taskId: string): number {
   return parseInt(taskId.replace('task-', ''), 10);
 }
-
-/**
- * Convert frontend column ID to backend column ID
- * Since we're not mapping anymore, just return the same ID
- */
-export function frontendToBackendColumnId(frontendColumnId: string): string {
-  return frontendColumnId;
-}

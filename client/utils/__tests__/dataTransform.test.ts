@@ -2,7 +2,6 @@ import {
   transformBackendToFrontend,
   transformTaskToBackend,
   extractTaskNumber,
-  frontendToBackendColumnId,
 } from '../dataTransform';
 import { BackendBoard } from '../../services/api';
 
@@ -19,7 +18,7 @@ describe('dataTransform utilities', () => {
           ongoing: [2],
           done: [],
         },
-        order: ['todo', 'ongoing', 'done'],
+        order: ['todo', 'ongoing', 'completed'],
       };
 
       const result = transformBackendToFrontend(backendBoard);
@@ -31,14 +30,14 @@ describe('dataTransform utilities', () => {
 
       expect(result.columns['todo']).toEqual({
         id: 'todo',
-        name: 'To Do',
+        name: 'Todo',
         tasks: ['task-1'],
         columnColor: 'blue',
       });
 
-      expect(result.columns['in-progress']).toEqual({
-        id: 'in-progress',
-        name: 'In Progress',
+      expect(result.columns['ongoing']).toEqual({
+        id: 'ongoing',
+        name: 'Ongoing',
         tasks: ['task-2'],
         columnColor: 'yellow',
       });
@@ -50,7 +49,7 @@ describe('dataTransform utilities', () => {
         columnColor: 'green',
       });
 
-      expect(result.columnOrder).toEqual(['todo', 'in-progress', 'completed']);
+      expect(result.columnOrder).toEqual(['todo', 'ongoing', 'completed']);
     });
 
     it('handles empty board', () => {
@@ -61,14 +60,14 @@ describe('dataTransform utilities', () => {
           ongoing: [],
           done: [],
         },
-        order: ['todo', 'ongoing', 'done'],
+        order: ['todo', 'ongoing', 'completed'],
       };
 
       const result = transformBackendToFrontend(backendBoard);
 
       expect(result.tasks).toEqual({});
       expect(result.columns['todo'].tasks).toEqual([]);
-      expect(result.columns['in-progress'].tasks).toEqual([]);
+      expect(result.columns['ongoing'].tasks).toEqual([]);
       expect(result.columns['completed'].tasks).toEqual([]);
     });
 
@@ -180,34 +179,6 @@ describe('dataTransform utilities', () => {
     it('returns NaN for invalid format', () => {
       expect(extractTaskNumber('invalid')).toBeNaN();
       expect(extractTaskNumber('task-')).toBeNaN();
-    });
-  });
-
-  describe('frontendToBackendColumnId', () => {
-    it('converts todo column', () => {
-      expect(frontendToBackendColumnId('todo')).toBe('todo');
-    });
-
-    it('converts in-progress to ongoing', () => {
-      expect(frontendToBackendColumnId('in-progress')).toBe('ongoing');
-    });
-
-    it('converts completed to done', () => {
-      expect(frontendToBackendColumnId('completed')).toBe('done');
-    });
-
-    it('returns unknown column IDs unchanged', () => {
-      expect(frontendToBackendColumnId('custom-column')).toBe('custom-column');
-      expect(frontendToBackendColumnId('in-review')).toBe('in-review');
-    });
-  });
-
-  describe('round-trip transformation', () => {
-    it('frontend -> backend column ID -> should map correctly', () => {
-      const frontendIds = ['todo', 'in-progress', 'completed'];
-      const backendIds = frontendIds.map(frontendToBackendColumnId);
-
-      expect(backendIds).toEqual(['todo', 'ongoing', 'done']);
     });
   });
 });

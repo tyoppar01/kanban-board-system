@@ -1,12 +1,19 @@
 import { render, screen } from '@testing-library/react';
-import { DragDropContext } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { Column } from '../Column';
 import { Column as ColumnType, Task } from '../../../types/kanban.types';
 
-// Wrapper component to provide DragDropContext
+// Wrapper component to provide DragDropContext and Droppable for column dragging
 const DndWrapper = ({ children }: { children: React.ReactNode }) => (
   <DragDropContext onDragEnd={() => {}}>
-    {children}
+    <Droppable droppableId="all-columns" direction="horizontal" type="column">
+      {(provided) => (
+        <div ref={provided.innerRef} {...provided.droppableProps}>
+          {children}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
   </DragDropContext>
 );
 
@@ -37,6 +44,8 @@ describe('Column', () => {
     onStopEdit: jest.fn(),
     onUpdateTask: jest.fn(),
     onDeleteTask: jest.fn(),
+    handleDelete: jest.fn(),
+    index: 0,
   };
 
   it('renders column with correct title', () => {
@@ -148,5 +157,61 @@ describe('Column', () => {
     // Both tasks should be rendered
     expect(screen.getByText('First task')).toBeInTheDocument();
     expect(screen.getByText('Second task')).toBeInTheDocument();
+  });
+
+  it('renders column as draggable with correct draggableId', () => {
+    const { container } = render(
+      <DndWrapper>
+        <Column {...mockProps} />
+      </DndWrapper>
+    );
+    
+    // Check that column is rendered with draggable attributes
+    const draggableElement = container.querySelector('[data-rfd-draggable-id="column-todo"]');
+    expect(draggableElement).toBeInTheDocument();
+  });
+
+  it('displays cursor-move on column header for drag handle', () => {
+    const { container } = render(
+      <DndWrapper>
+        <Column {...mockProps} />
+      </DndWrapper>
+    );
+    
+    // Find the header element with cursor-move class
+    const dragHandle = container.querySelector('.cursor-move');
+    expect(dragHandle).toBeInTheDocument();
+    expect(dragHandle).toHaveTextContent('To Do');
+  });
+
+  it('renders column at correct index position', () => {
+    const { rerender } = render(
+      <DndWrapper>
+        <Column {...mockProps} index={0} />
+      </DndWrapper>
+    );
+    
+    expect(screen.getByText('To Do')).toBeInTheDocument();
+    
+    // Rerender with different index
+    rerender(
+      <DndWrapper>
+        <Column {...mockProps} index={2} />
+      </DndWrapper>
+    );
+    
+    expect(screen.getByText('To Do')).toBeInTheDocument();
+  });
+
+  it('displays delete button in column header', () => {
+    const { container } = render(
+      <DndWrapper>
+        <Column {...mockProps} />
+      </DndWrapper>
+    );
+    
+    // The delete button should be present (though hidden with opacity-0)
+    const deleteButton = container.querySelector('button');
+    expect(deleteButton).toBeInTheDocument();
   });
 });

@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useKanban } from '../useKanban';
-import { boardApi, taskApi } from '../../services/api';
+import { boardApi, columnApi, taskApi } from '../../graphql/api';
 
 // Mock the API modules
-jest.mock('../../services/api', () => ({
+jest.mock('../../graphql/api', () => ({
   boardApi: {
     getBoard: jest.fn(),
   },
@@ -12,6 +12,11 @@ jest.mock('../../services/api', () => ({
     moveTask: jest.fn(),
     deleteTask: jest.fn(),
     editTask: jest.fn(),
+  },
+  columnApi: {
+    createColumn: jest.fn(),
+    deleteColumn: jest.fn(),
+    moveColumn: jest.fn(),
   },
 }));
 
