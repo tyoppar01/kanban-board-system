@@ -86,19 +86,7 @@ const ADD_COLUMN = gql`
 
 const DELETE_COLUMN = gql`
   mutation removeColumn($name: String!) {
-    removeColumn(name: $name) {
-      taskList {
-        id
-        title
-        description
-        createdDate
-      }
-      columns {
-        id
-        taskIds
-      }
-      order
-    }
+    removeColumn(name: $name)
   }
 `;
 
@@ -267,7 +255,7 @@ export const columnApi = {
   },
 
   async deleteColumn(columnName: string): Promise<BackendBoard> {
-    const { data } = await client.mutate<{ removeColumn: { taskList: any[], columns: any[], order: string[] } }>({
+    const { data } = await client.mutate<{ removeColumn: boolean }>({
       mutation: DELETE_COLUMN,
       variables: { name: columnName }
     });
@@ -276,7 +264,7 @@ export const columnApi = {
       throw new Error('Failed to delete column via GraphQL');
     }
 
-      // Fetch the updated board instead of relying on mutation response
+    // Fetch the updated board since mutation returns boolean
     return await boardApi.getBoard();
   },
 
