@@ -34,7 +34,6 @@ export class TaskRepo {
       return task;
 
     } catch (error) {
-      console.error("Error adding task:", error);
       throw new Error("Failed to add task");
     }
   }
@@ -68,7 +67,6 @@ export class TaskRepo {
       return task;
 
     } catch (error) {
-      console.error("Error removing task:", error);
       throw new Error("Failed to remove task");
     }
   }
