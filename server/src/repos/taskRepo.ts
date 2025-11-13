@@ -45,7 +45,7 @@ export class TaskRepo {
    * @param board 
    * @returns 
    */
-  async remove(taskId: number, column: string, board: IBoard): Promise<ITask> {
+  async remove(taskId: number, column: string, board: IBoard): Promise<boolean> {
     try {
       // Get the task before removing it
       const task = board.taskList[taskId];
@@ -64,7 +64,7 @@ export class TaskRepo {
         { new: true }
       );
 
-      return task;
+      return true;
 
     } catch (error) {
       throw new Error("Failed to remove task");

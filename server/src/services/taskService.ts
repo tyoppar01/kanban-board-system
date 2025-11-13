@@ -56,7 +56,7 @@ export class TaskService {
    * @param column 
    * @returns 
    */
-  async removeTask(id: number, column: string): Promise<ITask>{
+  async removeTask(id: number, column: string): Promise<boolean>{
 
     if (!id || !column) {
       throw new Error(ErrorCode.INVALID_INPUT);
