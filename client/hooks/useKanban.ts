@@ -453,6 +453,49 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     }
   };
 
+  const deleteColumn = async (columnId: string) => {
+    // Remove column from local state
+    const {[columnId]: _, ...remainingColumns} = data.columns;
+    const updatedColumnOrder = data.columnOrder.filter(id => id !== columnId);
+
+    // Also remove tasks in that column
+    const taskIdsToRemove = data.columns[columnId]?.tasks || [];
+    const updatedTasks = { ...data.tasks };
+    taskIdsToRemove.forEach(taskId => {
+      delete updatedTasks[taskId];
+    });
+
+    setData({
+      tasks: updatedTasks,
+      columns: remainingColumns,
+      columnOrder: updatedColumnOrder,
+    });
+
+    // Sync with backend if not in browser-only mode
+    if (!USE_BROWSER_ONLY) {
+      try {
+        const backendBoard = await columnApi.deleteColumn(columnId);
+        const transformedBoard = transformBackendToFrontend(backendBoard);
+        setData(transformedBoard);
+      } catch (error) {
+        console.error('Failed to delete column on backend:', error);
+        throw new Error('Failed to delete column. Please try again.');
+      }
+    }
+
+    // add action for column deletion
+    const newAction: Action = {
+      id: `action-${Date.now()}`,
+      type: 'deleted-column',
+      taskId: '',
+      taskContent: '',
+      fromColumn: data.columns[columnId]?.name || '',
+      toColumn: '',
+      timestamp: Date.now()
+    };
+    setActions([newAction, ...actions].slice(0, 10));
+  }; 
+
   // Function to start editing a task
   const startEditingTask = (taskId: string) => {
     setEditingState({ isEditing: true, taskId });
@@ -630,5 +673,6 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     stopEditingTask,
     updateTask,
     deleteTask,
+    deleteColumn
   };
 };
