@@ -4,7 +4,7 @@ import { DropResult } from '@hello-pangea/dnd';
 import { Action, StorageState } from '../types/kanban.types';
 import { getStorageData, setStorageData, STORAGE_KEYS, isLocalStorageAvailable } from '@/utils/storage';
 import { boardApi, taskApi, columnApi } from '../graphql/api';
-import { transformBackendToFrontend, transformTaskToBackend, frontendToBackendColumnId, normalizeColumnName, formatColumnName, getColumnColor } from '../utils/dataTransform';
+import { transformBackendToFrontend, transformTaskToBackend, normalizeColumnName, formatColumnName, getColumnColor } from '../utils/dataTransform';
 
 // Empty initial data - will be loaded from backend
 const initialData: Board = {
@@ -524,8 +524,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
 
     if (!USE_BROWSER_ONLY) {
       try {
-        const backendColumnName = frontendToBackendColumnId(columnName);
-        const backendBoard = await columnApi.moveColumn(backendColumnName, newIndex);
+        const backendBoard = await columnApi.moveColumn(columnName, newIndex);
         const transformedBoard = transformBackendToFrontend(backendBoard);
         setData(transformedBoard);
       } catch (error) {
@@ -595,8 +594,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     if (!USE_BROWSER_ONLY) {
       try {
         const numericId = parseInt(taskId.split('-')[1]);
-        const backendColumnId = frontendToBackendColumnId(columnId);
-        await taskApi.deleteTask(numericId, backendColumnId);
+        await taskApi.deleteTask(numericId, columnId);
       } catch (error) {
         console.error('Failed to delete task on backend:', error);
         // Task is still deleted locally, will sync later
@@ -656,9 +654,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       if (!USE_BROWSER_ONLY) {
         try {
           const numericId = parseInt(draggableId.split('-')[1]);
-          const backendSourceColumn = frontendToBackendColumnId(source.droppableId);
-          const backendDestColumn = frontendToBackendColumnId(destination.droppableId);
-          await taskApi.moveTask(numericId, destination.index, backendSourceColumn, backendDestColumn);
+          await taskApi.moveTask(numericId, destination.index, source.droppableId, destination.droppableId);
         } catch (error) {
           console.error('Failed to sync move to backend:', error);
         }
@@ -709,9 +705,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     if (!USE_BROWSER_ONLY) {
       try {
         const numericId = parseInt(draggableId.split('-')[1]);
-        const backendSourceColumn = frontendToBackendColumnId(source.droppableId);
-        const backendDestColumn = frontendToBackendColumnId(destination.droppableId);
-        await taskApi.moveTask(numericId, destination.index, backendSourceColumn, backendDestColumn);
+        await taskApi.moveTask(numericId, destination.index, source.droppableId, destination.droppableId);
       } catch (error) {
         console.error('Failed to sync move to backend:', error);
       }
