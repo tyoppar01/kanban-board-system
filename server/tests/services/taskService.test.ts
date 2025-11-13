@@ -1,7 +1,4 @@
-// tests/services/taskService.test.ts
-
-import { Board } from "../../src/models/interface/board";
-import { Task } from "../../src/models/interface/task";
+import { ITask } from "../../src/models/interface/task";
 import { BoardRepo } from "../../src/repos/boardRepo";
 import { TaskRepo } from "../../src/repos/taskRepo";
 import { TaskService } from "../../src/services/taskService";
@@ -45,14 +42,15 @@ describe("TaskService", () => {
   });
 
 
-  describe("addTask()", () => {
+  describe("ADD TASK", () => {
+
     it("should add a new task successfully", async () => {
-      const board: Board = {
+      const board = {
         taskList: {},
         columns: { todo: [] },
         order: [],
       };
-      const newTask: Task = { id: 1, title: "New Task" } as any;
+      const newTask: ITask = { id: 1, title: "New Task" };
 
       mockBoardRepo.get.mockResolvedValue(board);
       mockTaskRepo.add.mockReturnValue({ 1: newTask });
@@ -60,7 +58,7 @@ describe("TaskService", () => {
       const result = await taskService.addTask(newTask);
 
       expect(mockBoardRepo.get).toHaveBeenCalled();
-      expect(mockTaskRepo.add).toHaveBeenCalledWith(newTask, board);
+      expect(mockTaskRepo.add).toHaveBeenCalledWith(newTask);
       expect(result).toEqual(newTask);
     });
 
@@ -71,7 +69,7 @@ describe("TaskService", () => {
         order: [],
       });
 
-      const newTask: Task = { id: 1, title: "Task" } as any;
+      const newTask: ITask = { id: 1, title: "Task" };
 
       await expect(taskService.addTask(newTask))
         .rejects
@@ -85,7 +83,7 @@ describe("TaskService", () => {
         order: [],
       });
 
-      const newTask: Task = { id: 1, title: "Duplicate Task" } as any;
+      const newTask: ITask = { id: 1, title: "Duplicate Task" };
 
       await expect(taskService.addTask(newTask))
         .rejects
@@ -94,7 +92,8 @@ describe("TaskService", () => {
   });
 
 
-  describe("removeTask()", () => {
+  describe("REMOVE TASK", () => {
+
     it("should remove an existing task successfully", async () => {
       const board = { columns: { todo: [1] }, taskList: { 1: { id: 1 } } };
       mockBoardRepo.get.mockResolvedValue(board);
@@ -127,7 +126,8 @@ describe("TaskService", () => {
   });
 
 
-  describe("relocateTask()", () => {
+  describe("RELOCATE TASK", () => {
+
     it("should relocate task within same column", async () => {
       const board = {
         columns: { todo: [1, 2, 3] },
@@ -180,22 +180,23 @@ describe("TaskService", () => {
       };
       mockBoardRepo.get.mockResolvedValue(board);
 
-      await expect(taskService.relocateTask(1, 5, "todo", "done"))
+      await expect(taskService.relocateTask(1, 1, "todo", "done"))
         .rejects
-        .toThrow("index provided has exceed the range limit Invalid index: 5: Expected index: [0, 0]");
+        .toThrow("index provided has exceed the range limit Invalid index: 1: Expected index: [0, 0]");
     });
   });
 
 
-  describe("editTask()", () => {
+  describe("EDIT TASK", () => {
+
     it("should update an existing task", async () => {
-      const board = {
-        taskList: { 1: { id: 1, title: "Old Title", description: "Desc" } },
-      };
+
+      const board = { taskList: { 1: { id: 1, title: "Old Title", description: "Desc" } } };
+
       mockBoardRepo.get.mockResolvedValue(board);
       mockTaskRepo.update.mockReturnValue(true);
 
-      const updatedTask: Task = { id: 1, title: "New Title" } as any;
+      const updatedTask: ITask = { id: 1, title: "New Title" };
 
       const result = await taskService.editTask(updatedTask);
 
@@ -207,21 +208,20 @@ describe("TaskService", () => {
       const board = { taskList: {} };
       mockBoardRepo.get.mockResolvedValue(board);
 
-      await expect(taskService.editTask({ id: 1 } as Task))
+      await expect(taskService.editTask({ id: 1 } as ITask))
         .rejects
         .toThrow("Input is invalid, please try again");
     });
 
-    it("should throw if taskRepo.update() returns false (update failure)", async () => {
-        const board = {
-            taskList: { 1: { id: 1, title: "Old Task" } },
-        };
-        mockBoardRepo.get.mockResolvedValue(board);
-        mockTaskRepo.update.mockReturnValue(false); // ❌ simulate failure
+    it("should throw error when update has failed", async () => {
 
-        await expect(taskService.editTask({ id: 1, title: "New Task" } as any))
-            .rejects
-            .toThrow("Task 1  reocrd is not found");
+      const board = { taskList: { 1: { id: 1, title: "Old Task" } } };
+      mockBoardRepo.get.mockResolvedValue(board);
+      mockTaskRepo.update.mockReturnValue(false);
+
+      await expect(taskService.editTask({ id: 1, title: "New Task" } as any))
+        .rejects
+        .toThrow("Task 1  reocrd is not found");
     });
 
   });
