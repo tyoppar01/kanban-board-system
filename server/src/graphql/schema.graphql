@@ -55,4 +55,6 @@ type Mutation {
 
   addColumn(name: String!): Board!
 
+  removeColumn(name: String!):  Board!
+
 }

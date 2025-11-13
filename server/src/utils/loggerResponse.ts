@@ -25,7 +25,8 @@ export enum MethodName {
     EDIT_TASK = "PUT /TASK Edit",
     MOVE_TASK = "PUT /TASK DnD",
     REMOVE_TASK = "DELETE /TASK",
-    ADD_COL = "POST /COLUMN"
+    ADD_COL = "POST /COLUMN",
+    REMOVE_COL = "DELETE /COLUMN",
 }
 
 export enum ClassName {
