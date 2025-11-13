@@ -53,10 +53,7 @@ const MOVE_TASK = gql`
 
 const DELETE_TASK = gql`
   mutation RemoveTask($id: Int!, $column: String!) {
-    removeTask(id: $id, column: $column) {
-      id
-      title
-    }
+    removeTask(id: $id, column: $column)
   }
 `;
 
