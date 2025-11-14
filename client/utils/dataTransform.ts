@@ -56,8 +56,12 @@ export function normalizeColumnName(name: string): string {
 
 /**
  * Convert backend board structure to frontend board structure
+ * @param storedColors - Optional map of stored column colors to preserve color assignments
  */
-export function transformBackendToFrontend(backendBoard: BackendBoard): Board {
+export function transformBackendToFrontend(
+  backendBoard: BackendBoard, 
+  storedColors?: Record<string, string>
+): Board {
   // Transform tasks from Record<number, BackendTask> to Record<string, Task>
   const tasks: Record<string, Task> = {};
   Object.entries(backendBoard.taskList).forEach(([id, backendTask]) => {
@@ -78,7 +82,8 @@ export function transformBackendToFrontend(backendBoard: BackendBoard): Board {
       id: columnId,
       name: formatColumnName(columnId),
       tasks: taskIds.map(id => `task-${id}`),
-      columnColor: getColumnColor(columnId, orderIndex),
+      // Use stored color if available, otherwise calculate from index
+      columnColor: storedColors?.[columnId] || getColumnColor(columnId, orderIndex),
     };
   });
 

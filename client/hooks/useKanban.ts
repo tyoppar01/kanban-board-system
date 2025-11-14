@@ -77,6 +77,13 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
   const [actions, setActions] = useState<Action[]>([]);
   const [pendingNewTasks, setPendingNewTasks] = useState<Set<string>>(new Set());
   const hasLoadedInitialData = useRef(false);
+  
+  // Store column colors persistently (columnId -> color)
+  const [columnColors, setColumnColors] = useState<Record<string, string>>({
+    'todo': 'blue',
+    'in-progress': 'yellow',
+    'completed': 'green',
+  });
 
   const [isHydrated, setIsHydrated] = useState(false);
   const [storageState, setStorageState] = useState<StorageState>({
@@ -121,10 +128,12 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
         const savedData = getStorageData(STORAGE_KEYS.KANBAN_DATA, null);
         const savedCounter = getStorageData(STORAGE_KEYS.KANBAN_COUNTER, 7);
         const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
+        const savedColors = getStorageData(STORAGE_KEYS.COLUMN_COLORS, null);
 
         if (savedData) setData(savedData);
         if (savedCounter) setTaskCounter(savedCounter);
         if (savedActions) setActions(savedActions);
+        if (savedColors) setColumnColors(savedColors);
       }
       
       finishLoading();
@@ -132,8 +141,11 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       // Backend mode: Fetch from backend and save to localStorage
       const fetchBoardFromBackend = async () => {
         try {
+          // Load saved colors first
+          const savedColors = available ? getStorageData(STORAGE_KEYS.COLUMN_COLORS, null) : null;
+          
           const backendBoard = await boardApi.getBoard();
-          const frontendBoard = transformBackendToFrontend(backendBoard);
+          const frontendBoard = transformBackendToFrontend(backendBoard, savedColors || undefined);
           setData(frontendBoard);
           
           // Update task counter based on highest task ID
@@ -148,6 +160,9 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
             if (savedActions && savedActions.length > 0) {
               setActions(savedActions);
             }
+            if (savedColors) {
+              setColumnColors(savedColors);
+            }
             
             // Save board data to localStorage for offline support
             setStorageData(STORAGE_KEYS.KANBAN_DATA, frontendBoard);
@@ -160,10 +175,12 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
             const savedData = getStorageData(STORAGE_KEYS.KANBAN_DATA, null);
             const savedCounter = getStorageData(STORAGE_KEYS.KANBAN_COUNTER, 7);
             const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
+            const savedColors = getStorageData(STORAGE_KEYS.COLUMN_COLORS, null);
 
             if (savedData) setData(savedData);
             if (savedCounter) setTaskCounter(savedCounter);
             if (savedActions) setActions(savedActions);
+            if (savedColors) setColumnColors(savedColors);
           }
         } finally {
           finishLoading();
@@ -183,7 +200,8 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     const success =
       setStorageData(STORAGE_KEYS.KANBAN_DATA, data) &&
       setStorageData(STORAGE_KEYS.KANBAN_COUNTER, taskCounter) &&
-      setStorageData(STORAGE_KEYS.KANBAN_ACTIONS, actions);
+      setStorageData(STORAGE_KEYS.KANBAN_ACTIONS, actions) &&
+      setStorageData(STORAGE_KEYS.COLUMN_COLORS, columnColors);
 
     // if saving success is true
     if (success) {
@@ -200,7 +218,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     }
 
     return success;
-  }, [data, taskCounter, actions, storageState.isAvailable]);
+  }, [data, taskCounter, actions, columnColors, storageState.isAvailable]);
 
 
   // auto save when data changes
@@ -225,7 +243,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       if (!USE_BROWSER_ONLY) {
         try {
           const backendBoard = await boardApi.getBoard();
-          const frontendBoard = transformBackendToFrontend(backendBoard);
+          const frontendBoard = transformBackendToFrontend(backendBoard, columnColors);
           setData(frontendBoard);
           
           // Update task counter based on highest task ID
@@ -418,12 +436,20 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     // Get the new column's order index
     const newOrderIndex = data.columnOrder.length;
 
+    // Assign color once and store it permanently
+    const assignedColor = getColumnColor(columnId, newOrderIndex);
+    const updatedColumnColors = {
+      ...columnColors,
+      [columnId]: assignedColor,
+    };
+    setColumnColors(updatedColumnColors);
+
     // Create new column
     const newColumn = {
       id: columnId,
       name: formatColumnName(columnId), // Use the formatted name
       tasks: [],
-      columnColor: getColumnColor(columnId, newOrderIndex),
+      columnColor: assignedColor,
     };
 
     // Update local state immediately
@@ -444,7 +470,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     if (!USE_BROWSER_ONLY) {
       try {
         const backendBoard = await columnApi.addColumn(columnId);
-        const transformedBoard = transformBackendToFrontend(backendBoard);
+        const transformedBoard = transformBackendToFrontend(backendBoard, updatedColumnColors);
         setData(transformedBoard);
       } catch (error) {
         console.error('Failed to add column on backend:', error);
@@ -486,7 +512,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     if (!USE_BROWSER_ONLY) {
       try {
         const backendBoard = await columnApi.deleteColumn(columnId);
-        const transformedBoard = transformBackendToFrontend(backendBoard);
+        const transformedBoard = transformBackendToFrontend(backendBoard, columnColors);
         setData(transformedBoard);
       } catch (error) {
         console.error('Failed to delete column on backend:', error);
@@ -525,7 +551,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     if (!USE_BROWSER_ONLY) {
       try {
         const backendBoard = await columnApi.moveColumn(columnName, newIndex);
-        const transformedBoard = transformBackendToFrontend(backendBoard);
+        const transformedBoard = transformBackendToFrontend(backendBoard, columnColors);
         setData(transformedBoard);
       } catch (error) {
         console.error('Failed to move column on backend:', error);
