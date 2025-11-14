@@ -10,6 +10,9 @@ RUN npm install
 # copy source code
 COPY . .
 
+# run tests (unit tests only)
+RUN npm test -- --testPathIgnorePatterns="tests/e2e" --passWithNoTests
+
 # build the application
 RUN npm run build 
 
