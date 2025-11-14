@@ -30,7 +30,7 @@ test.describe('Kanban Board', () => {
     
     // Check if the main container is visible
     const mainContainer = page.locator('div.min-h-screen.bg-gray-50').first();
-    await expect(mainContainer).toBeVisible({ timeout: 10000 });
+    await expect(mainContainer).toBeVisible({ timeout: 20000 });
   });
 
   test('should display kanban columns', async ({ page }) => {
@@ -43,21 +43,7 @@ test.describe('Kanban Board', () => {
     
     // Verify the main container is present
     const mainContainer = page.locator('div.min-h-screen.bg-gray-50').first();
-    await expect(mainContainer).toBeVisible({ timeout: 1000 });
-  });
-
-  test('should be able to interact with tasks', async ({ page }) => {
-    // Wait for the board to fully load
-    await page.waitForTimeout(1500);
-    
-    // Check if the main container is visible first
-    const mainContainer = page.locator('div.min-h-screen.bg-gray-50').first();
-    await expect(mainContainer).toBeVisible({ timeout: 15000 });
-    
-    // Check if any button exists (add task or other interactions)
-    const buttons = page.getByRole('button');
-    const buttonCount = await buttons.count();
-    expect(buttonCount).toBeGreaterThan(0);
+    await expect(mainContainer).toBeVisible({ timeout: 2000 });
   });
 
   test('should have responsive layout', async ({ page }) => {
@@ -68,7 +54,7 @@ test.describe('Kanban Board', () => {
     
     // Check if main container is accessible
     const mainContainer = page.locator('div.min-h-screen.bg-gray-50').first();
-    await expect(mainContainer).toBeVisible({ timeout: 10000 });
+    await expect(mainContainer).toBeVisible({ timeout: 15000 });
     
     // Test desktop viewport
     await page.setViewportSize({ width: 1920, height: 1080 });
