@@ -73,7 +73,7 @@ export class TaskService {
     }
 
     // remove task from column and taskList
-    const deletedTask: ITask = await this.taskRepo.remove(id, column, board);
+    const deletedTask: boolean = await this.taskRepo.remove(id, column, board);
 
     // ensure that it is preserved, unless implement otherwise
     if (!deletedTask) {
