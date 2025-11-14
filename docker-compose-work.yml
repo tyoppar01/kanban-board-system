@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # Backend Server (pulls from Docker Hub)
+  server:
+    image: docker.io/tyoppar/kanban-repo-2919:server-v1
+    container_name: kanban-server
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${SERVER_PORT:-4000}
+      MONGODB_URI: ${MONGODB_URI}  
+    ports:
+      - "${SERVER_PORT:-4000}:4000"
+    networks:
+      - kanban-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/graphql"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend Client (pulls from Docker Hub)
+  client:
+    image: docker.io/tyoppar/kanban-repo-2919:client-v1
+    container_name: kanban-client
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+      NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:4000/graphql}
+    ports:
+      - "${CLIENT_PORT:-3000}:3000"
+    depends_on:
+      - server
+    networks:
+      - kanban-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  kanban-network:
+    driver: bridge
