@@ -35,6 +35,27 @@ fi
 
 echo "Using [$ENGINE] to compose kanban board..."
 
-$ENGINE compose up -d
+# Try bridge networking first (docker-compose.yml)
+echo "Attempting bridge networking..."
+if $ENGINE compose up -d 2>&1 | tee /tmp/compose-output.log | grep -q "netavark"; then
+    echo "⚠️  Bridge networking failed (netavark error)"
+    echo "Cleaning up and switching to host networking..."
+    
+    # Clean up failed containers
+    $ENGINE compose down 2>/dev/null || true
+    $ENGINE rm -af 2>/dev/null || true
+    
+    # Try host networking
+    if [ -f "docker-compose.host.yml" ]; then
+        echo "Starting with host networking..."
+        $ENGINE compose -f docker-compose.host.yml up -d
+        echo "✅ Host networking succeeded"
+    else
+        echo "❌ docker-compose.host.yml not found"
+        exit 1
+    fi
+else
+    echo "✅ Bridge networking succeeded"
+fi
 
 echo "Services started successfully."
