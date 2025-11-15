@@ -1,12 +1,9 @@
-import dotenv from "dotenv";
 import mongoose from 'mongoose';
-import path from 'path';
-
-dotenv.config();
 
 export const conenctMongoose = async () => {
 
     try {
+        console.log("MONGO_URI VALUE is", ((process.env.MONGO_URI)?true:false));
         console.log("Starting to connect to MongoDB")
         await mongoose.connect(process.env.MONGO_URI!, 
             { 
