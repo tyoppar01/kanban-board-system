@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+import path = require("path");
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+
 import express = require("express");
 import http = require("http");
 import { ApolloServer } from "@apollo/server";
@@ -6,6 +10,7 @@ import cors from "cors";
 import { resolvers } from "./graphql/resolvers";
 import typeDefs from "./graphql/typeDefs";
 import { conenctMongoose } from "./database";
+import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 
 // ==================== Middleware ======================== //
 const app = express();
@@ -13,7 +18,7 @@ app.use(express.json());
 app.use(cors());
 
 // =================== Health Check ======================= //
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
   console.log("✅ GET / triggered OK");
   res.status(200).json({ success: true, message: "Server is running" });
 });
@@ -24,18 +29,28 @@ async function startServer() {
 
   await conenctMongoose();
 
-  const server = new ApolloServer({ typeDefs, resolvers });
+  const httpServer = http.createServer(app);
+
+  const server = new ApolloServer({ 
+    typeDefs, 
+    resolvers,
+    csrfPrevention: false,
+    plugins: [ApolloServerPluginLandingPageLocalDefault ()],
+  });
 
   await server.start();
 
   app.use(
     "/graphql",
-    cors<cors.CorsRequest>(),
+    cors(),
     express.json(),
-    expressMiddleware(server)
+    expressMiddleware(server, {
+      context: async ({ req }) => ({ token: req.headers.token }),
+    })
   );
 
-  const httpServer = http.createServer(app);
+  const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
+
   httpServer.listen(PORT, () => {
     console.log(`🚀 GraphQL Server ready at http://localhost:${PORT}/graphql`);
   });
@@ -47,5 +62,4 @@ async function startServer() {
   httpServer.timeout = 0;
 }
 
-const PORT = 8080;
 startServer().catch(console.error);

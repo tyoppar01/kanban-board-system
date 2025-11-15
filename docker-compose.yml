@@ -1,37 +1,37 @@
-version: '3.8'
-
 services:
-  # Backend Server (pulls from Docker Hub)
+  # Server (GraphQL)
   server:
-    image: docker.io/tyoppar/kanban-repo-2919:server-v2
+    image: docker.io/tyoppar/kanban-repo-2919:server-v5
     container_name: kanban-server
     restart: unless-stopped
-    network_mode: host
+    env_file:
+      - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      PORT: ${SERVER_PORT:-4000}
-      MONGO_URI: ${MONGODB_URI}  
+      PORT: ${SERVER_PORT:-8080}
+      MONGO_URI: ${MONGO_URI}  
     ports:
-      - "${SERVER_PORT:-4000}:4000"
+      - "${SERVER_PORT:-8080}:8080"
     networks:
       - kanban-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/graphql"]
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8080/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
 
-  # Frontend Client (pulls from Docker Hub)
+  # Client (Next.JS)
   client:
     image: docker.io/tyoppar/kanban-repo-2919:client-v2
     container_name: kanban-client
     restart: unless-stopped
-    network_mode: host
+    env_file:
+      - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
-      NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:4000/graphql}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+      NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:8080/graphql}
     ports:
       - "${CLIENT_PORT:-3000}:3000"
     depends_on:

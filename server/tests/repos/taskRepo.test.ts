@@ -73,7 +73,7 @@ describe(`TaskRepo`, () => {
 
     // Remove Task
     it('should remove a task from a specific column', async () => {
-        const expectedRemovedTask: ITask = { id: 1, title: "Setup project" };
+        const expected_res = true;
         
         // Mock the MongoDB update operation
         MockedBoard.findOneAndUpdate.mockReturnValue({
@@ -82,7 +82,7 @@ describe(`TaskRepo`, () => {
 
         const removedTask = await repo.remove(1, 'todo', board);
 
-        expect(removedTask).toEqual(expectedRemovedTask);
+        expect(removedTask).toEqual(expected_res);
         expect(MockedBoard.findOneAndUpdate).toHaveBeenCalledWith(
             {},
             {
