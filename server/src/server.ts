@@ -49,7 +49,7 @@ async function startServer() {
     })
   );
 
-  const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
+  const PORT = process.env.PORT ? Number(process.env.PORT) : 8080;
 
   httpServer.listen(PORT, () => {
     console.log(`🚀 GraphQL Server ready at http://localhost:${PORT}/graphql`);
