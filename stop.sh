@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 # Auto-detect Docker or Podman
 if command -v docker &> /dev/null; then
     ENGINE="docker"
