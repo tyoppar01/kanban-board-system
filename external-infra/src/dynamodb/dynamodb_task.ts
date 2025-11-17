@@ -1,7 +1,7 @@
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { ITask } from "../models/task";
 import { logResponse, MethodName } from "../utils/loggerResponse";
-import { docClient, TABLES } from "./dynamodb_init";
+import { docClient, TABLES } from "./client";
 import { DynamoBoardRepo } from "./dynamodb_board";
 
 // ==================== DynamoDB Task Repo ===================== //
@@ -176,5 +176,5 @@ export class DynamoTaskRepo {
       throw new Error("Failed to update task");
     }
   }
-  
+
 }

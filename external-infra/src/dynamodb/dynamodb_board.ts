@@ -1,7 +1,7 @@
 import { DeleteCommand, GetCommand, PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { IBoard } from "../models/board";
 import { logResponse, MethodName } from "../utils/loggerResponse";
-import { docClient, TABLES } from "./dynamodb_init";
+import { docClient, TABLES } from "./client";
 
 // ================== DynamoDB Board Repo =================== //
 
