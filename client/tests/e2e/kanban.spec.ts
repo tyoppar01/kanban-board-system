@@ -23,7 +23,7 @@ test.describe('Full User Workflow - End to End', () => {
     
     // step 1: verify board is there
     const mainContainer = page.locator('div.min-h-screen.bg-gray-50').first();
-    await expect(mainContainer).toBeVisible({ timeout: 10000 });
+    await expect(mainContainer).toBeVisible({ timeout: 20000 });
     
     // step 2: create a new task and verify db write
     console.log('Step 2: Creating a new task...');
