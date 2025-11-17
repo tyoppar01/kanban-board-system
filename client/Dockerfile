@@ -1,17 +1,21 @@
-# use node 22 alpine as base image
-FROM node:22-alpine AS builder
+# use node 22 as base image
+FROM node:22 AS builder
 
 WORKDIR /app
 
 # install dependencies
 COPY package*.json ./
 RUN npm install
+RUN npx playwright install --with-deps chromium
 
 # copy source code
 COPY . .
 
 # run tests (unit tests only)
-RUN npm test -- --testPathIgnorePatterns="tests/e2e" --passWithNoTests
+RUN npm test
+
+# run E2E tests
+RUN npm run test:e2e
 
 # build the application
 RUN npm run build 
@@ -26,7 +30,6 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./
 COPY --from=builder /app/tsconfig.json ./
-# COPY --from=builder /app/.env ./.env
 
 RUN npm install --omit=dev
 
