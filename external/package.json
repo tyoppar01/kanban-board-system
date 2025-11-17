@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "dev": "nodemon",
+    "start": "ts-node src/server.ts",
+    "test": "jest --coverage"
+  },
+  "devDependencies": {
+    "@types/mongoose": "^5.11.96",
+    "@types/node": "^24.10.1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.932.0",
+    "@aws-sdk/lib-dynamodb": "^3.932.0",
+    "dotenv": "^17.2.3"
+  }
+}
