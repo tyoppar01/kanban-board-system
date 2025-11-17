@@ -1,6 +1,6 @@
 import { ITask } from "./task";
 
-export interface IBoard extends Document {
+export interface IBoard {
   id?: number;
   taskList: Record<number, ITask>;
   columns: Record<string, number[]>;

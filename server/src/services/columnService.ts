@@ -1,12 +1,12 @@
+import { DynamoBoardRepo } from "../../../external-infra/src/dynamodb/dynamodb_board";
 import { IBoard } from "../models/interface/board";
-import { BoardRepo } from "../repos/boardRepo";
 import { ErrorCode } from "../utils/errorCode";
 
 export class ColumnService {
 
       private static instance: ColumnService;
 
-      constructor(private boardRepo: BoardRepo = BoardRepo.getInstance()) {}
+      constructor(private boardRepo: DynamoBoardRepo = DynamoBoardRepo.getInstance()) {}
 
       static getInstance(): ColumnService {
             if (!ColumnService.instance) ColumnService.instance = new ColumnService();
@@ -16,7 +16,7 @@ export class ColumnService {
       async addColumn(colName: string): Promise<IBoard> {
             const board: IBoard = await this.boardRepo.get();
             if (board.columns[colName]) throw new Error(ErrorCode.INVALID_INPUT);
-            const output = await this.boardRepo.setColumn(colName, board);
+            const output = await this.boardRepo.setColumn(colName);
             return output;
       }
 
