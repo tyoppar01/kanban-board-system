@@ -2,23 +2,20 @@ services:
   # Server (GraphQL)
   server:
     build: 
-      context: /server
-      dockerfile: Dockerfile 
+      context: .
+      dockerfile: ./server/Dockerfile 
     container_name: kanban-server
     restart: unless-stopped
-    network_mode: host
     env_file:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${SERVER_PORT:-8080}
-      MONGO_URI: ${MONGO_URI}  
-    ports:
-      - "${SERVER_PORT:-8080}:8080"
+    network_mode: host
+    volumes:
+      - ./external-infra:/external-infra:ro
     depends_on:
       - dynamodb
-    networks:
-      - kanban-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8080/"]
       interval: 30s
@@ -28,24 +25,18 @@ services:
 
   # Client (Next.JS)
   client:
-    build: 
-      context: /client
-      dockerfile: Dockerfile 
+    image: docker.io/tyoppar/kanban-repo-2919:client-v2
     container_name: kanban-client
     restart: unless-stopped
-    network_mode: host
     env_file:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
       NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:8080/graphql}
-    ports:
-      - "${CLIENT_PORT:-3000}:3000"
+    network_mode: host
     depends_on:
       - server
-    networks:
-      - kanban-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
@@ -55,31 +46,14 @@ services:
 
   # Database (DynamoDBLocal)
   dynamodb:
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
-    image: "amazon/dynamodb-local:latest"
+    image: docker.io/amazon/dynamodb-local:latest
     container_name: kanban-dynamodb
     restart: unless-stopped
-    network_mode: host
-    ports:
-      - "${DYNAMO_PORT:-8000}:8000"
     environment:
       DYNAMODB_ENDPOINT: ${DYNAMO_ENDPOINT:-http://localhost:8000}
-    networks:
-      - kanban-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+    network_mode: host
     volumes:
       - dynamo-data:/home/dynamodblocal/data
-    working_dir: 
-      - /home/dynamodblocal
-
-networks:
-  kanban-network:
-    driver: bridge
 
 volumes:
   dynamo-data:
