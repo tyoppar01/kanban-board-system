@@ -57,7 +57,13 @@ export { DynamoBoardRepo } from "../dynamodb/dynamodb_board";
 export { DynamoTaskRepo } from "../dynamodb/dynamodb_task";
 
 export const client = new DynamoDBClient(getDynamoConfig());
-export const docClient = DynamoDBDocumentClient.from(client);
+export const docClient = DynamoDBDocumentClient.from(client, {
+  marshallOptions: {
+    removeUndefinedValues: true, // Remove undefined values from objects
+    convertEmptyValues: false,
+    convertClassInstanceToMap: false
+  }
+});
 export const TABLES = getTableNames();
 
 /**
