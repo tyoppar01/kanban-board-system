@@ -1,9 +1,10 @@
-import { BoardRepo } from "../../src/repos/boardRepo";
+import { DynamoBoardRepo } from "../../../external-infra/src/dynamodb/dynamodb_board";
 import { ColumnService } from "../../src/services/columnService";
+import { ErrorCode } from "../../src/utils/errorCode";
 
-// Mock BoardRepo
-jest.mock("../../src/repos/boardRepo", () => ({
-  BoardRepo: {
+// Mock DynamoBoardRepo
+jest.mock("../../../external-infra/src/dynamodb/dynamodb_board", () => ({
+  DynamoBoardRepo: {
     getInstance: jest.fn(),
   },
 }));
@@ -28,8 +29,9 @@ describe("ColumnService", () => {
                   moveCol: jest.fn(),
             };
 
-            (BoardRepo.getInstance as jest.Mock).mockReturnValue(mockBoardRepo);
+            (DynamoBoardRepo.getInstance as jest.Mock).mockReturnValue(mockBoardRepo);
 
+            // Reset singleton instance
             (ColumnService as any).instance = null;
             columnService = ColumnService.getInstance();
       });
@@ -67,7 +69,7 @@ describe("ColumnService", () => {
                   const result = await columnService.addColumn("newColumn");
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
-                  expect(mockBoardRepo.setColumn).toHaveBeenCalledWith("newColumn", mockBoard);
+                  expect(mockBoardRepo.setColumn).toHaveBeenCalledWith("newColumn");
                   expect(result).toEqual(updatedBoard);
             });
 
@@ -82,7 +84,7 @@ describe("ColumnService", () => {
 
                   await expect(columnService.addColumn("todo"))
                   .rejects
-                  .toThrow("Input is invalid, please try again");
+                  .toThrow(ErrorCode.INVALID_INPUT);
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
                   expect(mockBoardRepo.setColumn).not.toHaveBeenCalled();
@@ -97,6 +99,42 @@ describe("ColumnService", () => {
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
                   expect(mockBoardRepo.setColumn).not.toHaveBeenCalled();
+            });
+
+            it("should handle setColumn repository failures", async () => {
+                  const mockBoard = {
+                        taskList: {},
+                        columns: { todo: [] },
+                        order: ["todo"],
+                  };
+
+                  mockBoardRepo.get.mockResolvedValue(mockBoard);
+                  mockBoardRepo.setColumn.mockRejectedValue(new Error("Repository error"));
+
+                  await expect(columnService.addColumn("newColumn"))
+                  .rejects
+                  .toThrow("Repository error");
+
+                  expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
+                  expect(mockBoardRepo.setColumn).toHaveBeenCalledWith("newColumn");
+            });
+
+            it("should handle empty column name", async () => {
+                  const mockBoard = {
+                        taskList: {},
+                        columns: {},
+                        order: [],
+                  };
+
+                  mockBoardRepo.get.mockResolvedValue(mockBoard);
+                  mockBoardRepo.setColumn.mockResolvedValue(mockBoard);
+
+                  // Empty string is treated as a valid column name in current implementation
+                  const result = await columnService.addColumn("");
+                  
+                  expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
+                  expect(mockBoardRepo.setColumn).toHaveBeenCalledWith("");
+                  expect(result).toEqual(mockBoard);
             });
 
       });
@@ -131,7 +169,7 @@ describe("ColumnService", () => {
 
                   await expect(columnService.removeColumn("nonexistent"))
                   .rejects
-                  .toThrow("Input is invalid, please try again");
+                  .toThrow(ErrorCode.INVALID_INPUT);
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
                   expect(mockBoardRepo.removeColumn).not.toHaveBeenCalled();
@@ -143,6 +181,41 @@ describe("ColumnService", () => {
                   await expect(columnService.removeColumn("done"))
                   .rejects
                   .toThrow("Database error");
+
+                  expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
+                  expect(mockBoardRepo.removeColumn).not.toHaveBeenCalled();
+            });
+
+            it("should handle removeColumn repository failures", async () => {
+                  const mockBoard = {
+                        taskList: {},
+                        columns: { todo: [], done: [] },
+                        order: ["todo", "done"],
+                  };
+
+                  mockBoardRepo.get.mockResolvedValue(mockBoard);
+                  mockBoardRepo.removeColumn.mockRejectedValue(new Error("Repository error"));
+
+                  await expect(columnService.removeColumn("done"))
+                  .rejects
+                  .toThrow("Repository error");
+
+                  expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
+                  expect(mockBoardRepo.removeColumn).toHaveBeenCalledWith("done");
+            });
+
+            it("should handle board with no columns object", async () => {
+                  const mockBoard = {
+                        taskList: {},
+                        columns: null,
+                        order: [],
+                  };
+
+                  mockBoardRepo.get.mockResolvedValue(mockBoard);
+
+                  await expect(columnService.removeColumn("done"))
+                  .rejects
+                  .toThrow("Cannot read properties of null (reading 'done')");
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
                   expect(mockBoardRepo.removeColumn).not.toHaveBeenCalled();
@@ -179,7 +252,7 @@ describe("ColumnService", () => {
 
                   await expect(columnService.moveColumn("ongoing", 0))
                   .rejects
-                  .toThrow("reocrd is not found");
+                  .toThrow(ErrorCode.RECORD_NOT_FOUND);
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
                   expect(mockBoardRepo.moveCol).not.toHaveBeenCalled();
@@ -196,7 +269,7 @@ describe("ColumnService", () => {
 
                   await expect(columnService.moveColumn("ongoing", -1))
                   .rejects
-                  .toThrow("Input is invalid, please try again");
+                  .toThrow(ErrorCode.INVALID_INPUT);
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
                   expect(mockBoardRepo.moveCol).not.toHaveBeenCalled();
@@ -213,7 +286,7 @@ describe("ColumnService", () => {
 
                   await expect(columnService.moveColumn("ongoing", 5))
                   .rejects
-                  .toThrow("Input is invalid, please try again");
+                  .toThrow(ErrorCode.INVALID_INPUT);
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
                   expect(mockBoardRepo.moveCol).not.toHaveBeenCalled();
@@ -245,6 +318,58 @@ describe("ColumnService", () => {
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
                   expect(mockBoardRepo.moveCol).toHaveBeenCalledWith("ongoing", 1, ["todo", "ongoing", "done"]);
                   expect(result).toBe(false);
+            });
+
+            it("should handle moveCol repository failures", async () => {
+                  const mockBoard = {
+                        taskList: {},
+                        columns: { todo: [], ongoing: [], done: [] },
+                        order: ["todo", "ongoing", "done"],
+                  };
+
+                  mockBoardRepo.get.mockResolvedValue(mockBoard);
+                  mockBoardRepo.moveCol.mockRejectedValue(new Error("Repository error"));
+
+                  await expect(columnService.moveColumn("ongoing", 1))
+                  .rejects
+                  .toThrow("Repository error");
+
+                  expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
+                  expect(mockBoardRepo.moveCol).toHaveBeenCalledWith("ongoing", 1, ["todo", "ongoing", "done"]);
+            });
+
+            it("should handle edge case where destIndex equals array length", async () => {
+                  const mockBoard = {
+                        taskList: {},
+                        columns: { todo: [], ongoing: [], done: [] },
+                        order: ["todo", "ongoing", "done"],
+                  };
+
+                  mockBoardRepo.get.mockResolvedValue(mockBoard);
+
+                  await expect(columnService.moveColumn("ongoing", 3)) // Length is 3, so index 3 is invalid
+                  .rejects
+                  .toThrow(ErrorCode.INVALID_INPUT);
+
+                  expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
+                  expect(mockBoardRepo.moveCol).not.toHaveBeenCalled();
+            });
+
+            it("should successfully move column to same position", async () => {
+                  const mockBoard = {
+                        taskList: {},
+                        columns: { todo: [], ongoing: [], done: [] },
+                        order: ["todo", "ongoing", "done"],
+                  };
+
+                  mockBoardRepo.get.mockResolvedValue(mockBoard);
+                  mockBoardRepo.moveCol.mockResolvedValue(true);
+
+                  const result = await columnService.moveColumn("ongoing", 1); // Same position
+
+                  expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
+                  expect(mockBoardRepo.moveCol).toHaveBeenCalledWith("ongoing", 1, ["todo", "ongoing", "done"]);
+                  expect(result).toBe(true);
             });
       });
 

@@ -1,7 +1,9 @@
 services:
   # Server (GraphQL)
   server:
-    image: docker.io/tyoppar/kanban-repo-2919:server-v5
+    build: 
+      context: /server
+      dockerfile: Dockerfile 
     container_name: kanban-server
     restart: unless-stopped
     network_mode: host
@@ -11,6 +13,12 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${SERVER_PORT:-8080}
       MONGO_URI: ${MONGO_URI}  
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      - dynamodb
+    networks:
+      - kanban-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8080/"]
       interval: 30s
@@ -20,7 +28,9 @@ services:
 
   # Client (Next.JS)
   client:
-    image: docker.io/tyoppar/kanban-repo-2919:client-v2
+    build: 
+      context: /client
+      dockerfile: Dockerfile 
     container_name: kanban-client
     restart: unless-stopped
     network_mode: host
@@ -30,11 +40,46 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
       NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:8080/graphql}
+    ports:
+      - "${CLIENT_PORT:-3000}:3000"
     depends_on:
       - server
+    networks:
+      - kanban-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  # Database (DynamoDBLocal)
+  dynamodb:
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    image: "amazon/dynamodb-local:latest"
+    container_name: kanban-dynamodb
+    restart: unless-stopped
+    network_mode: host
+    ports:
+      - "${DYNAMO_PORT:-8000}:8000"
+    environment:
+      DYNAMODB_ENDPOINT: ${DYNAMO_ENDPOINT:-http://localhost:8000}
+    networks:
+      - kanban-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - dynamo-data:/home/dynamodblocal/data
+    working_dir: 
+      - /home/dynamodblocal
+
+networks:
+  kanban-network:
+    driver: bridge
+
+volumes:
+  dynamo-data:

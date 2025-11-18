@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import path = require("path");
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-import { CreateTableCommand, DynamoDBClient, ListTablesCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
+import { CreateTableCommand, DynamoDBClient, ListTablesCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { logProcess, MethodName } from "../utils/loggerResponse";
 
@@ -63,7 +63,6 @@ export const testConnection = async (): Promise<boolean> => {
     
   } catch (error: any) {
     logProcess(MethodName.TEST, `❌ DynamoDB connection failed: ${error.message}`);
-    console.error('Full error details:', error);
     return false;
   }
 };
