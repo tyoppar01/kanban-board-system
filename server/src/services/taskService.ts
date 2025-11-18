@@ -1,6 +1,6 @@
-import { DynamoBoardRepo } from "../../../external-infra/src/dynamodb/dynamodb_board";
-import { DynamoTaskRepo } from "../../../external-infra/src/dynamodb/dynamodb_task";
 import { ITask } from "../models/interface/task";
+import { BoardRepo } from "../repos/boardRepo";
+import { TaskRepo } from "../repos/taskRepo";
 import { ErrorCode } from "../utils/errorCode";
 import { logResponse, MethodName } from "../utils/loggerResponse";
 
@@ -10,10 +10,7 @@ export class TaskService {
 
   private static instance: TaskService;
 
-  constructor(
-    private taskRepo: DynamoTaskRepo = DynamoTaskRepo.getInstance(), 
-    private boardRepo: DynamoBoardRepo = DynamoBoardRepo.getInstance()
-  ) {}
+  constructor(private taskRepo: TaskRepo = TaskRepo.getInstance(), private boardRepo: BoardRepo = BoardRepo.getInstance()) {}
 
   static getInstance(): TaskService {
     if (!TaskService.instance) {
@@ -48,7 +45,7 @@ export class TaskService {
     }
 
     // add into taskList and columnList
-    const output = await this.taskRepo.add(task);
+    const output = this.taskRepo.add(task);
     logResponse(MethodName.ADD_TASK, output);
     return task;
   }
@@ -76,7 +73,7 @@ export class TaskService {
     }
 
     // remove task from column and taskList
-    const deletedTask: boolean = await this.taskRepo.remove(id, column);
+    const deletedTask: boolean = await this.taskRepo.remove(id, column, board);
 
     // ensure that it is preserved, unless implement otherwise
     if (!deletedTask) {

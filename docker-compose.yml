@@ -1,9 +1,7 @@
 services:
   # Server (GraphQL)
   server:
-    build: 
-      context: /server
-      dockerfile: Dockerfile 
+    image: docker.io/tyoppar/kanban-repo-2919:server-v5
     container_name: kanban-server
     restart: unless-stopped
     env_file:
@@ -14,8 +12,6 @@ services:
       MONGO_URI: ${MONGO_URI}  
     ports:
       - "${SERVER_PORT:-8080}:8080"
-    depends_on:
-      - dynamodb
     networks:
       - kanban-network
     healthcheck:
@@ -27,9 +23,7 @@ services:
 
   # Client (Next.JS)
   client:
-    build: 
-      context: /client
-      dockerfile: Dockerfile 
+    image: docker.io/tyoppar/kanban-repo-2919:client-v2
     container_name: kanban-client
     restart: unless-stopped
     env_file:
@@ -51,32 +45,6 @@ services:
       retries: 3
       start_period: 60s
 
-  # Database (DynamoDBLocal)
-  dynamodb:
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
-    image: "amazon/dynamodb-local:latest"
-    container_name: kanban-dynamodb
-    restart: unless-stopped
-    ports:
-      - "${DYNAMO_PORT:-8000}:8000"
-    environment:
-      DYNAMODB_ENDPOINT: ${DYNAMO_ENDPOINT:-http://localhost:8000}
-    networks:
-      - kanban-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    volumes:
-      - dynamo-data:/home/dynamodblocal/data
-    working_dir: 
-      - /home/dynamodblocal
-
 networks:
   kanban-network:
     driver: bridge
-
-volumes:
-  dynamo-data:
