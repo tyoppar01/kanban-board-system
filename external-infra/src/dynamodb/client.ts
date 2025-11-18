@@ -33,14 +33,24 @@ const getDynamoConfig = () => {
  * @returns Object with table names
  */
 const getTableNames = () => {
-  const prefix = process.env.DYNAMO_TABLE_PREFIX || '';
+  // Clean the prefix by removing quotes if they exist
+  let prefix = process.env.DYNAMO_TABLE_PREFIX || '';
+  prefix = prefix.replace(/^["']|["']$/g, ''); // Remove leading/trailing quotes
+  
   const suffix = process.env.NODE_ENV === 'development' ? '' : '_prod';
   
-  return {
+  const tableNames = {
     BOARDS: `${prefix}board${suffix}`,
     TASKS: `${prefix}task${suffix}`,
     COLUMNS: `${prefix}column${suffix}`
   };
+  
+  // Debug logging to see what table names are being generated
+  console.log('🔍 Generated table names:', tableNames);
+  console.log('🔍 Raw prefix from env:', process.env.DYNAMO_TABLE_PREFIX);
+  console.log('🔍 Cleaned prefix:', prefix);
+  
+  return tableNames;
 };
 
 export { DynamoBoardRepo } from "../dynamodb/dynamodb_board";
@@ -72,24 +82,44 @@ export const testConnection = async (): Promise<boolean> => {
  * @returns 
  */
 export const initBoardTable = async () => {
-  const command = new CreateTableCommand({
-    TableName: TABLES.BOARDS,
-    AttributeDefinitions: [
-      {
-        AttributeName: "id",
-        AttributeType: "N",
-      },
-    ],
-    KeySchema: [
-      {
-        AttributeName: "id",
-        KeyType: "HASH",
-      },
-    ],
-    BillingMode: "PAY_PER_REQUEST",
-  });
+  try {
+    console.log(`🔍 Attempting to create table: ${TABLES.BOARDS}`);
+    
+    const command = new CreateTableCommand({
+      TableName: TABLES.BOARDS,
+      AttributeDefinitions: [
+        {
+          AttributeName: "id",
+          AttributeType: "N",
+        },
+      ],
+      KeySchema: [
+        {
+          AttributeName: "id",
+          KeyType: "HASH",
+        },
+      ],
+      BillingMode: "PAY_PER_REQUEST",
+    });
 
-  const response = await client.send(command);
-  logProcess(MethodName.INIT_TABLE, "Table initialized successfully");
-  return response;
+    const response = await client.send(command);
+    logProcess(MethodName.INIT_TABLE, `✅ Table '${TABLES.BOARDS}' initialized successfully`);
+    return response;
+    
+  } catch (error: any) {
+    // Check if table already exists
+    if (error.name === 'ResourceInUseException' || error.message.includes('preexisting table')) {
+      logProcess(MethodName.INIT_TABLE, `✅ Table '${TABLES.BOARDS}' already exists - continuing`);
+      console.log(`🔍 Table ${TABLES.BOARDS} already exists, skipping creation`);
+      return null; // Table already exists, this is fine
+    }
+    
+    logProcess(MethodName.INIT_TABLE, `❌ Table creation failed: ${error.message}`);
+    console.error('🔍 Table creation error details:', {
+      tableName: TABLES.BOARDS,
+      error: error.message,
+      tableNames: TABLES
+    });
+    throw error;
+  }
 };

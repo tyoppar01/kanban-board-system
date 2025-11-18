@@ -88,8 +88,9 @@ export class DynamoBoardRepo {
       const command = new UpdateCommand({
         TableName: TABLES.BOARDS,
         Key: { id: boardId },
-        UpdateExpression: "SET columns.#colName = :emptyArray, #order = :newOrder",
+        UpdateExpression: "SET #columns.#colName = :emptyArray, #order = :newOrder",
         ExpressionAttributeNames: {
+          "#columns": "columns",
           "#colName": colName,
           "#order": "order"
         },
@@ -126,8 +127,9 @@ export class DynamoBoardRepo {
       const command = new UpdateCommand({
         TableName: TABLES.BOARDS,
         Key: { id: boardId },
-        UpdateExpression: "REMOVE columns.#colName SET #order = :newOrder",
+        UpdateExpression: "REMOVE #columns.#colName SET #order = :newOrder",
         ExpressionAttributeNames: {
+          "#columns": "columns",
           "#colName": colName,
           "#order": "order"
         },

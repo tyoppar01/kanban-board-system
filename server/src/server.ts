@@ -3,7 +3,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin
 import { expressMiddleware } from "@as-integrations/express5";
 import cors from "cors";
 import dotenv from "dotenv";
-import { startDynamoDB } from "../../external-infra/src/index";
+import { startDynamoDB } from "/external-infra/src/index";
 import { resolvers } from "./graphql/resolvers";
 import typeDefs from "./graphql/typeDefs";
 import path = require("path");
