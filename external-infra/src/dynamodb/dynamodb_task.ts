@@ -29,16 +29,17 @@ export class DynamoTaskRepo {
       const board = await DynamoBoardRepo.getInstance().get(boardId);
 
       // Add task to todo column if it doesn't exist, otherwise add to existing todo column
-      const todoColumn = board.columns.todo || [];
+      const todoColumn = board.columns?.todo || [];
       const updatedTodoColumn = [...todoColumn, task.id];
 
       // Update board with new task in taskList and add to todo column
       const command = new UpdateCommand({
         TableName: TABLES.BOARDS,
         Key: { id: boardId },
-        UpdateExpression: "SET taskList.#taskId = :task, columns.todo = :todoColumn",
+        UpdateExpression: "SET taskList.#taskId = :task, #columns.todo = :todoColumn",
         ExpressionAttributeNames: {
-          "#taskId": task.id.toString()
+          "#taskId": task.id.toString(),
+          "#columns": "columns"
         },
         ExpressionAttributeValues: {
           ":task": task,
@@ -75,16 +76,17 @@ export class DynamoTaskRepo {
       }
 
       // Remove taskId from the specified column
-      const updatedColumn = board.columns[column]?.filter(id => id !== taskId) || [];
+      const updatedColumn = board.columns?.[column]?.filter(id => id !== taskId) || [];
 
       // Create update expression to remove task from taskList and update column
       const command = new UpdateCommand({
         TableName: TABLES.BOARDS,
         Key: { id: boardId },
-        UpdateExpression: "REMOVE taskList.#taskId SET columns.#columnName = :updatedColumn",
+        UpdateExpression: "REMOVE taskList.#taskId SET #columns.#columnName = :updatedColumn",
         ExpressionAttributeNames: {
           "#taskId": taskId.toString(),
-          "#columnName": column
+          "#columnName": column,
+          "#columns": "columns"
         },
         ExpressionAttributeValues: {
           ":updatedColumn": updatedColumn
@@ -124,10 +126,11 @@ export class DynamoTaskRepo {
       const command = new UpdateCommand({
         TableName: TABLES.BOARDS,
         Key: { id: boardId },
-        UpdateExpression: "SET columns.#currCol = :currList, columns.#destCol = :destList",
+        UpdateExpression: "SET #columns.#currCol = :currList, #columns.#destCol = :destList",
         ExpressionAttributeNames: {
           "#currCol": currCol,
-          "#destCol": destCol
+          "#destCol": destCol,
+          "#columns": "columns"
         },
         ExpressionAttributeValues: {
           ":currList": currList,
