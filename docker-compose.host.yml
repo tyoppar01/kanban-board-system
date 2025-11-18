@@ -49,6 +49,7 @@ services:
     image: docker.io/amazon/dynamodb-local:latest
     container_name: kanban-dynamodb
     restart: unless-stopped
+    command: ["-jar", "DynamoDBLocal.jar", "-dbPath", "/home/dynamodblocal/data", "-sharedDb"]
     environment:
       DYNAMODB_ENDPOINT: ${DYNAMO_ENDPOINT:-http://localhost:8000}
     network_mode: host

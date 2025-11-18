@@ -32,7 +32,7 @@ export const boardResolver = {
             logProcess(MethodName.GET_BOARD, ClassName.RESOLVE, columns);
             logResponse(MethodName.GET_BOARD, { taskList, columns, order: board.order })
             
-            return { taskList, columns, columnOrder: board.order };
+            return { taskList, columns, order: board.order };
         },
 
     },
