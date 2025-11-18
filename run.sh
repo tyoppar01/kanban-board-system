@@ -30,6 +30,7 @@ if command -v docker &> /dev/null; then
 elif command -v podman &> /dev/null; then
     ENGINE="podman"
     COMPOSE_FILE="docker-compose.host.yml"
+    COMPOSE_FILE_HOST="docker-compose.host.yml"
 else
     echo "Error: Docker or Podman not found."
     exit 1
@@ -41,7 +42,7 @@ echo "Using [$ENGINE] to compose kanban board..."
 if [ "$ENGINE" = "podman" ]; then
     echo "Using host networking for Podman..."
     if [ -f "$COMPOSE_FILE" ]; then
-        $ENGINE compose -f $COMPOSE_FILE up -d
+        $ENGINE compose -f $COMPOSE_FILE -f $COMPOSE_FILE_HOST up -d
         echo "✅ Podman with host networking succeeded"
     else
         echo "❌ $COMPOSE_FILE not found"

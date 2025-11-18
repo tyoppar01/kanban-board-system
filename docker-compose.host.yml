@@ -1,16 +1,21 @@
 services:
   # Server (GraphQL)
   server:
-    image: docker.io/tyoppar/kanban-repo-2919:server-v5
+    build: 
+      context: .
+      dockerfile: ./server/Dockerfile 
     container_name: kanban-server
     restart: unless-stopped
-    network_mode: host
     env_file:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${SERVER_PORT:-8080}
-      MONGO_URI: ${MONGO_URI}  
+    network_mode: host
+    volumes:
+      - ./external-infra:/external-infra:ro
+    depends_on:
+      - dynamodb
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:8080/"]
       interval: 30s
@@ -23,13 +28,13 @@ services:
     image: docker.io/tyoppar/kanban-repo-2919:client-v2
     container_name: kanban-client
     restart: unless-stopped
-    network_mode: host
     env_file:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
       NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:8080/graphql}
+    network_mode: host
     depends_on:
       - server
     healthcheck:
@@ -38,3 +43,18 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  # Database (DynamoDBLocal)
+  dynamodb:
+    image: docker.io/amazon/dynamodb-local:latest
+    container_name: kanban-dynamodb
+    restart: unless-stopped
+    command: ["-jar", "DynamoDBLocal.jar", "-dbPath", "/home/dynamodblocal/data", "-sharedDb"]
+    environment:
+      DYNAMODB_ENDPOINT: ${DYNAMO_ENDPOINT:-http://localhost:8000}
+    network_mode: host
+    volumes:
+      - dynamo-data:/home/dynamodblocal/data
+
+volumes:
+  dynamo-data:

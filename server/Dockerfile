@@ -7,11 +7,16 @@ FROM node:20-alpine AS test
 WORKDIR /src
 
 # install dependencies
-COPY package*.json ./
+COPY server/package*.json ./
 RUN npm install
 
+# Install external-infra dependencies (will be mounted as volume)
+RUN mkdir -p /external-infra
+COPY external-infra/package*.json /external-infra/
+RUN cd /external-infra && npm install
+
 # copy source code
-COPY . .
+COPY server/ .
 
 # run tests
 RUN npm test
@@ -23,11 +28,16 @@ FROM node:20-alpine AS production
 WORKDIR /src
 
 # Copy package files and install all dependencies
-COPY package*.json ./
+COPY server/package*.json ./
 RUN npm ci
 
+# Install external-infra dependencies (will be mounted as volume)
+RUN mkdir -p /external-infra
+COPY external-infra/package*.json /external-infra/
+RUN cd /external-infra && npm ci
+
 # Copy source code
-COPY . .
+COPY server/ .
 
 # Expose port
 EXPOSE 8080
