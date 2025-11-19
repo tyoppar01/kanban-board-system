@@ -1,4 +1,4 @@
-import { ITask } from "../models/interface/task";
+import { ITask } from "../models/task";
 import { BoardRepo } from "../repos/boardRepo";
 import { TaskRepo } from "../repos/taskRepo";
 import { ErrorCode } from "../utils/errorCode";

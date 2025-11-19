@@ -37,8 +37,10 @@ fi
 
 echo "Using [$ENGINE] to compose kanban board..."
 
-echo "$ENGINE up -d"
+# Stop and remove old containers first
+$ENGINE down --remove-orphans 2>/dev/null || true
 
-$ENGINE up -d
+# Build and start with fresh containers
+$ENGINE up -d --build
 
 echo "✅ Services started successfully."

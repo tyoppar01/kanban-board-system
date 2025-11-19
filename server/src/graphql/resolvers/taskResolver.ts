@@ -1,4 +1,4 @@
-import { ITask } from "../../models/interface/task";
+import { ITask } from "../../models/task";
 import { TaskService } from "../../services/taskService";
 import { ClassName, logProcess, logResponse, MethodName } from "../../utils/loggerResponse";
 

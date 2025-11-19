@@ -1,103 +1,101 @@
-import { IBoard } from "../models/interface/board";
-import { Board } from "../models/schemaModel";
+import { BoardRepository } from 'external-apis';
+import { IBoard } from "../models/board";
 
-// ================== Board Repo =================== //
-
+/**
+ * BoardRepo Adapter
+ * Adapts the Prisma-based BoardRepository to work with existing server code
+ * This maintains the same interface as the old Mongoose-based BoardRepo
+ */
 export class BoardRepo {
 
   private static instance: BoardRepo;
+  private boardRepository: BoardRepository;
 
-  constructor() {}
+  constructor() {
+    this.boardRepository = BoardRepository.getInstance();
+  }
 
   static getInstance(): BoardRepo {
     if (!BoardRepo.instance) BoardRepo.instance = new BoardRepo();
     return BoardRepo.instance;
   }
 
+  /**
+   * Get board with all columns and tasks
+   * Transforms Prisma data structure to match IBoard interface
+   */
   async get(): Promise<IBoard> {
     try {
-      let board = await Board.findOne().lean();
 
-      if (!board) {
-        const newBoard = new Board();
-        await newBoard.save();
-        board = await Board.findOne().lean();
-      }
+      // retrieve from prisma ORM
+      const board = await this.boardRepository.get();
+      
+      // Transform Prisma structure to IBoard format
+      const taskList: Record<number, any> = {};
+      const columns: Record<string, number[]> = {};
+      const order: string[] = [];
 
-      return board as IBoard;
+      // Build columns object and order array
+      board.columns.forEach((column: any) => {
+        columns[column.name] = column.tasks.map((task: any) => task.id);
+        order.push(column.name);
+      });
+
+      // Build taskList object
+      board.columns.forEach((column: any) => {
+        column.tasks.forEach((task: any) => {
+          taskList[task.id] = {
+            id: task.id,
+            title: task.title
+          };
+        });
+      });
+
+      // return typed IBoard
+      return {
+        id: board.id,
+        taskList,
+        columns,
+        order
+      } as IBoard;
 
     } catch (error) {
       throw new Error("Failed to retrieve board");
     }
   }
 
-  async setColumn(colName: string, board: IBoard): Promise<IBoard> {
+  /**
+   * Add a new column to the board
+   */
+  async setColumn(colName: string): Promise<IBoard> {
     try {
-      const updatedBoard = await Board.findOneAndUpdate(
-        {},
-        {
-          $set: {
-            [`columns.${colName}`]: [],
-            order: [...board.order, colName]
-          }
-        },
-        { new: true }
-      ).lean();
-
-      return updatedBoard as IBoard;
-      
+      await this.boardRepository.setColumn(colName);
+      return await this.get();
     } catch (error) {
       throw new Error("Failed to add column to board");
     }
   }
 
+  /**
+   * Remove a column from the board
+   */
   async removeColumn(colName: string): Promise<boolean> {
     try {
-      const updatedBoard = await Board.findOneAndUpdate(
-        {},
-        {
-          $pull: { order: colName },
-          $unset: { [`columns.${colName}`]: "" }
-        },
-        { new: true }
-      ).lean();
-
-      return true;
-
+      return await this.boardRepository.removeColumn(colName);
     } catch (error) {
       throw new Error("Failed to remove column from board");
     }
   }
 
-  async moveCol(colName: string, destIndex: number, orderArr: string[]): Promise<boolean> {
+  /**
+   * Move a column to a new position
+   */
+  async moveCol(colName: string, destIndex: number): Promise<boolean> {
     try {
-      const newOrder = [...orderArr];
-      const currIndex = newOrder.indexOf(colName);
-      
-      if (currIndex === -1) {
-        throw new Error(`Column ${colName} not found in order`);
-      }
-
-      // Remove column from current position
-      newOrder.splice(currIndex, 1);
-      
-      // Insert column at destination index
-      newOrder.splice(destIndex, 0, colName);
-
-      // Update the board with new order
-      const updatedBoard = await Board.findOneAndUpdate(
-        {},
-        {
-          $set: { order: newOrder }
-        },
-        { new: true }
-      ).lean();
-
-      return true;
-
+      return await this.boardRepository.moveCol(colName, destIndex);
     } catch (error) {
       throw new Error("Failed to move column");
     }
   }
 
-};
+}

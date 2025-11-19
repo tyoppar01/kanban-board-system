@@ -1,0 +1,64 @@
+// Prisma Schema for Kanban Board System
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Board model - represents the kanban board
+model Board {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  columns   Column[]
+  tasks     Task[]
+
+  @@map("boards")
+}
+
+// Column model - represents columns like "todo", "ongoing", "completed"
+model Column {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  position  Int      // Order of columns on the board
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  boardId   Int
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+
+  @@map("columns")
+  @@index([boardId])
+  @@index([position])
+}
+
+// Task model - represents individual tasks
+model Task {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String?
+  position     Int       // Order within the column
+  createdDate  DateTime  @default(now())
+  modifiedDate DateTime  @updatedAt
+
+  // Relations
+  boardId      Int
+  board        Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  columnId     Int
+  column       Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@map("tasks")
+  @@index([boardId])
+  @@index([columnId])
+  @@index([position])
+}
