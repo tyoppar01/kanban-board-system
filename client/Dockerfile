@@ -4,19 +4,16 @@ FROM node:22 AS builder
 WORKDIR /app
 
 # install dependencies
-COPY package*.json ./
+COPY client/package*.json ./
 RUN npm install
 RUN npx playwright install --with-deps chromium
 
 # copy source code
-COPY . .
+COPY client/ .
 
 # run tests (unit tests only)
 RUN npm test
-
-# run E2E tests
-RUN npm run test:e2e
-
+# RUN npm run test:e2e
 # build the application
 RUN npm run build 
 

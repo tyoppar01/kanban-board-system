@@ -1,6 +1,10 @@
 import dotenv from "dotenv";
 import path = require("path");
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+try {
+  dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+} catch (e) {
+  console.log('FILE .env not found, using container environment variables');
+}
 
 import express = require("express");
 import http = require("http");
@@ -9,7 +13,7 @@ import { expressMiddleware } from "@as-integrations/express5";
 import cors from "cors";
 import { resolvers } from "./graphql/resolvers";
 import typeDefs from "./graphql/typeDefs";
-import { prisma } from "external-apis";
+import { connectDatabase } from "external-apis";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 
 // ==================== Middleware ======================== //
@@ -28,8 +32,7 @@ app.get("/", (_: any, res: any) => {
 async function startServer() {
 
   try {
-    await prisma.$connect();
-    console.log('✅ Connected to PostgreSQL via Prisma');
+    await connectDatabase();
   } catch (error) {
     console.error('❌ Failed to connect to PostgreSQL:', error);
     process.exit(1);

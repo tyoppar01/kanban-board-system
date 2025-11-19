@@ -1,7 +1,7 @@
 // Main entry point for external-apis package
 
 // Export database connection
-export { prisma, disconnectDatabase } from './config/database';
+export { prisma, connectDatabase, disconnectDatabase } from './config/database';
 
 // Export repositories
 export { BoardRepository } from './repositories/boardRepository';
