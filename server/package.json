@@ -25,6 +25,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "external-apis": "file:../external-apis",
     "graphql": "^16.12.0",
     "graphql-tag": "^2.12.6",
     "mongodb": "^7.0.0",
