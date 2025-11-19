@@ -1,0 +1,66 @@
+# Node modules (will be installed fresh in container)
+node_modules
+**/node_modules
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Testing and coverage
+coverage
+**/coverage
+
+# Build artifacts
+dist/
+build/
+*.tsbuildinfo
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker files
+docker-compose*.yml
+docker-compose*.yaml
+Dockerfile*
+.dockerignore
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation
+README.md
+docs/
+
+# Scripts
+run.sh
+stop.sh
+
+# Client build artifacts (not needed for server build)
+client/.next
+client/out
+client/dist
+
+# External APIs build
+external-apis/dist
+external-apis/build
+
+# Prisma generated client (will be generated in container)
+**/.prisma/
+**/prisma/migrations/

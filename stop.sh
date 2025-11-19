@@ -13,6 +13,6 @@ fi
 
 echo "Using [$ENGINE] to compose down kanban board..."
 
-$ENGINE compose down
+$ENGINE-compose down
 
 echo "Services stopped successfully, see you next time."

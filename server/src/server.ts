@@ -1,6 +1,10 @@
 import dotenv from "dotenv";
 import path = require("path");
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+try {
+  dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+} catch (e) {
+  console.log('FILE .env not found, using container environment variables');
+}
 
 import express = require("express");
 import http = require("http");
@@ -9,7 +13,7 @@ import { expressMiddleware } from "@as-integrations/express5";
 import cors from "cors";
 import { resolvers } from "./graphql/resolvers";
 import typeDefs from "./graphql/typeDefs";
-import { conenctMongoose } from "./database";
+import { connectDatabase } from "external-apis";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 
 // ==================== Middleware ======================== //
@@ -18,7 +22,7 @@ app.use(express.json());
 app.use(cors());
 
 // =================== Health Check ======================= //
-app.get("/", (_, res) => {
+app.get("/", (_: any, res: any) => {
   console.log("✅ GET / triggered OK");
   res.status(200).json({ success: true, message: "Server is running" });
 });
@@ -27,7 +31,12 @@ app.get("/", (_, res) => {
 
 async function startServer() {
 
-  await conenctMongoose();
+  try {
+    await connectDatabase();
+  } catch (error) {
+    console.error('❌ Failed to connect to PostgreSQL:', error);
+    process.exit(1);
+  }
 
   const httpServer = http.createServer(app);
 
@@ -45,7 +54,7 @@ async function startServer() {
     cors(),
     express.json(),
     expressMiddleware(server, {
-      context: async ({ req }) => ({ token: req.headers.token }),
+      context: async ({ req }: any) => ({ token: req.headers.token }),
     })
   );
 

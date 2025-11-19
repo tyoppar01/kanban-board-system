@@ -1,0 +1,35 @@
+{
+  "name": "external-apis",
+  "version": "1.0.0",
+  "description": "Database layer with Prisma ORM for Kanban Board System",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:reset": "prisma migrate reset",
+    "db:push": "prisma db push",
+    "postinstall": "prisma generate"
+  },
+  "keywords": [
+    "prisma",
+    "postgresql",
+    "database",
+    "kanban"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "prisma": "^5.20.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

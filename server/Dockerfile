@@ -7,11 +7,11 @@ FROM node:20-alpine AS test
 WORKDIR /src
 
 # install dependencies
-COPY package*.json ./
+COPY server/package*.json ./
 RUN npm install
 
 # copy source code
-COPY . .
+COPY server/ .
 
 # run tests
 RUN npm test
@@ -20,21 +20,31 @@ RUN npm test
 
 # production image
 FROM node:20-alpine AS production
-WORKDIR /src
 
-# Copy package files and install all dependencies
-COPY package*.json ./
-RUN npm ci
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
-# Copy source code
-COPY . .
+# Setup external-apis first
+WORKDIR /app/external-apis
+COPY external-apis/package*.json ./
+COPY external-apis/prisma ./prisma
+COPY external-apis/src ./src
+COPY external-apis/tsconfig.json ./
+RUN npm install && npm run prisma:generate
+
+# Setup server
+WORKDIR /app/server
+COPY server/package*.json ./
+# Copy rest of server code now so npm can resolve file:../external-apis
+COPY server/ ./
+RUN npm install
 
 # Expose port
 EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
 
-# ts-node src/server.ts
+# Start server with ts-node
 CMD ["npm", "start"]

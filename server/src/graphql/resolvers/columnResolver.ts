@@ -1,4 +1,4 @@
-import { IBoard } from "../../models/interface/board";
+import { IBoard } from "../../models/board";
 import { ColumnService } from "../../services/columnService";
 import { ClassName, MethodName, logProcess, logResponse } from "../../utils/loggerResponse";
 

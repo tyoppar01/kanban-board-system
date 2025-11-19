@@ -27,49 +27,33 @@ echo -e "-----------------------------------------${RESET}\n"
 if command -v docker &> /dev/null; then
     ENGINE="docker"
     COMPOSE_FILE="docker-compose.yml"
-elif command -v podman &> /dev/null; then
-    ENGINE="podman"
-    COMPOSE_FILE="docker-compose.host.yml"
+elif command -v podman-compose &> /dev/null; then
+    ENGINE="podman-compose"
+    COMPOSE_FILE="docker-compose.yml"
 else
-    echo "Error: Docker or Podman not found."
+    echo "Error: Docker or Podman-compose not found."
     exit 1
 fi
 
 echo "Using [$ENGINE] to compose kanban board..."
 
-# Use appropriate compose file based on container engine
-if [ "$ENGINE" = "podman" ]; then
-    echo "Using host networking for Podman..."
-    if [ -f "$COMPOSE_FILE" ]; then
-        $ENGINE compose -f $COMPOSE_FILE up -d
-        echo "✅ Podman with host networking succeeded"
-    else
-        echo "❌ $COMPOSE_FILE not found"
-        exit 1
-    fi
-else
-    # Try bridge networking first for Docker (docker-compose.yml)
-    echo "Attempting bridge networking for Docker..."
-    if $ENGINE compose up -d 2>&1 | tee /tmp/compose-output.log | grep -q "netavark"; then
-        echo "⚠️  Bridge networking failed (netavark error)"
-        echo "Cleaning up and switching to host networking..."
-        
-        # Clean up failed containers
-        $ENGINE compose down 2>/dev/null || true
-        $ENGINE rm -af 2>/dev/null || true
-        
-        # Try host networking
-        if [ -f "docker-compose.host.yml" ]; then
-            echo "Starting with host networking..."
-            $ENGINE compose -f docker-compose.host.yml up -d
-            echo "✅ Host networking succeeded"
-        else
-            echo "❌ docker-compose.host.yml not found"
-            exit 1
-        fi
-    else
-        echo "✅ Bridge networking succeeded"
-    fi
-fi
+# Stop and remove old containers first
+echo "🛑 Stopping existing containers..."
+$ENGINE down --remove-orphans 2>/dev/null || true
+# Remove Volume only if password has modified!
+# $ENGINE down -v 2>/dev/null || true
 
-echo "Services started successfully."
+# Build and start with fresh containers
+echo "🔨 Building containers..."
+$ENGINE up -d --build
+
+echo ""
+echo "✅ Services started successfully!"
+echo ""
+echo "📍 Access your services:"
+echo "   🌐 Client (Next.js):  http://localhost:3000"
+echo "   🔌 Server (GraphQL):  http://localhost:8080/graphql"
+echo "   🗄️  PostgreSQL:        localhost:5432"
+echo ""
+echo "💡 Check status with: podman ps"
+echo "📋 View logs with: podman logs kanban-server"

@@ -1,14 +1,23 @@
-import { IBoard } from "../models/interface/board";
-import { ITask } from "../models/interface/task";
-import { Board } from "../models/schemaModel";
+import { TaskRepository, ColumnRepository, BoardRepository } from 'external-apis';
+import { IBoard } from "../models/board";
+import { ITask } from "../models/task";
 
-// ==================== Task Repo ===================== //
-
+/**
+ * TaskRepo Adapter
+ * Adapts the Prisma-based TaskRepository to work with existing server code
+ */
 export class TaskRepo {
 
   private static instance: TaskRepo;
+  private taskRepository: TaskRepository;
+  private columnRepository: ColumnRepository;
+  private boardRepository: BoardRepository;
 
-  constructor() {}
+  constructor() {
+    this.taskRepository = TaskRepository.getInstance();
+    this.columnRepository = ColumnRepository.getInstance();
+    this.boardRepository = BoardRepository.getInstance();
+  }
 
   static getInstance(): TaskRepo {
     if (!TaskRepo.instance) TaskRepo.instance = new TaskRepo();
@@ -22,18 +31,31 @@ export class TaskRepo {
    */
   async add(task: ITask): Promise<ITask> {
     try {
-      await Board.findOneAndUpdate(
-        {},
-        {
-          $push: { "columns.todo": task.id },
-          $set: { [`taskList.${task.id}`]: task }
-        },
-        { new: true }
-      ).lean();
+      const boardId = await this.boardRepository.getBoardId();
+      
+      // Get 'todo' column
+      const todoColumn = await this.columnRepository.getByName('todo', boardId);
+      if (!todoColumn) {
+        throw new Error("Column 'todo' not found");
+      }
+
+      // Get current tasks in todo column to determine position
+      const tasks = await this.taskRepository.getByColumn(todoColumn.id);
+      const position = tasks.length;
+
+      // Create task in Prisma
+      await this.taskRepository.add({
+        title: task.title,
+        description: task.description,
+        boardId,
+        columnId: todoColumn.id,
+        position
+      });
 
       return task;
 
     } catch (error) {
+      console.error('Failed to add task:', error);
       throw new Error("Failed to add task");
     }
   }
@@ -47,33 +69,25 @@ export class TaskRepo {
    */
   async remove(taskId: number, column: string, board: IBoard): Promise<boolean> {
     try {
-      // Get the task before removing it
+      // Check if task exists in board
       const task = board.taskList[taskId];
-
       if (!task) {
         throw new Error(`Task ${taskId} not found`);
       }
 
-      // Remove taskId from the column and from taskList
-      await Board.findOneAndUpdate(
-        {},
-        {
-          $pull: { [`columns.${column}`]: taskId },
-          $unset: { [`taskList.${taskId}`]: "" }
-        },
-        { new: true }
-      );
+      // Remove task from Prisma
+      await this.taskRepository.remove(taskId);
 
       return true;
 
     } catch (error) {
+      console.error('Failed to remove task:', error);
       throw new Error("Failed to remove task");
     }
   }
 
-
   /**
-   * Update Column
+   * Update Column (move task between columns)
    * @param taskId 
    * @param currCol 
    * @param currList 
@@ -88,21 +102,36 @@ export class TaskRepo {
         destCol: string, 
         destList: number[]): Promise<boolean>{
     try {
-      const updateFields: any = {};
-      updateFields[`columns.${currCol}`] = currList;
-      updateFields[`columns.${destCol}`] = destList;
+      const boardId = await this.boardRepository.getBoardId();
+      
+      // Get destination column
+      const destColumn = await this.columnRepository.getByName(destCol, boardId);
+      if (!destColumn) {
+        throw new Error(`Column ${destCol} not found`);
+      }
 
-      await Board.findOneAndUpdate(
-        {},
-        {
-          $set: updateFields
-        },
-        { new: true }
-      );
+      // Find the new position in destination list
+      const newPosition = destList.indexOf(taskId);
+      if (newPosition === -1) {
+        throw new Error('Task not found in destination list');
+      }
+
+      // Update task's column and position
+      await this.taskRepository.updateColumn(taskId, destColumn.id, newPosition);
+
+      // Update positions of other tasks in the same column
+      const tasksToUpdate = destList
+        .map((id, index) => ({ id, position: index }))
+        .filter(t => t.id !== taskId);
+
+      if (tasksToUpdate.length > 0) {
+        await this.taskRepository.updateTaskPositions(tasksToUpdate);
+      }
 
       return true;
 
     } catch (error) {
+      console.error('Failed to update columns:', error);
       throw new Error("Failed to update columns");
     }
   }
@@ -114,21 +143,18 @@ export class TaskRepo {
    */
   async update(target: ITask):Promise<boolean> {
     try {
-      await Board.findOneAndUpdate(
-        {},
-        {
-          $set: {
-            [`taskList.${target.id}`]: target
-          }
-        },
-        { new: true }
-      );
+      await this.taskRepository.update({
+        id: target.id,
+        title: target.title,
+        description: target.description
+      });
 
       return true;
 
     } catch (error) {
+      console.error('Failed to update task:', error);
       throw new Error("Failed to update task");
     }
   }
 
-};
+}
