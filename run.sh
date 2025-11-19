@@ -38,9 +38,22 @@ fi
 echo "Using [$ENGINE] to compose kanban board..."
 
 # Stop and remove old containers first
+echo "🛑 Stopping existing containers..."
 $ENGINE down --remove-orphans 2>/dev/null || true
+# Remove Volume only if password has modified!
+# $ENGINE down -v 2>/dev/null || true
 
 # Build and start with fresh containers
+echo "🔨 Building containers..."
 $ENGINE up -d --build
 
-echo "✅ Services started successfully."
+echo ""
+echo "✅ Services started successfully!"
+echo ""
+echo "📍 Access your services:"
+echo "   🌐 Client (Next.js):  http://localhost:3000"
+echo "   🔌 Server (GraphQL):  http://localhost:8080/graphql"
+echo "   🗄️  PostgreSQL:        localhost:5432"
+echo ""
+echo "💡 Check status with: podman ps"
+echo "📋 View logs with: podman logs kanban-server"
