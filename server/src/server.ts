@@ -1,16 +1,16 @@
-import { ApolloServer } from "@apollo/server";
-import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
-import { expressMiddleware } from "@as-integrations/express5";
-import cors from "cors";
 import dotenv from "dotenv";
-import { startDynamoDB } from "/external-infra/src/index";
-import { resolvers } from "./graphql/resolvers";
-import typeDefs from "./graphql/typeDefs";
 import path = require("path");
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 import express = require("express");
 import http = require("http");
+import { ApolloServer } from "@apollo/server";
+import { expressMiddleware } from "@as-integrations/express5";
+import cors from "cors";
+import { resolvers } from "./graphql/resolvers";
+import typeDefs from "./graphql/typeDefs";
+import { conenctMongoose } from "./database";
+import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 
 // ==================== Middleware ======================== //
 const app = express();
@@ -27,8 +27,7 @@ app.get("/", (_, res) => {
 
 async function startServer() {
 
-  // Initialize DynamoDB connection and tables
-  await startDynamoDB();
+  await conenctMongoose();
 
   const httpServer = http.createServer(app);
 

@@ -1,15 +1,15 @@
 import { ITask } from "../../src/models/interface/task";
-import { DynamoBoardRepo } from "../../../external-infra/src/dynamodb/dynamodb_board";
-import { DynamoTaskRepo } from "../../../external-infra/src/dynamodb/dynamodb_task";
+import { BoardRepo } from "../../src/repos/boardRepo";
+import { TaskRepo } from "../../src/repos/taskRepo";
 import { TaskService } from "../../src/services/taskService";
 
-// Mock DynamoDB Repos
-jest.mock("../../../external-infra/src/dynamodb/dynamodb_task", () => ({
-  DynamoTaskRepo: { getInstance: jest.fn() },
+// Mock Repos
+jest.mock("../../src/repos/taskRepo", () => ({
+  TaskRepo: { getInstance: jest.fn() },
 }));
 
-jest.mock("../../../external-infra/src/dynamodb/dynamodb_board", () => ({
-  DynamoBoardRepo: { getInstance: jest.fn() },
+jest.mock("../../src/repos/boardRepo", () => ({
+  BoardRepo: { getInstance: jest.fn() },
 }));
 
 describe("TaskService", () => {
@@ -28,8 +28,8 @@ describe("TaskService", () => {
 
     mockBoardRepo = { get: jest.fn() };
 
-    (DynamoTaskRepo.getInstance as jest.Mock).mockReturnValue(mockTaskRepo);
-    (DynamoBoardRepo.getInstance as jest.Mock).mockReturnValue(mockBoardRepo);
+    (TaskRepo.getInstance as jest.Mock).mockReturnValue(mockTaskRepo);
+    (BoardRepo.getInstance as jest.Mock).mockReturnValue(mockBoardRepo);
 
     // reset singleton
     (TaskService as any).instance = null;
@@ -97,13 +97,13 @@ describe("TaskService", () => {
     it("should remove an existing task successfully", async () => {
       const board = { columns: { todo: [1] }, taskList: { 1: { id: 1 } } };
       mockBoardRepo.get.mockResolvedValue(board);
-      mockTaskRepo.remove.mockReturnValue(true);
+      mockTaskRepo.remove.mockReturnValue({ id: 1 });
 
       const result = await taskService.removeTask(1, "todo");
 
       expect(mockBoardRepo.get).toHaveBeenCalled();
-      expect(mockTaskRepo.remove).toHaveBeenCalledWith(1, "todo");
-      expect(result).toEqual(true);
+      expect(mockTaskRepo.remove).toHaveBeenCalledWith(1, "todo", board);
+      expect(result).toEqual({ id: 1 });
     });
 
     it("should throw if column does not exist", async () => {
