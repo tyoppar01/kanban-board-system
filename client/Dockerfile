@@ -6,14 +6,13 @@ WORKDIR /app
 # install dependencies
 COPY client/package*.json ./
 RUN npm install
-RUN npx playwright install --with-deps chromium
 
 # copy source code
 COPY client/ .
 
 # run tests (unit tests only)
 RUN npm test
-# RUN npm run test:e2e
+
 # build the application
 RUN npm run build 
 
