@@ -1,0 +1,75 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and test in Docker containers
+        run: |
+          echo "🔨 Building and testing [SERVER]..."
+          docker build --target builder -f server/Dockerfile -t kanban-server-builder .
+          echo "✅ Server build passed"
+          docker build --target test -f server/Dockerfile -t kanban-server-test .
+          echo "✅ Server tests passed"
+          
+          echo "🔨 Building and testing [CLIENT]..."
+          docker build --target builder -f client/Dockerfile -t kanban-client-builder .
+          echo "✅ Client build passed"
+          docker build --target test -f client/Dockerfile -t kanban-client-test .
+          echo "✅ Client tests passed"
+
+      - name: Build production images
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "🔨 Building production images..."
+          docker build --target production -f server/Dockerfile -t kanban-server:latest .
+          docker build --target production -f client/Dockerfile -t kanban-client:latest .
+          echo "✅ Production images built"
+
+      - name: Save Docker images
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker save kanban-server:latest > server-image.tar
+          docker save kanban-client:latest > client-image.tar
+
+      - name: Upload artifacts
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images
+          path: |
+            server-image.tar
+            client-image.tar
+          retention-days: 1
+
+  test-summary:
+    name: Test Summary
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.build-and-test.result }}" == "success" ]; then
+            echo "✅ All tests passed successfully!"
+          else
+            echo "❌ Tests failed. Deployment blocked."
+            exit 1
+          fi

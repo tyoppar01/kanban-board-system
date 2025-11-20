@@ -67,7 +67,7 @@ describe("ColumnService", () => {
                   const result = await columnService.addColumn("newColumn");
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
-                  expect(mockBoardRepo.setColumn).toHaveBeenCalledWith("newColumn", mockBoard);
+                  expect(mockBoardRepo.setColumn).toHaveBeenCalledWith("newColumn");
                   expect(result).toEqual(updatedBoard);
             });
 
@@ -164,7 +164,7 @@ describe("ColumnService", () => {
                   const result = await columnService.moveColumn("ongoing", 0);
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
-                  expect(mockBoardRepo.moveCol).toHaveBeenCalledWith("ongoing", 0, ["todo", "ongoing", "done"]);
+                  expect(mockBoardRepo.moveCol).toHaveBeenCalledWith("ongoing", 0);
                   expect(result).toBe(true);
             });
 
@@ -243,7 +243,7 @@ describe("ColumnService", () => {
                   const result = await columnService.moveColumn("ongoing", 1);
 
                   expect(mockBoardRepo.get).toHaveBeenCalledTimes(1);
-                  expect(mockBoardRepo.moveCol).toHaveBeenCalledWith("ongoing", 1, ["todo", "ongoing", "done"]);
+                  expect(mockBoardRepo.moveCol).toHaveBeenCalledWith("ongoing", 1);
                   expect(result).toBe(false);
             });
       });

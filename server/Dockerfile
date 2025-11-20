@@ -1,17 +1,33 @@
-# ======== Testing Phase ========
+# ======== Build Phase ========
 
-# use node 20 as test image
-FROM node:20-alpine AS test
+# build image
+FROM node:20-alpine AS builder
 
-# source code work dir
-WORKDIR /src
+WORKDIR /app
 
-# install dependencies
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
+# Setup external-apis first
+WORKDIR /app/external-apis
+COPY external-apis/package*.json ./
+COPY external-apis/prisma ./prisma
+COPY external-apis/src ./src
+COPY external-apis/tsconfig.json ./
+RUN npm install && npm run prisma:generate
+
+# Setup server
+WORKDIR /app/server
 COPY server/package*.json ./
+COPY server/ ./
 RUN npm install
 
-# copy source code
-COPY server/ .
+# ======== Testing Phase ========
+
+# test the built code
+FROM builder AS test
+
+WORKDIR /app/server
 
 # run tests
 RUN npm test
@@ -20,6 +36,9 @@ RUN npm test
 
 # production image
 FROM node:20-alpine AS production
+
+# Ensure tests passed
+COPY --from=test /app/server/package.json /tmp/test-passed
 
 # Install OpenSSL for Prisma
 RUN apk add --no-cache openssl
