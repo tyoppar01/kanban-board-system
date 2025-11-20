@@ -83,6 +83,41 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
+          # Clean up disk space before deployment
+          echo "🧹 Cleaning up disk space..."
+          docker system prune -a --volumes -f
+
+          # Remove all unused Docker data
+          docker container prune -f
+          docker image prune -a -f
+          docker volume prune -f
+          docker network prune -f
+          docker builder prune -a -f
+
+          # Clean package manager
+          sudo apt clean
+          sudo apt autoremove -y
+          sudo apt autoclean
+
+          # Clean logs
+          sudo journalctl --vacuum-time=3d
+          sudo find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+          sudo rm -rf /var/log/*.gz
+          sudo rm -rf /var/log/*.1
+
+          # Clean Docker logs specifically
+          sudo sh -c 'truncate -s 0 /var/lib/docker/containers/*/*-json.log' 2>/dev/null
+
+          # Clean temp files
+          sudo rm -rf /tmp/*
+          sudo rm -rf /var/tmp/*
+
+          # Check remaining space
+          df -h
+          docker system df
+          
+          echo "✅ Cleanup complete"
+
           echo "📦 Copying Docker images to EC2..."
           scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
@@ -108,44 +143,6 @@ jobs:
             set -e
             
             echo "🚀 Starting deployment..."
-            
-            # Clean up disk space before deployment
-            echo "🧹 Cleaning up disk space..."
-            docker system prune -a --volumes -f
-
-            # Remove all unused Docker data
-            docker container prune -f
-            docker image prune -a -f
-            docker volume prune -f
-            docker network prune -f
-            docker builder prune -a -f
-
-            # Clean package manager
-            sudo apt clean
-            sudo apt autoremove -y
-            sudo apt autoclean
-
-            # Clean logs
-            sudo journalctl --vacuum-time=3d
-            sudo find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
-            sudo rm -rf /var/log/*.gz
-            sudo rm -rf /var/log/*.1
-
-            # Clean Docker logs specifically
-            sudo sh -c 'truncate -s 0 /var/lib/docker/containers/*/*-json.log' 2>/dev/null
-
-            # Clean temp files
-            sudo rm -rf /tmp/*
-            sudo rm -rf /var/tmp/*
-
-            # Clean old kernels (if any)
-            sudo apt autoremove --purge -y
-
-            # Check remaining space
-            df -h
-            docker system df
-            
-            echo "✅ Cleanup complete"
             
             # Navigate to project directory
             cd /home/${EC2_USER}/kanban-board-system
