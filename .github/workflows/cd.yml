@@ -1,0 +1,243 @@
+name: CD - Deploy to EC2
+
+on:
+  workflow_run:
+    workflows: ["CI - Build and Test"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    # Only deploy if CI passed and triggered from main branch
+    if: |
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event.workflow_run.conclusion == 'success' && 
+       github.event.workflow_run.head_branch == 'main')
+    
+    environment:
+      name: production
+      url: http://${{ secrets.EC2_HOST }}:3000
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create production .env file
+        run: |
+          cat > .env.production << EOF
+          NODE_ENV=production
+          SERVER_PORT=8080
+          NEXT_PUBLIC_API_URL=http://${{ secrets.EC2_HOST }}:8080
+          NEXT_PUBLIC_GRAPHQL_URL=http://${{ secrets.EC2_HOST }}:8080/graphql
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgresql:5432/${{ secrets.POSTGRES_DB }}
+          EOF
+          echo "✅ Production .env file created"
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup SSH
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+
+      - name: Copy files to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          echo "📦 Copying Docker images to EC2..."
+          scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
+          scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
+          
+          echo "📄 Copying configuration files..."
+          scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
+          
+          # Copy production .env file
+          if [ -f .env.production ]; then
+            scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/.env
+            echo "✅ Production .env copied"
+          else
+            echo "⚠️  .env.production file not found - ensure environment variables are configured on EC2"
+          fi
+
+      - name: Deploy application on EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << EOF
+            set -e
+            
+            echo "🚀 Starting deployment..."
+            
+            # Navigate to project directory
+            cd /home/${EC2_USER}/kanban-board-system
+            
+            # Load Docker images
+            echo "📥 Loading Docker images..."
+            docker load < /tmp/server-image.tar
+            docker load < /tmp/client-image.tar
+            
+            # Backup current images (for rollback)
+            echo "💾 Creating backup tags..."
+            docker tag kanban-server:latest kanban-server:previous 2>/dev/null || true
+            docker tag kanban-client:latest kanban-client:previous 2>/dev/null || true
+            
+            # Stop and start containers with docker-compose
+            echo "🔄 Restarting containers..."
+            docker-compose down --timeout 30 || true
+            docker-compose up -d
+            
+            # Clean up temp files
+            rm -f /tmp/server-image.tar /tmp/client-image.tar
+            
+            echo "✅ Deployment complete!"
+          EOF
+
+      - name: Wait for services to start
+        run: |
+          echo "⏳ Waiting for services to initialize..."
+          sleep 15
+
+      - name: Health check
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+            set -e
+            
+            echo "🏥 Running health checks..."
+            
+            # Check container status
+            echo "📊 Container status:"
+            docker-compose ps
+            
+            # Wait a bit more if needed
+            sleep 5
+            
+            # Check server health
+            if curl -f -s http://localhost:8080/ > /dev/null; then
+              echo "✅ Server (port 8080) is healthy"
+            else
+              echo "❌ Server health check failed"
+              docker-compose logs --tail=50 server
+              exit 1
+            fi
+            
+            # Check client health
+            if curl -f -s http://localhost:3000/ > /dev/null; then
+              echo "✅ Client (port 3000) is healthy"
+            else
+              echo "❌ Client health check failed"
+              docker-compose logs --tail=50 client
+              exit 1
+            fi
+            
+            # Check database
+            if docker-compose exec -T postgresql pg_isready -U kanban > /dev/null; then
+              echo "✅ Database is healthy"
+            else
+              echo "⚠️  Database health check warning"
+            fi
+            
+            echo "🎉 All health checks passed!"
+          EOF
+
+      - name: Cleanup old Docker images
+        if: success()
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+            echo "🧹 Cleaning up old Docker images..."
+            docker image prune -f
+            echo "✨ Cleanup complete"
+          EOF
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "🎊 Deployment successful!"
+            echo "📍 Application URL: http://${{ secrets.EC2_HOST }}:3000"
+            echo "📍 GraphQL API: http://${{ secrets.EC2_HOST }}:8080/graphql"
+            echo "🏷️  Version: ${{ github.sha }}"
+          else
+            echo "💥 Deployment failed!"
+            echo "Check logs above for details"
+          fi
+
+  rollback:
+    name: Rollback (Manual)
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name == 'workflow_dispatch'
+    needs: deploy
+    
+    steps:
+      - name: Setup SSH
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+
+      - name: Rollback to previous version
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+            echo "⏪ Rolling back to previous version..."
+            cd /home/${USER}/kanban-board-system
+            
+            # Tag previous images as latest
+            docker tag kanban-server:previous kanban-server:latest
+            docker tag kanban-client:previous kanban-client:latest
+            
+            # Restart containers
+            docker-compose down
+            docker-compose up -d
+            
+            echo "✅ Rollback complete"
+          EOF
