@@ -2,9 +2,9 @@ name: CD - Deploy to EC2
 
 on:
   workflow_run:
-    workflows: ["CI - Build and Test"]
-    types:
-      - completed
+    # workflows: ["CI - Build and Test"]
+    # types:
+    #   - completed
     branches:
       - main
   workflow_dispatch:
@@ -16,7 +16,6 @@ on:
         type: choice
         options:
           - production
-          - staging
 
 env:
   IMAGE_TAG: ${{ github.sha }}
@@ -151,6 +150,9 @@ jobs:
             set -e
             
             echo "🏥 Running health checks..."
+            
+            # Navigate to project directory
+            cd /home/${USER}/kanban-board-system
             
             # Check container status
             echo "📊 Container status:"
