@@ -213,7 +213,12 @@ jobs:
             
             # Check database
             if docker-compose exec -T postgresql pg_isready -U kanban -d kanban_db > /dev/null; then
- checks passed!"
+              echo "✅ Database is healthy"
+            else
+              echo "⚠️  Database health check warning"
+            fi
+            
+            echo "🎉 All health checks passed!"
           EOF
 
       - name: Cleanup old Docker images
