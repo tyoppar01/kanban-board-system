@@ -2,9 +2,9 @@ name: CD - Deploy to EC2
 
 on:
   workflow_run:
-    # workflows: ["CI - Build and Test"]
-    # types:
-    #   - completed
+    workflows: ["CI - Build and Test"]
+    types:
+      - completed
     branches:
       - main
   workflow_dispatch:
