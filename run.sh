@@ -25,7 +25,7 @@ echo -e "-----------------------------------------${RESET}\n"
 
 # Auto-detect Docker or Podman
 if command -v docker &> /dev/null; then
-    ENGINE="docker"
+    ENGINE="docker compose"
     COMPOSE_FILE="docker-compose.yml"
 elif command -v podman-compose &> /dev/null; then
     ENGINE="podman-compose"
