@@ -109,6 +109,44 @@ jobs:
             
             echo "🚀 Starting deployment..."
             
+            # Clean up disk space before deployment
+            echo "🧹 Cleaning up disk space..."
+            docker system prune -a --volumes -f
+
+            # Remove all unused Docker data
+            docker container prune -f
+            docker image prune -a -f
+            docker volume prune -f
+            docker network prune -f
+            docker builder prune -a -f
+
+            # Clean package manager
+            sudo apt clean
+            sudo apt autoremove -y
+            sudo apt autoclean
+
+            # Clean logs
+            sudo journalctl --vacuum-time=3d
+            sudo find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+            sudo rm -rf /var/log/*.gz
+            sudo rm -rf /var/log/*.1
+
+            # Clean Docker logs specifically
+            sudo sh -c 'truncate -s 0 /var/lib/docker/containers/*/*-json.log' 2>/dev/null
+
+            # Clean temp files
+            sudo rm -rf /tmp/*
+            sudo rm -rf /var/tmp/*
+
+            # Clean old kernels (if any)
+            sudo apt autoremove --purge -y
+
+            # Check remaining space
+            df -h
+            docker system df
+            
+            echo "✅ Cleanup complete"
+            
             # Navigate to project directory
             cd /home/${EC2_USER}/kanban-board-system
             
@@ -175,12 +213,7 @@ jobs:
             
             # Check database
             if docker-compose exec -T postgresql pg_isready -U kanban -d kanban_db > /dev/null; then
-              echo "✅ Database is healthy"
-            else
-              echo "⚠️  Database health check warning"
-            fi
-            
-            echo "🎉 All health checks passed!"
+ checks passed!"
           EOF
 
       - name: Cleanup old Docker images
