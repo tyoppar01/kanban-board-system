@@ -52,21 +52,14 @@ jobs:
           EOF
           echo "✅ Production .env file created"
 
-      - name: Build production images (manual dispatch only)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Build production images
         run: |
-          echo "🔨 Building production images for manual deployment..."
+          echo "🔨 Building production images..."
           docker build --target production -f server/Dockerfile -t kanban-server:latest .
           docker build --target production -f client/Dockerfile -t kanban-client:latest .
           docker save kanban-server:latest > server-image.tar
           docker save kanban-client:latest > client-image.tar
           echo "✅ Production images built and saved"
-
-      - name: Download build artifacts (automatic deployment only)
-        if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-images
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
