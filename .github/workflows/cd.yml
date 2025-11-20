@@ -32,7 +32,7 @@ jobs:
        github.event.workflow_run.head_branch == 'main')
     
     environment:
-      name: production
+      name: env-prod
     
     steps:
       - name: Checkout code
@@ -60,13 +60,6 @@ jobs:
           docker save kanban-server:latest > server-image.tar
           docker save kanban-client:latest > client-image.tar
           echo "✅ Production images built and saved"
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Setup SSH
         env:
