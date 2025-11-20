@@ -32,7 +32,7 @@ jobs:
        github.event.workflow_run.head_branch == 'main')
     
     environment:
-      name: production
+      name: env-prod
     
     steps:
       - name: Checkout code
