@@ -64,7 +64,7 @@ services:
     networks:
       kanban-network:
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kanban}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kanban} -d ${POSTGRES_DB:-kanban_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
