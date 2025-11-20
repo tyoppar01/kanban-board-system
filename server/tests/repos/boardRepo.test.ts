@@ -1,23 +1,35 @@
 import { BoardRepo } from '../../src/repos/boardRepo';
-import { Board } from '../../src/models/schemaModel';
+import { BoardRepository } from 'external-apis';
 
-// Mock the entire Board model with constructor and static methods
-jest.mock('../../src/models/schemaModel', () => {
+// Mock the external-apis BoardRepository
+jest.mock('external-apis', () => ({
+  BoardRepository: {
+    getInstance: jest.fn(() => ({
+      get: jest.fn(),
+      getBoardId: jest.fn().mockResolvedValue(1),
+      setColumn: jest.fn(),
+      removeColumn: jest.fn(),
+      moveColumn: jest.fn(),
+    })),
+  },
+  TaskRepository: {
+    getInstance: jest.fn(() => ({}))
+  },
+  ColumnRepository: {
+    getInstance: jest.fn(() => ({}))
+  },
+}));
 
-  const MockBoard: any = jest.fn().mockImplementation(() => ({
-    save: jest.fn().mockResolvedValue({})
-  }));
+const mockBoardRepoInstance = {
+  get: jest.fn(),
+  getBoardId: jest.fn().mockResolvedValue(1),
+  setColumn: jest.fn(),
+  removeColumn: jest.fn(),
+  moveColumn: jest.fn(),
+  moveCol: jest.fn(),
+};
 
-  MockBoard.findOne = jest.fn(() => ({ lean: jest.fn() }));
-
-  MockBoard.findOneAndUpdate = jest.fn(() => ({ lean: jest.fn() }));
-
-  return { Board: MockBoard };
-
-});
-
-// Get reference to the mocked Board
-const MockedBoard = Board as any;
+(BoardRepository.getInstance as jest.Mock).mockReturnValue(mockBoardRepoInstance);
 
 describe('BoardRepo', () => {
   let repo: BoardRepo;
@@ -27,8 +39,9 @@ describe('BoardRepo', () => {
     (BoardRepo as any).instance = null;
     repo = BoardRepo.getInstance();
     
-    // Clear all mocks and stubs
+    // Clear all mocks
     jest.clearAllMocks();
+    mockBoardRepoInstance.getBoardId.mockResolvedValue(1);
   });
 
   it('should achieve singleton instance of boardRepo', () => {
@@ -39,22 +52,29 @@ describe('BoardRepo', () => {
 
   it('should return a board with expected structure', async () => {
     const mockBoardData = {
-      taskList: {
-        1: { id: 1, title: "Setup project structure" },
-        2: { id: 2, title: "Implement Express routes" },
-      },
-      columns: {
-        todo: [1, 2],
-        ongoing: [],
-        done: [],
-      },
-      order: ['todo', 'ongoing', 'done'],
+      id: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      columns: [
+        {
+          id: 1,
+          name: 'todo',
+          position: 0,
+          boardId: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          tasks: [
+            { id: 1, title: "Setup project structure", description: null, position: 0, columnId: 1, boardId: 1, createdDate: new Date(), modifiedDate: new Date() },
+            { id: 2, title: "Implement Express routes", description: null, position: 1, columnId: 1, boardId: 1, createdDate: new Date(), modifiedDate: new Date() },
+          ]
+        },
+        { id: 2, name: 'ongoing', position: 1, boardId: 1, createdAt: new Date(), updatedAt: new Date(), tasks: [] },
+        { id: 3, name: 'done', position: 2, boardId: 1, createdAt: new Date(), updatedAt: new Date(), tasks: [] },
+      ]
     };
 
-    // Mock successful findOne
-    MockedBoard.findOne.mockReturnValue({
-      lean: jest.fn().mockResolvedValue(mockBoardData)
-    } as any);
+    // Mock successful get
+    mockBoardRepoInstance.get.mockResolvedValue(mockBoardData as any);
 
     const board = await repo.get();
 
@@ -69,119 +89,84 @@ describe('BoardRepo', () => {
     expect(board.columns.todo).toContain(1);
     expect(board.order).toEqual(['todo', 'ongoing', 'done']);
 
-    // Verify MongoDB was called
-    expect(MockedBoard.findOne).toHaveBeenCalledTimes(1);
+    // Verify repository was called
+    expect(mockBoardRepoInstance.get).toHaveBeenCalledTimes(1);
   });
 
   it('should create a new board if none exists', async () => {
     const mockBoardData = {
-      taskList: {},
-      columns: {
-        todo: [],
-        ongoing: [],
-        completed: [],
-      },
-      order: ['todo', 'ongoing', 'completed'],
+      id: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      columns: [
+        { id: 1, name: 'todo', position: 0, boardId: 1, createdAt: new Date(), updatedAt: new Date(), tasks: [] },
+        { id: 2, name: 'ongoing', position: 1, boardId: 1, createdAt: new Date(), updatedAt: new Date(), tasks: [] },
+        { id: 3, name: 'completed', position: 2, boardId: 1, createdAt: new Date(), updatedAt: new Date(), tasks: [] },
+      ]
     };
 
-    // Mock first board is empty, thus create first mock board
-    MockedBoard.findOne
-      .mockReturnValueOnce({ lean: jest.fn().mockResolvedValue(null)} as any)
-      .mockReturnValueOnce({lean: jest.fn().mockResolvedValue(mockBoardData)} as any);
-
-    // Mock the Board constructor's save method
-    const mockSave = jest.fn().mockResolvedValue(mockBoardData);
-    MockedBoard.mockImplementation(() => ({
-      save: mockSave
-    }));
+    // BoardRepository.get() creates the board automatically if it doesn't exist
+    mockBoardRepoInstance.get.mockResolvedValue(mockBoardData as any);
 
     const board = await repo.get();
 
-    expect(board).toEqual(mockBoardData);
-    expect(MockedBoard.findOne).toHaveBeenCalledTimes(2);
-    expect(MockedBoard).toHaveBeenCalledTimes(1);
-    expect(mockSave).toHaveBeenCalledTimes(1);
+    expect(board).toHaveProperty('columns');
+    expect(board).toHaveProperty('order');
+    expect(board.order).toEqual(['todo', 'ongoing', 'completed']);
+    expect(mockBoardRepoInstance.get).toHaveBeenCalledTimes(1);
   });
 
   it('should handle database errors gracefully', async () => {
     
-    // Mock findOne to throw an error
-    MockedBoard.findOne.mockReturnValue({
-      lean: jest.fn().mockRejectedValue(new Error('Database connection failed'))
-    } as any);
+    // Mock get to throw an error
+    mockBoardRepoInstance.get.mockRejectedValue(new Error('Database connection failed'));
 
     await expect(repo.get()).rejects.toThrow('Failed to retrieve board');
-    expect(MockedBoard.findOne).toHaveBeenCalledTimes(1);
+    expect(mockBoardRepoInstance.get).toHaveBeenCalledTimes(1);
   });
 
   describe('setColumn', () => {
     it('should add a new column to the board', async () => {
-      const boardData = {
-        taskList: {},
-        columns: { todo: [], ongoing: [] },
-        order: ['todo', 'ongoing'],
-      } as any; // Type assertion to avoid Document interface conflicts
-
-      const updatedBoardData = {
-        taskList: {},
-        columns: { todo: [], ongoing: [], newColumn: [] },
-        order: ['todo', 'ongoing', 'newColumn'],
+      const mockBoardData = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        columns: [
+          { id: 1, name: 'todo', position: 0, boardId: 1, createdAt: new Date(), updatedAt: new Date(), tasks: [] },
+          { id: 2, name: 'newColumn', position: 1, boardId: 1, createdAt: new Date(), updatedAt: new Date(), tasks: [] },
+        ]
       };
+      
+      mockBoardRepoInstance.setColumn.mockResolvedValue(undefined);
+      mockBoardRepoInstance.get.mockResolvedValue(mockBoardData as any);
 
-      MockedBoard.findOneAndUpdate.mockReturnValue({
-        lean: jest.fn().mockResolvedValue(updatedBoardData)
-      } as any);
+      const result = await repo.setColumn('newColumn');
 
-      const result = await repo.setColumn('newColumn', boardData);
-
-      expect(result).toEqual(updatedBoardData);
-      expect(MockedBoard.findOneAndUpdate).toHaveBeenCalledWith(
-        {},
-        {
-          $set: {
-            'columns.newColumn': [],
-            order: ['todo', 'ongoing', 'newColumn']
-          }
-        },
-        { new: true }
-      );
+      expect(result).toHaveProperty('columns');
+      expect(mockBoardRepoInstance.setColumn).toHaveBeenCalledWith('newColumn');
+      expect(mockBoardRepoInstance.get).toHaveBeenCalled();
     });
 
     it('should handle errors when adding column', async () => {
-      const boardData = { taskList: {}, columns: {}, order: [] } as any;
+      mockBoardRepoInstance.setColumn.mockRejectedValue(new Error('Database error'));
 
-      MockedBoard.findOneAndUpdate.mockReturnValue({
-        lean: jest.fn().mockRejectedValue(new Error('Database error'))
-      } as any);
-
-      await expect(repo.setColumn('newColumn', boardData))
+      await expect(repo.setColumn('newColumn'))
         .rejects.toThrow('Failed to add column to board');
     });
   });
 
   describe('removeColumn', () => {
     it('should remove column from the board', async () => {
-      MockedBoard.findOneAndUpdate.mockReturnValue({
-        lean: jest.fn().mockResolvedValue({})
-      } as any);
+      mockBoardRepoInstance.removeColumn.mockResolvedValue(true);
 
       const result = await repo.removeColumn('oldColumn');
 
       expect(result).toBe(true);
-      expect(MockedBoard.findOneAndUpdate).toHaveBeenCalledWith(
-        {},
-        {
-          $pull: { order: 'oldColumn' },
-          $unset: { 'columns.oldColumn': '' }
-        },
-        { new: true }
-      );
+      expect(mockBoardRepoInstance.removeColumn).toHaveBeenCalledWith('oldColumn');
     });
 
     it('should handle errors when removing column', async () => {
-      MockedBoard.findOneAndUpdate.mockReturnValue({
-        lean: jest.fn().mockRejectedValue(new Error('Database error'))
-      } as any);
+      mockBoardRepoInstance.removeColumn.mockRejectedValue(new Error('Database error'));
 
       await expect(repo.removeColumn('oldColumn'))
         .rejects.toThrow('Failed to remove column from board');
@@ -190,39 +175,18 @@ describe('BoardRepo', () => {
 
   describe('moveCol', () => {
     it('should move column to new position', async () => {
-      const orderArr = ['todo', 'ongoing', 'done'];
+      mockBoardRepoInstance.moveCol.mockResolvedValue(true);
 
-      MockedBoard.findOneAndUpdate.mockReturnValue({
-        lean: jest.fn().mockResolvedValue({})
-      } as any);
-
-      const result = await repo.moveCol('ongoing', 0, orderArr);
+      const result = await repo.moveCol('ongoing', 0);
 
       expect(result).toBe(true);
-      expect(MockedBoard.findOneAndUpdate).toHaveBeenCalledWith(
-        {},
-        {
-          $set: { order: ['ongoing', 'todo', 'done'] }
-        },
-        { new: true }
-      );
-    });
-
-    it('should throw error for non-existent column', async () => {
-      const orderArr = ['todo', 'done'];
-
-      await expect(repo.moveCol('huh', 0, orderArr))
-        .rejects.toThrow('Failed to move column');
+      expect(mockBoardRepoInstance.moveCol).toHaveBeenCalledWith('ongoing', 0);
     });
 
     it('should handle database errors when moving column', async () => {
-      const orderArr = ['todo', 'ongoing', 'done'];
+      mockBoardRepoInstance.moveCol.mockRejectedValue(new Error('Database error'));
 
-      MockedBoard.findOneAndUpdate.mockReturnValue({
-        lean: jest.fn().mockRejectedValue(new Error('Database error'))
-      } as any);
-
-      await expect(repo.moveCol('ongoing', 0, orderArr))
+      await expect(repo.moveCol('ongoing', 0))
         .rejects.toThrow('Failed to move column');
     });
   });

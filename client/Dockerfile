@@ -1,4 +1,4 @@
-# use node 22 as base image
+# ======== Build Phase ========
 FROM node:22 AS builder
 
 WORKDIR /app
@@ -10,13 +10,18 @@ RUN npm install
 # copy source code
 COPY client/ .
 
-# run tests (unit tests only)
-RUN npm test
-
 # build the application
-RUN npm run build 
+RUN npm run build
 
-# production image
+# ======== Testing Phase ========
+FROM builder AS test
+
+WORKDIR /app
+
+# run tests (unit tests only)
+RUN npm test 
+
+# ======== Production Phase ========
 FROM node:22-alpine AS production
 
 WORKDIR /app

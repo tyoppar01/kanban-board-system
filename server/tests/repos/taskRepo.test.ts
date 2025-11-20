@@ -1,23 +1,42 @@
-import { IBoard } from '../../src/models/interface/board';
-import { ITask } from '../../src/models/interface/task';
+import { ColumnRepository, TaskRepository, BoardRepository } from 'external-apis';
+import { IBoard } from '../../src/models/board';
+import { ITask } from '../../src/models/task';
 import { TaskRepo } from '../../src/repos/taskRepo';
-import { Board } from '../../src/models/schemaModel';
 
-// Mock the Board model for MongoDB operations
-jest.mock('../../src/models/schemaModel', () => {
-  const MockBoard: any = jest.fn().mockImplementation(() => ({
-    save: jest.fn().mockResolvedValue({})
-  }));
-  
-  MockBoard.findOneAndUpdate = jest.fn(() => ({
-    lean: jest.fn()
-  }));
-  
-  return { Board: MockBoard };
-});
+// Create mock instances
+const mockTaskRepoInstance = {
+  add: jest.fn(),
+  remove: jest.fn(),
+  update: jest.fn(),
+  getByColumn: jest.fn(),
+  updateColumn: jest.fn(),
+  updateTaskPositions: jest.fn(),
+};
 
-// Get reference to the mocked Board
-const MockedBoard = Board as any;
+const mockColumnRepoInstance = {
+  getByName: jest.fn(),
+  getById: jest.fn(),
+  getAll: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+};
+
+const mockBoardRepoInstance = {
+  getBoardId: jest.fn().mockResolvedValue(1),
+};
+
+// Mock the external-apis repositories
+jest.mock('external-apis', () => ({
+  TaskRepository: {
+    getInstance: jest.fn(() => mockTaskRepoInstance),
+  },
+  ColumnRepository: {
+    getInstance: jest.fn(() => mockColumnRepoInstance),
+  },
+  BoardRepository: {
+    getInstance: jest.fn(() => mockBoardRepoInstance),
+  },
+}));
 
 describe(`TaskRepo`, () => {
 
@@ -52,115 +71,88 @@ describe(`TaskRepo`, () => {
     // Add Task
     it('should add a new task into the todo column', async () => {
         const newTask: ITask = { id: 3, title: "Write tests" };
+        const todoColumn = { id: 1, name: 'todo', position: 0, boardId: 1 };
         
-        // Mock the MongoDB update operation
-        MockedBoard.findOneAndUpdate.mockReturnValue({
-            lean: jest.fn().mockResolvedValue(board)
-        });
+        // Mock the column lookup and task creation
+        mockColumnRepoInstance.getByName.mockResolvedValue(todoColumn as any);
+        mockTaskRepoInstance.getByColumn.mockResolvedValue([]);
+        mockTaskRepoInstance.add.mockResolvedValue(newTask as any);
 
         const result = await repo.add(newTask);
 
         expect(result).toEqual(newTask);
-        expect(MockedBoard.findOneAndUpdate).toHaveBeenCalledWith(
-            {},
-            {
-                $push: { "columns.todo": 3 },
-                $set: { "taskList.3": newTask }
-            },
-            { new: true }
-        );
+        expect(mockColumnRepoInstance.getByName).toHaveBeenCalledWith('todo', 1);
+        expect(mockTaskRepoInstance.add).toHaveBeenCalled();
     });
 
     // Remove Task
     it('should remove a task from a specific column', async () => {
         const expected_res = true;
         
-        // Mock the MongoDB update operation
-        MockedBoard.findOneAndUpdate.mockReturnValue({
-            lean: jest.fn().mockResolvedValue(board)
-        });
+        // Mock the Prisma delete operation
+        mockTaskRepoInstance.remove.mockResolvedValue(true);
 
         const removedTask = await repo.remove(1, 'todo', board);
 
         expect(removedTask).toEqual(expected_res);
-        expect(MockedBoard.findOneAndUpdate).toHaveBeenCalledWith(
-            {},
-            {
-                $pull: { "columns.todo": 1 },
-                $unset: { "taskList.1": "" }
-            },
-            { new: true }
-        );
+        expect(mockTaskRepoInstance.remove).toHaveBeenCalledWith(1);
     });
 
     // Update Column
     it('should update column lists correctly', async () => {
-        const currList = [2]; // task 1 removed
-        const destList = [1]; // task 1 moved to "ongoing"
+        const taskId = 1;
+        const sourceCol = 'todo';
+        const destCol = 'ongoing';
+        const sourceColumn = { id: 1, name: 'todo', position: 0, boardId: 1 };
+        const destColumn = { id: 2, name: 'ongoing', position: 1, boardId: 1 };
 
-        // Mock the MongoDB update operation
-        MockedBoard.findOneAndUpdate.mockReturnValue({
-            lean: jest.fn().mockResolvedValue(board)
+        // Mock the column lookups and task update
+        mockColumnRepoInstance.getByName.mockImplementation((name: string) => {
+            if (name === 'todo') return Promise.resolve(sourceColumn as any);
+            if (name === 'ongoing') return Promise.resolve(destColumn as any);
+            return Promise.resolve(null);
         });
+        mockTaskRepoInstance.updateColumn.mockResolvedValue(true);
+        mockTaskRepoInstance.updateTaskPositions.mockResolvedValue(true);
 
-        const success = await repo.updateColumn(1, 'todo', currList, 'ongoing', destList);
+        const success = await repo.updateColumn(taskId, sourceCol, [2], destCol, [1]);
 
         expect(success).toBe(true);
-        expect(MockedBoard.findOneAndUpdate).toHaveBeenCalledWith(
-            {},
-            {
-                $set: {
-                    "columns.todo": currList,
-                    "columns.ongoing": destList
-                }
-            },
-            { new: true }
-        );
+        expect(mockTaskRepoInstance.updateColumn).toHaveBeenCalled();
     });
 
     // Update Column within same column
     it('should update column lists correctly with same column', async () => {
-        const currList = [2, 1]; // reordered tasks
-        const destList = [2, 1]; // same order after move
+        const taskId = 1;
+        const column = 'todo';
+        const todoColumn = { id: 1, name: 'todo', position: 0, boardId: 1 };
 
-        // Mock the MongoDB update operation
-        MockedBoard.findOneAndUpdate.mockReturnValue({
-            lean: jest.fn().mockResolvedValue(board)
-        });
+        // Mock the column lookup and task update
+        mockColumnRepoInstance.getByName.mockResolvedValue(todoColumn as any);
+        mockTaskRepoInstance.updateColumn.mockResolvedValue(true);
+        mockTaskRepoInstance.updateTaskPositions.mockResolvedValue(true);
 
-        const success = await repo.updateColumn(1, 'todo', currList, 'todo', destList);
+        const success = await repo.updateColumn(taskId, column, [2, 1], column, [2, 1]);
 
         expect(success).toBe(true);
-        expect(MockedBoard.findOneAndUpdate).toHaveBeenCalledWith(
-            {},
-            {
-                $set: {
-                    "columns.todo": destList
-                }
-            },
-            { new: true }
-        );
+        expect(mockTaskRepoInstance.updateColumn).toHaveBeenCalled();
     });
 
     // Edit Task Details
     it('should update task details in board', async () => {
         const updatedTask: ITask = { id: 2, title: "Build API + tests", description: "EDITABLE?" };
 
-        // Mock the MongoDB update operation to resolve successfully
-        MockedBoard.findOneAndUpdate.mockResolvedValue(board);
+        // Mock the Prisma update operation to resolve successfully
+        mockTaskRepoInstance.update.mockResolvedValue(true);
 
         const success = await repo.update(updatedTask);
 
         expect(success).toBe(true);
-        expect(MockedBoard.findOneAndUpdate).toHaveBeenCalledWith(
-            {},
-            {
-                $set: {
-                    [`taskList.${updatedTask.id}`]: updatedTask
-                }
-            },
-            { new: true }
-        );
+        expect(mockTaskRepoInstance.update).toHaveBeenCalledWith({
+            id: updatedTask.id,
+            title: updatedTask.title,
+            description: updatedTask.description
+        });
     });
 
 
