@@ -158,8 +158,8 @@ jobs:
             docker tag kanban-client:latest kanban-client:previous 2>/dev/null || true
             
             echo "🔄 Restarting containers..."
-            docker compose down --timeout 30 || true
-            docker compose up -d client
+            docker-compose down --timeout 30 || true
+            docker-compose up -d client
             
             rm -f /tmp/client-image.tar
             echo "✅ Client deployment complete!"
@@ -207,12 +207,11 @@ jobs:
               echo "⚠️  Database health check warning"
             fi
           EOF
-          
-          echo "🏥 Health check - Client EC2..."
+        
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << 'EOF'
             set -e
             echo "📊 Container status:"
-            docker compose ps
+            docker-compose ps
             
             sleep 5
             
@@ -220,7 +219,7 @@ jobs:
               echo "✅ Client (port 3000) is healthy"
             else
               echo "❌ Client health check failed"
-              docker compose logs --tail=50 client
+              docker-compose logs --tail=50 client
               exit 1
             fi
           EOF
