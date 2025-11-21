@@ -30,13 +30,16 @@ jobs:
       (github.event.workflow_run.conclusion == 'success' && 
        github.event.workflow_run.head_branch == 'main')
     
+    # secrets environment variables
     environment:
       name: env-prod
     
     steps:
+      # 1) run checkout src code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2) initialization .env file and insert necessary secret variables
       - name: Create production .env file
         run: |
           cat > .env.production << EOF
@@ -55,6 +58,7 @@ jobs:
           export NEXT_PUBLIC_API_URL=http://${{ secrets.EC2_HOST }}:8080
           export NEXT_PUBLIC_GRAPHQL_URL=http://${{ secrets.EC2_HOST }}:8080/graphql
 
+      # 3) build production images
       - name: Build production images
         env:
           NEXT_PUBLIC_API_URL: http://${{ secrets.EC2_HOST }}:8080
@@ -70,6 +74,7 @@ jobs:
           docker save kanban-client:latest > client-image.tar
           echo "✅ Production images built and saved"
 
+      # 4) setup SSH connection (without AWS credentials)
       - name: Setup SSH
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -82,34 +87,36 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
           ssh-keyscan -H $EC2_HOST_CLIENT >> ~/.ssh/known_hosts
-          
-          # Create project directory on both EC2 instances
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} "mkdir -p /home/${EC2_USER}/kanban-board-system"
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} "mkdir -p /home/${EC2_USER}/kanban-board-system"
 
+      # 5) copy files to EC2 instances
       - name: Copy files to EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
         run: |        
+
+          # Server Instance
           echo "📦 Copying files to Server EC2 ..."
           scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
-
           echo "📦 Copying env file to Server EC2 ..."
           scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/.env
           
+          # Client Instance
           echo "📦 Copying files to Client EC2 ..."
+          scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/
-
           echo "📦 Copying env file to Client EC2 ..."
           scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/.env
           
           echo "✅ Files copied to both instances"
 
+      # 6) deploy in EC2 instances 
       - name: Deploy application on EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -117,16 +124,13 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
-          echo "🚀 Deploying to Server EC2 ..."
+          echo "🚀 Deploy Process EC2 SERVER"
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
             set -e
-            
-            echo "🚀 Starting deployment..."
-            
+                        
             # Navigate to project directory
             cd /home/${EC2_USER}/kanban-board-system
             
-            # Load Docker images
             echo "📥 Loading Docker images..."
             docker load < /tmp/server-image.tar
             docker load < /tmp/client-image.tar
@@ -146,30 +150,34 @@ jobs:
             echo "✅ Server deployment complete!"
           EOF
           
-          echo "🚀 Deploying to Client EC2 ..."
+          echo "🚀 Deploy Process EC2 CLIENT"
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << 'EOF'
             set -e
             cd /home/${EC2_USER}/kanban-board-system
             
-            echo "📥 Loading Docker image..."
+            echo "📥 Loading Docker images..."
+            docker load < /tmp/server-image.tar
             docker load < /tmp/client-image.tar
             
             echo "💾 Creating backup tags..."
+            docker tag kanban-server:latest kanban-server:previous 2>/dev/null || true
             docker tag kanban-client:latest kanban-client:previous 2>/dev/null || true
             
             echo "🔄 Restarting containers..."
             docker-compose down --timeout 30 || true
             docker-compose up -d client
             
-            rm -f /tmp/client-image.tar
+            rm -f /tmp/server-image.tar /tmp/client-image.tar
             echo "✅ Client deployment complete!"
           EOF
 
+      # 7) WAIT TIME to start server
       - name: Wait for services to start
         run: |
           echo "⏳ Waiting for services to initialize..."
           sleep 15
 
+      # 8) Health Check
       - name: Health check
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -180,18 +188,11 @@ jobs:
             set -e
             
             echo "🏥 Running health checks..."
-            
-            # Navigate to project directory
-            cd /home/${USER}/kanban-board-system
-            
-            # Check container status
+            cd /home/${EC2_USER}/kanban-board-system
             echo "📊 Container status:"
             docker-compose ps
-            
-            # Wait a bit more if needed
             sleep 5
-            
-            # Check server health
+        
             if curl -f -s http://localhost:8080/ > /dev/null; then
               echo "✅ Server (port 8080) is healthy"
             else
@@ -226,7 +227,8 @@ jobs:
           
           echo "🎉 All health checks passed!"
 
-      - name: Cleanup old Docker images
+      # 9) Cleanup
+      - name: Cleanup Docker Images
         if: success()
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -246,6 +248,7 @@ jobs:
           
           echo "✨ Cleanup complete"
 
+      # 10) Devployment Results
       - name: Deployment summary
         if: always()
         run: |
