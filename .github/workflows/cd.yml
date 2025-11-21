@@ -81,9 +81,11 @@ jobs:
           echo "$EC2_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+          ssh-keyscan -H $EC2_HOST_CLIENT >> ~/.ssh/known_hosts
           
-          # Create project directory on EC2
+          # Create project directory on both EC2 instances
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} "mkdir -p /home/${EC2_USER}/kanban-board-system"
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} "mkdir -p /home/${EC2_USER}/kanban-board-system"
 
       - name: Copy files to EC2
         env:
