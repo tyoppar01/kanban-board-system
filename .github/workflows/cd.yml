@@ -125,7 +125,7 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
         run: |
           echo "🚀 Deploy Process EC2 SERVER"
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << EOF
             set -e
                         
             # Navigate to project directory
@@ -151,7 +151,7 @@ jobs:
           EOF
           
           echo "🚀 Deploy Process EC2 CLIENT"
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << EOF
             set -e
             cd /home/${EC2_USER}/kanban-board-system
             
@@ -184,7 +184,7 @@ jobs:
           EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          ssh -T -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -T -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << EOF
             set -e
             
             echo "🏥 Running health checks..."
@@ -209,7 +209,7 @@ jobs:
             fi
           EOF
         
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << EOF
             set -e
             echo "📊 Container status:"
             docker-compose ps
@@ -237,11 +237,11 @@ jobs:
         run: |
           echo "🧹 Cleaning up old Docker images..."
           
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << EOF
             docker image prune -f
           EOF
           
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << EOF
             docker image prune -f
             echo "✨ Cleanup complete"
           EOF
@@ -286,9 +286,9 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << EOF
             echo "⏪ Rolling back to previous version..."
-            cd /home/${USER}/kanban-board-system
+            cd /home/${EC2_USER}/kanban-board-system
             
             # Tag previous images as latest
             docker tag kanban-server:previous kanban-server:latest
