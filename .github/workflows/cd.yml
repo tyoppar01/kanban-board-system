@@ -211,6 +211,8 @@ jobs:
         
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << EOF
             set -e
+            cd /home/${EC2_USER}/kanban-board-system
+            
             echo "📊 Container status:"
             docker-compose ps
             
