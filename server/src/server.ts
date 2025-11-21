@@ -44,6 +44,7 @@ async function startServer() {
     typeDefs, 
     resolvers,
     csrfPrevention: false,
+    introspection: true,
     plugins: [ApolloServerPluginLandingPageLocalDefault ()],
   });
 

@@ -1,9 +1,7 @@
 services:
   # Server (GraphQL)
   server:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
+    image: kanban-server:latest
     container_name: kanban-server
     restart: unless-stopped
     env_file:
@@ -24,17 +22,11 @@ services:
 
   # Client (Next.JS)
   client:
-    build:
-      context: .
-      dockerfile: client/Dockerfile
+    image: kanban-client:latest
     container_name: kanban-client
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
-      NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:8080/graphql}
     ports:
       - "3000:3000"
     depends_on:

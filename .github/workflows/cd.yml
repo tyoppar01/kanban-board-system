@@ -16,7 +16,6 @@ on:
         type: choice
         options:
           - production
-          - staging
 
 env:
   IMAGE_TAG: ${{ github.sha }}
@@ -32,7 +31,7 @@ jobs:
        github.event.workflow_run.head_branch == 'main')
     
     environment:
-      name: production
+      name: env-prod
     
     steps:
       - name: Checkout code
@@ -83,12 +82,15 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_USER: ${{ secrets.EC2_USER }}
         run: |
           mkdir -p ~/.ssh
           echo "$EC2_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
-          ssh-keyscan -H $EC2_HOST_CLIENT >> ~/.ssh/known_hosts
+          
+          # Create project directory on EC2
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} "mkdir -p /home/${EC2_USER}/kanban-board-system"
 
       - name: Copy files to EC2
         env:
@@ -179,10 +181,13 @@ jobs:
           EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -T -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
             set -e
             
             echo "🏥 Running health checks..."
+            
+            # Navigate to project directory
+            cd /home/${USER}/kanban-board-system
             
             # Check container status
             echo "📊 Container status:"
