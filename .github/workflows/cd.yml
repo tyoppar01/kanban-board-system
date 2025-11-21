@@ -102,7 +102,7 @@ jobs:
           scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/.env
           
           echo "📦 Copying files to Client EC2 ..."
-          scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
+          scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/
 
