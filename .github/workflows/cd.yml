@@ -81,40 +81,47 @@ jobs:
       - name: Setup SSH
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
           echo "$EC2_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+          ssh-keyscan -H $EC2_HOST_CLIENT >> ~/.ssh/known_hosts
 
       - name: Copy files to EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
         run: |        
-          echo "📦 Copying Docker images to EC2..."
+          echo "📦 Copying files to Server EC2 ..."
           scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
-          
-          echo "📄 Copying configuration files..."
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
+
+          echo "📦 Copying env file to Server EC2 ..."
+          scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/.env
           
-          # Copy production .env file
-          if [ -f .env.production ]; then
-            scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/.env
-            echo "✅ Production .env copied"
-          else
-            echo "⚠️  .env.production file not found - ensure environment variables are configured on EC2"
-          fi
+          echo "📦 Copying files to Client EC2 ..."
+          scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
+          scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/
+
+          echo "📦 Copying env file to Client EC2 ..."
+          scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/.env
+          
+          echo "✅ Files copied to both instances"
 
       - name: Deploy application on EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
           EC2_USER: ${{ secrets.EC2_USER }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << EOF
+          echo "🚀 Deploying to Server EC2 ..."
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
             set -e
             
             echo "🚀 Starting deployment..."
@@ -139,8 +146,26 @@ jobs:
             
             # Clean up temp files
             rm -f /tmp/server-image.tar /tmp/client-image.tar
+            echo "✅ Server deployment complete!"
+          EOF
+          
+          echo "🚀 Deploying to Client EC2 ..."
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << 'EOF'
+            set -e
+            cd /home/${EC2_USER}/kanban-board-system
             
-            echo "✅ Deployment complete!"
+            echo "📥 Loading Docker image..."
+            docker load < /tmp/client-image.tar
+            
+            echo "💾 Creating backup tags..."
+            docker tag kanban-client:latest kanban-client:previous 2>/dev/null || true
+            
+            echo "🔄 Restarting containers..."
+            docker compose down --timeout 30 || true
+            docker compose up -d client
+            
+            rm -f /tmp/client-image.tar
+            echo "✅ Client deployment complete!"
           EOF
 
       - name: Wait for services to start
@@ -151,6 +176,7 @@ jobs:
       - name: Health check
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
@@ -174,43 +200,59 @@ jobs:
               exit 1
             fi
             
-            # Check client health
-            if curl -f -s http://localhost:3000/ > /dev/null; then
-              echo "✅ Client (port 3000) is healthy"
-            else
-              echo "❌ Client health check failed"
-              docker-compose logs --tail=50 client
-              exit 1
-            fi
-            
-            # Check database
+            # Check database health
             if docker-compose exec -T postgresql pg_isready -U kanban -d kanban_db > /dev/null; then
               echo "✅ Database is healthy"
             else
               echo "⚠️  Database health check warning"
             fi
-            
-            echo "🎉 All health checks passed!"
           EOF
+          
+          echo "🏥 Health check - Client EC2..."
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << 'EOF'
+            set -e
+            echo "📊 Container status:"
+            docker compose ps
+            
+            sleep 5
+            
+            if curl -f -s http://localhost:3000/ > /dev/null; then
+              echo "✅ Client (port 3000) is healthy"
+            else
+              echo "❌ Client health check failed"
+              docker compose logs --tail=50 client
+              exit 1
+            fi
+          EOF
+          
+          echo "🎉 All health checks passed!"
 
       - name: Cleanup old Docker images
         if: success()
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
+          echo "🧹 Cleaning up old Docker images..."
+          
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
-            echo "🧹 Cleaning up old Docker images..."
+            docker image prune -f
+          EOF
+          
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << 'EOF'
             docker image prune -f
             echo "✨ Cleanup complete"
           EOF
+          
+          echo "✨ Cleanup complete"
 
       - name: Deployment summary
         if: always()
         run: |
           if [ "${{ job.status }}" == "success" ]; then
             echo "🎊 Deployment successful!"
-            echo "📍 Application URL: http://${{ secrets.EC2_HOST }}:3000"
+            echo "📍 Application URL: http://${{ secrets.EC2_HOST_CLIENT }}:3000"
             echo "📍 GraphQL API: http://${{ secrets.EC2_HOST }}:8080/graphql"
             echo "🏷️  Version: ${{ github.sha }}"
           else
@@ -228,12 +270,14 @@ jobs:
       - name: Setup SSH
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
           echo "$EC2_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+          ssh-keyscan -H $EC2_HOST_CLIENT >> ~/.ssh/known_hosts
 
       - name: Rollback to previous version
         env:
