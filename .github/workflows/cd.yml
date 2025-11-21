@@ -118,7 +118,7 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
         run: |
           echo "🚀 Deploying to Server EC2 ..."
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << EOF
             set -e
             
             echo "🚀 Starting deployment..."
@@ -147,7 +147,7 @@ jobs:
           EOF
           
           echo "🚀 Deploying to Client EC2 ..."
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << EOF
             set -e
             cd /home/${EC2_USER}/kanban-board-system
             
@@ -176,13 +176,13 @@ jobs:
           EC2_HOST_CLIENT: ${{ secrets.EC2_HOST_CLIENT }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          ssh -T -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -T -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << EOF
             set -e
             
             echo "🏥 Running health checks..."
             
             # Navigate to project directory
-            cd /home/${USER}/kanban-board-system
+            cd /home/${EC2_USER}/kanban-board-system
             
             # Check container status
             echo "📊 Container status:"
@@ -284,9 +284,9 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} << EOF
             echo "⏪ Rolling back to previous version..."
-            cd /home/${USER}/kanban-board-system
+            cd /home/${EC2_USER}/kanban-board-system
             
             # Tag previous images as latest
             docker tag kanban-server:previous kanban-server:latest
