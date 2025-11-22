@@ -106,7 +106,7 @@ export function AddColumnButton({ onAddColumn, columnCount, maxColumns = 6 }: Ad
                   value={columnName}
                   onChange={(e) => setColumnName(e.target.value)}
                   placeholder="e.g., In Review, Testing, Deployed"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
                   autoFocus
                   maxLength={30}
                   disabled={isSubmitting}
