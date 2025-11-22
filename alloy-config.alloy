@@ -1,0 +1,27 @@
+// Grafana Alloy Configuration for Kanban Board Metrics
+
+// Prometheus scrape component
+prometheus.scrape "kanban_metrics" {
+  targets = [{
+    __address__ = "host.docker.internal:8080",
+    job         = "kanban-server",
+  }]
+
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+  
+  scrape_interval = "15s"
+  scrape_timeout  = "10s"
+  metrics_path    = "/metrics"
+}
+
+// Remote write to Grafana Cloud
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = env("GRAFANA_CLOUD_PROMETHEUS_URL")
+
+    basic_auth {
+      username = env("GRAFANA_CLOUD_PROMETHEUS_USER")
+      password = env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}
