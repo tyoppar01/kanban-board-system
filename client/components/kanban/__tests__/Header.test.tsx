@@ -1,10 +1,25 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Header } from '../Header';
 import { Action } from '../../../types/kanban.types';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 // Mock window.confirm
 const mockConfirm = jest.fn();
 global.confirm = mockConfirm;
+
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+  }),
+}));
+
+// Wrapper component with AuthProvider
+const renderWithAuth = (ui: React.ReactElement) => {
+  return render(<AuthProvider>{ui}</AuthProvider>);
+};
 
 describe('Header', () => {
   const mockActions: Action[] = [
@@ -35,34 +50,44 @@ describe('Header', () => {
 
   // Rendering Tests
   it('renders header title', () => {
-    render(<Header actions={[]} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={[]} onReset={mockOnReset} />);
     expect(screen.getByText('My Kanban')).toBeInTheDocument();
   });
 
   it('renders subtitle/description', () => {
-    render(<Header actions={[]} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={[]} onReset={mockOnReset} />);
     expect(screen.getByText('A simple board to keep track of tasks.')).toBeInTheDocument();
   });
 
   it('renders "Last Actions" button', () => {
-    render(<Header actions={[]} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={[]} onReset={mockOnReset} />);
+    // Open actions menu first
+    const menuButton = screen.getByTitle('Actions');
+    fireEvent.click(menuButton);
     expect(screen.getByRole('button', { name: /last actions/i })).toBeInTheDocument();
   });
 
   it('renders "Reset" button', () => {
-    render(<Header actions={[]} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={[]} onReset={mockOnReset} />);
+    // Open actions menu first
+    const menuButton = screen.getByTitle('Actions');
+    fireEvent.click(menuButton);
     expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument();
   });
 
   // Interaction Tests - Last Actions
   it('LastActions modal is hidden by default', () => {
-    render(<Header actions={mockActions} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={mockActions} onReset={mockOnReset} />);
     // LastActions component should not be visible initially (check for "Created" text which appears in actions)
     expect(screen.queryByText(/Created/i)).not.toBeInTheDocument();
   });
 
   it('clicking "Last Actions" button shows LastActions modal', () => {
-    render(<Header actions={mockActions} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={mockActions} onReset={mockOnReset} />);
+    
+    // Open actions menu first
+    const menuButton = screen.getByTitle('Actions');
+    fireEvent.click(menuButton);
     
     const lastActionsButton = screen.getByRole('button', { name: /last actions/i });
     fireEvent.click(lastActionsButton);
@@ -71,38 +96,53 @@ describe('Header', () => {
     expect(screen.getByText(/Created/i)).toBeInTheDocument();
   });
 
-  it('closing LastActions modal hides it', () => {
-    render(<Header actions={mockActions} onReset={mockOnReset} />);
+  it('closing LastActions modal hides it', async () => {
+    renderWithAuth(<Header actions={mockActions} onReset={mockOnReset} />);
+    
+    // Open actions menu
+    const menuButton = screen.getByTitle('Actions');
+    fireEvent.click(menuButton);
     
     // Open modal
     const lastActionsButton = screen.getByRole('button', { name: /last actions/i });
     fireEvent.click(lastActionsButton);
     expect(screen.getByText(/Created/i)).toBeInTheDocument();
     
-    // Close modal - find by the X icon's parent button
-    const closeButtons = screen.getAllByRole('button');
-    const closeButton = closeButtons.find(btn => btn.querySelector('svg'));
-    fireEvent.click(closeButton!);
+    // Click backdrop to close (backdrop is the outer div with fixed inset-0)
+    const backdrop = screen.getByText(/Created/i).closest('.fixed');
+    if (backdrop) {
+      fireEvent.click(backdrop);
+    }
     
-    // Modal should be hidden
-    expect(screen.queryByText(/Created/i)).not.toBeInTheDocument();
+    // Wait for modal to close
+    await waitFor(() => {
+      expect(screen.queryByText(/Created/i)).not.toBeInTheDocument();
+    });
   });
 
   // Interaction Tests - Reset
   it('clicking "Reset" button shows confirmation dialog', () => {
-    render(<Header actions={[]} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={[]} onReset={mockOnReset} />);
+    
+    // Open actions menu first
+    const menuButton = screen.getByTitle('Actions');
+    fireEvent.click(menuButton);
     
     const resetButton = screen.getByRole('button', { name: /reset/i });
     fireEvent.click(resetButton);
     
     expect(mockConfirm).toHaveBeenCalledWith(
-      'Are you sure you want to reset all data? This will clear all tasks and actions from localStorage.'
+      'Reset data is going to clear localStorage. It won\'t delete any data from the server. Are you sure you want to proceed?'
     );
   });
 
   it('confirming reset calls onReset callback', () => {
     mockConfirm.mockReturnValue(true);
-    render(<Header actions={[]} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={[]} onReset={mockOnReset} />);
+    
+    // Open actions menu first
+    const menuButton = screen.getByTitle('Actions');
+    fireEvent.click(menuButton);
     
     const resetButton = screen.getByRole('button', { name: /reset/i });
     fireEvent.click(resetButton);
@@ -112,7 +152,11 @@ describe('Header', () => {
 
   it('canceling reset does not call onReset callback', () => {
     mockConfirm.mockReturnValue(false);
-    render(<Header actions={[]} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={[]} onReset={mockOnReset} />);
+    
+    // Open actions menu first
+    const menuButton = screen.getByTitle('Actions');
+    fireEvent.click(menuButton);
     
     const resetButton = screen.getByRole('button', { name: /reset/i });
     fireEvent.click(resetButton);
@@ -122,7 +166,11 @@ describe('Header', () => {
 
   // Props Tests
   it('passes actions prop to LastActions component', () => {
-    render(<Header actions={mockActions} onReset={mockOnReset} />);
+    renderWithAuth(<Header actions={mockActions} onReset={mockOnReset} />);
+    
+    // Open actions menu first
+    const menuButton = screen.getByTitle('Actions');
+    fireEvent.click(menuButton);
     
     // Open modal
     const lastActionsButton = screen.getByRole('button', { name: /last actions/i });
