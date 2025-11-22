@@ -80,6 +80,7 @@ export function AddColumnButton({ onAddColumn, columnCount, maxColumns = 6 }: Ad
               }
             `}
             title={isMaxReached ? `Maximum ${maxColumns} columns reached` : 'Add new column'}
+            aria-label="Add new column"
           >
             <Plus className="w-5 h-5" />
             <span className="font-medium whitespace-nowrap">
