@@ -1,6 +1,7 @@
 import { ITask } from "../../models/task";
 import { TaskService } from "../../services/taskService";
 import { ClassName, logProcess, logResponse, MethodName } from "../../utils/loggerResponse";
+import { taskCreated, taskDeleted, taskMoved, taskUpdated } from "../../metrics";
 
 const service: TaskService = TaskService.getInstance();
 
@@ -12,6 +13,10 @@ export const taskResolver = {
       logProcess(MethodName.ADD_TASK, ClassName.RESOLVE, task);
       const res = await service.addTask(task);
       logResponse(MethodName.ADD_TASK, res);
+      
+      // Track metric
+      taskCreated.inc({ board_id: 'default' });
+      
       return res;
     },
 
@@ -19,6 +24,12 @@ export const taskResolver = {
       logProcess(MethodName.REMOVE_TASK, ClassName.RESOLVE, {id, column});
       const res = await service.removeTask(id, column);
       logResponse(MethodName.REMOVE_TASK, res);
+      
+      // Track metric
+      if (res) {
+        taskDeleted.inc({ board_id: 'default' });
+      }
+      
       return res;
     },
 
@@ -26,6 +37,16 @@ export const taskResolver = {
       logProcess(MethodName.MOVE_TASK, ClassName.RESOLVE, { taskId, index, currCol, destCol });
       const res = await service.relocateTask(taskId, index, currCol, destCol);
       logResponse(MethodName.MOVE_TASK, res);
+      
+      // Track metric
+      if (res) {
+        taskMoved.inc({ 
+          board_id: 'default',
+          from_column: currCol,
+          to_column: destCol
+        });
+      }
+      
       return res;
     },
 
@@ -33,6 +54,12 @@ export const taskResolver = {
       logProcess(MethodName.EDIT_TASK, ClassName.RESOLVE, task);
       const res = await service.editTask(task);
       logResponse(MethodName.EDIT_TASK, res);
+      
+      // Track metric
+      if (res) {
+        taskUpdated.inc({ board_id: 'default' });
+      }
+      
       return res;
     },
 

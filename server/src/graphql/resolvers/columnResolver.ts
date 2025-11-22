@@ -1,6 +1,7 @@
 import { IBoard } from "../../models/board";
 import { ColumnService } from "../../services/columnService";
 import { ClassName, MethodName, logProcess, logResponse } from "../../utils/loggerResponse";
+import { columnCreated, columnDeleted } from "../../metrics";
 
 export const columnResolver = { 
 
@@ -27,6 +28,10 @@ export const columnResolver = {
             );
 
             logResponse(MethodName.ADD_COL, { taskList, columns, order: board.order })
+            
+            // Track metric
+            columnCreated.inc({ board_id: 'default' });
+            
             return { taskList, columns, order: board.order };
         },
 
@@ -35,6 +40,12 @@ export const columnResolver = {
             logProcess(MethodName.REMOVE_COL, ClassName.RESOLVE, name);
             const output: boolean = await ColumnService.getInstance().removeColumn(name);
             logResponse(MethodName.REMOVE_COL, output);
+            
+            // Track metric
+            if (output) {
+                columnDeleted.inc({ board_id: 'default' });
+            }
+            
             return output;
         },
 
