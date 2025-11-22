@@ -15,16 +15,51 @@ import { resolvers } from "./graphql/resolvers";
 import typeDefs from "./graphql/typeDefs";
 import { connectDatabase } from "external-apis";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
+import { register, apiDuration, apiErrors } from "./metrics";
 
 // ==================== Middleware ======================== //
 const app = express();
 app.use(express.json());
 app.use(cors());
 
+// =================== API Duration Tracking ============== //
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  res.on('finish', () => {
+    const duration = (Date.now() - start) / 1000;
+    const operation = req.route?.path || req.path || 'unknown';
+    
+    apiDuration.observe(
+      {
+        operation: operation,
+        status: res.statusCode.toString()
+      },
+      duration
+    );
+    
+    // Track errors
+    if (res.statusCode >= 400) {
+      apiErrors.inc({
+        operation: operation,
+        error_type: res.statusCode >= 500 ? 'server_error' : 'client_error'
+      });
+    }
+  });
+  
+  next();
+});
+
 // =================== Health Check ======================= //
 app.get("/", (_: any, res: any) => {
   console.log("✅ GET / triggered OK");
   res.status(200).json({ success: true, message: "Server is running" });
+});
+
+// =================== Metrics Endpoint =================== //
+app.get("/metrics", async (_: any, res: any) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
 });
 
 // =================== Server Setup ======================= //
