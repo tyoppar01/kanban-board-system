@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LastActions } from './LastActions';
 import { Action } from '../../types/kanban.types';
+import UserProfile from '../auth/UserProfile';
 
 interface HeaderProps {
   actions: Action[];
@@ -23,7 +24,8 @@ export const Header: React.FC<HeaderProps> = ({ actions, onReset }) => {
           <h1 className="text-5xl font-bold text-gray-900 mb-2">My Kanban</h1>
           <p className="text-gray-600">A simple board to keep track of tasks.</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          <UserProfile />
           <button 
             onClick={() => setShowLastActions(true)}
             className="text-gray-600 hover:text-gray-900"
