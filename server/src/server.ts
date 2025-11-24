@@ -16,9 +16,14 @@ import typeDefs from "./graphql/typeDefs";
 import { connectDatabase } from "external-apis";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { register, apiDuration, apiErrors } from "./metrics";
+import { createServer } from "http";
+import { initializeWebSocket } from "./websocket";
 
 // ==================== Middleware ======================== //
 const app = express();
+const httpServer = createServer(app);
+initializeWebSocket(httpServer);
+
 app.use(express.json());
 app.use(cors());
 
@@ -98,6 +103,7 @@ async function startServer() {
 
   httpServer.listen(PORT, () => {
     console.log(`🚀 GraphQL Server ready at http://localhost:${PORT}/graphql`);
+    console.log(`WebSocket Server initialized`);
   });
 
   // timeout configuration
