@@ -73,7 +73,6 @@ export const colorClasses: ColorClasses = {
 
 export const useKanban = (storageMode: StorageMode = 'backend') => {
   const [data, setData] = useState<Board>(initialData);
-  const [taskCounter, setTaskCounter] = useState<number>(7);
   const [actions, setActions] = useState<Action[]>([]);
   const [pendingNewTasks, setPendingNewTasks] = useState<Set<string>>(new Set());
   const hasLoadedInitialData = useRef(false);
@@ -126,12 +125,10 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       // Browser-only mode: Load from localStorage only
       if (available) {
         const savedData = getStorageData(STORAGE_KEYS.KANBAN_DATA, null);
-        const savedCounter = getStorageData(STORAGE_KEYS.KANBAN_COUNTER, 7);
         const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
         const savedColors = getStorageData(STORAGE_KEYS.COLUMN_COLORS, null);
 
         if (savedData) setData(savedData);
-        if (savedCounter) setTaskCounter(savedCounter);
         if (savedActions) setActions(savedActions);
         if (savedColors) setColumnColors(savedColors);
       }
@@ -147,12 +144,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
           const backendBoard = await boardApi.getBoard();
           const frontendBoard = transformBackendToFrontend(backendBoard, savedColors || undefined);
           setData(frontendBoard);
-          
-          // Update task counter based on highest task ID
-          const taskIds = Object.keys(backendBoard.taskList).map(Number);
-          const maxId = Math.max(...taskIds, 0);
-          setTaskCounter(maxId + 1);
-          
+                    
           // Load actions from localStorage (actions are client-side only)
           if (available) {
             const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
@@ -166,19 +158,16 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
             
             // Save board data to localStorage for offline support
             setStorageData(STORAGE_KEYS.KANBAN_DATA, frontendBoard);
-            setStorageData(STORAGE_KEYS.KANBAN_COUNTER, maxId + 1);
           }
         } catch (error) {
           console.error('Failed to fetch board from backend:', error);
           // Fallback to localStorage if backend fails
           if (available) {
             const savedData = getStorageData(STORAGE_KEYS.KANBAN_DATA, null);
-            const savedCounter = getStorageData(STORAGE_KEYS.KANBAN_COUNTER, 7);
             const savedActions = getStorageData(STORAGE_KEYS.KANBAN_ACTIONS, []);
             const savedColors = getStorageData(STORAGE_KEYS.COLUMN_COLORS, null);
 
             if (savedData) setData(savedData);
-            if (savedCounter) setTaskCounter(savedCounter);
             if (savedActions) setActions(savedActions);
             if (savedColors) setColumnColors(savedColors);
           }
@@ -199,7 +188,6 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     console.log('Saving actions to localStorage:', actions);
     const success =
       setStorageData(STORAGE_KEYS.KANBAN_DATA, data) &&
-      setStorageData(STORAGE_KEYS.KANBAN_COUNTER, taskCounter) &&
       setStorageData(STORAGE_KEYS.KANBAN_ACTIONS, actions) &&
       setStorageData(STORAGE_KEYS.COLUMN_COLORS, columnColors);
 
@@ -218,7 +206,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     }
 
     return success;
-  }, [data, taskCounter, actions, columnColors, storageState.isAvailable]);
+  }, [data, actions, columnColors, storageState.isAvailable]);
 
 
   // auto save when data changes
@@ -226,7 +214,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     if (isHydrated) {
       saveToStorage();
     }
-  }, [data, taskCounter, actions, isHydrated, saveToStorage]);
+  }, [data, actions, isHydrated, saveToStorage]);
 
   // clear storage function
   const clearStorage = useCallback(async () => {
@@ -245,21 +233,14 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
           const backendBoard = await boardApi.getBoard();
           const frontendBoard = transformBackendToFrontend(backendBoard, columnColors);
           setData(frontendBoard);
-          
-          // Update task counter based on highest task ID
-          const taskIds = Object.keys(backendBoard.taskList).map(Number);
-          const maxId = Math.max(...taskIds, 0);
-          setTaskCounter(maxId + 1);
         } catch (error) {
           console.error('Failed to fetch board from backend:', error);
           // Fallback to empty board if backend fails
           setData(initialData);
-          setTaskCounter(1);
         }
       } else {
         // Browser-only mode: reset to empty board
         setData(initialData);
-        setTaskCounter(1);
       }
       
       setStorageState(prev => ({
@@ -275,8 +256,9 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
 
   // Function to add a new task
   const addTask = async () => {
-    // create new task with unique ID
-    const newTaskId = `task-${taskCounter}`;
+    // Generate random 5-digit ID to prevent collisions between multiple users
+    const randomId = Math.floor(10000 + Math.random() * 90000); // Random number between 10000-99999
+    const newTaskId = `task-${randomId}`;
     const newTask: Task = { id: newTaskId, content: 'New task' };
 
     // get current todo column
@@ -304,8 +286,6 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       tasks: updatedTasks,
       columns: updatedColumns
     });
-
-    setTaskCounter(taskCounter + 1);
     
     // Mark this task as pending (newly created, not yet named)
     setPendingNewTasks(prev => new Set(prev).add(newTaskId));
@@ -345,15 +325,6 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     if (pendingNewTasks.has(taskId)) {
       console.log('🐛 Task IS pending, removing from set:', taskId);
       
-      // Remove from pending set
-      setPendingNewTasks(prev => {
-        const newSet = new Set(prev);
-        console.log('🐛 Before delete:', Array.from(prev));
-        newSet.delete(taskId);
-        console.log('🐛 After delete:', Array.from(newSet));
-        return newSet;
-      });
-
       // Find which column the task is in
       let columnName = 'To Do';
       for (const [colId, column] of Object.entries(data.columns)) {
@@ -374,14 +345,25 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
       };
       setActions([newAction, ...actions].slice(0, 10));
 
+      // Remove from pending set BEFORE backend sync
+      // This allows WebSocket refetch to work normally for all users
+      setPendingNewTasks(prev => {
+        const newSet = new Set(prev);
+        console.log('🐛 Before delete:', Array.from(prev));
+        newSet.delete(taskId);
+        console.log('🐛 After delete:', Array.from(newSet));
+        return newSet;
+      });
+
       // NOW sync with backend after user enters the task name
       if (!USE_BROWSER_ONLY) {
         try {
           console.log('🐛 Syncing to backend:', { taskId, newContent });
-          const numericId = parseInt(taskId.split('-')[1]);
+          // Extract the random numeric ID from taskId (e.g., "task-47283" -> 47283)
+          const numericId = parseInt(taskId.split('-')[1], 10);
           const backendTask = transformTaskToBackend(taskId, newContent, numericId);
           await taskApi.createTask(backendTask);
-          console.log('🐛 Backend task created successfully');
+          console.log('🐛 Backend task created successfully with ID:', numericId);
         } catch (error) {
           console.error('🐛 Failed to create task on backend:', error);
           // Task is still saved locally, will sync later
@@ -738,9 +720,26 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     }
   };
 
+  // refetch board from backend (for WebSocket updates)
+  const refetchBoard = useCallback(async (force = false) => {
+    if (USE_BROWSER_ONLY) return; // only for backend mode
+    
+    try {
+      const available = isLocalStorageAvailable();
+      const savedColors = available ? getStorageData(STORAGE_KEYS.COLUMN_COLORS, null) : null;
+      
+      const backendBoard = await boardApi.getBoard();
+      const frontendBoard = transformBackendToFrontend(backendBoard, savedColors || undefined);
+      setData(frontendBoard);
+      
+      console.log('[WebSocket] Board refetched from backend (counter unchanged)');
+    } catch (error) {
+      console.error('[WebSocket] Failed to refetch board:', error);
+    }
+  }, [USE_BROWSER_ONLY]);
+
   return {
     data,
-    taskCounter,
     addTask,
     addColumn,
     onDragEnd,
@@ -753,6 +752,7 @@ export const useKanban = (storageMode: StorageMode = 'backend') => {
     stopEditingTask,
     updateTask,
     deleteTask,
-    deleteColumn
+    deleteColumn,
+    refetchBoard
   };
 };
