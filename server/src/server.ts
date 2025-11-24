@@ -7,7 +7,7 @@ try {
 }
 
 import express = require("express");
-import http = require("http");
+import { createServer } from "http";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
 import cors from "cors";
@@ -16,13 +16,11 @@ import typeDefs from "./graphql/typeDefs";
 import { connectDatabase } from "external-apis";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { register, apiDuration, apiErrors } from "./metrics";
-import { createServer } from "http";
 import { initializeWebSocket } from "./websocket";
 
 // ==================== Middleware ======================== //
 const app = express();
 const httpServer = createServer(app);
-initializeWebSocket(httpServer);
 
 app.use(express.json());
 app.use(cors());
@@ -78,7 +76,9 @@ async function startServer() {
     process.exit(1);
   }
 
-  const httpServer = http.createServer(app);
+  // initialize WebSocket server
+  initializeWebSocket(httpServer);
+  console.log('🔌 WebSocket server initialized');
 
   const server = new ApolloServer({ 
     typeDefs, 
