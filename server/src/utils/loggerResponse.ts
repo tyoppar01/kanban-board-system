@@ -20,6 +20,8 @@ export const logProcess = (methodName: MethodName, className: ClassName, data: a
 }
 
 export enum MethodName {
+    REGISTER = "POST /REGISTER",
+    LOGIN = "PUT /LOGIN",
     GET_BOARD = "GET /BOARD",
     ADD_TASK =  "POST /TASK",
     EDIT_TASK = "PUT /TASK Edit",

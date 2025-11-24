@@ -20,6 +20,14 @@ type Task {
   modifiedDate: String
 }
 
+type User {
+  id: ID!
+  username: String!
+  password: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
 # ==================== Input Types ==================== #
 
 input TaskInput {
@@ -28,6 +36,12 @@ input TaskInput {
   description: String
   createdDate: String
   modifiedDate: String
+}
+
+input UserInput {
+  username: String!
+  password: String!
+  token: String
 }
 
 # ==================== Queries ==================== #
@@ -58,5 +72,9 @@ type Mutation {
   removeColumn(name: String!):  Boolean!
 
   moveColumn(name: String!, destIndex: Int!): Boolean!
+
+  login(userProfile: UserInput!): String!
+
+  register(userProfile: UserInput!): User!
 
 }
