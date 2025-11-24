@@ -76,3 +76,7 @@ export function emitColumnCreated(boardId: string, column: any) {
 export function emitColumnDeleted(boardId: string, columnId: string) {
     getIO().to(`board:${boardId}`).emit('column:deleted', { boardId, columnId });
 }
+
+export function emitColumnMoved(boardId: string, columnId: string, destIndex: number) {
+    getIO().to(`board:${boardId}`).emit('column:moved', { boardId, columnId, destIndex });
+}
