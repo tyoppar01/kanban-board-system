@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { useKanban } from '../../hooks/useKanban';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { useSocket } from '@/contexts/SocketContext';
 import { Column } from './Column';
 import { Header } from './Header';
 import { AddTaskButton } from './AddTaskButton';
@@ -49,8 +51,46 @@ export default function KanbanBoard() {
     deleteColumn,
     storageState,
     isHydrated,
-    clearStorage
+    clearStorage,
+    refetchBoard
   } = useKanban(storageMode || 'backend');
+
+  // WebSocket connection status
+  const { isConnected } = useSocket();
+
+  // real-time updates integration
+  useRealtimeUpdates({
+    boardId: 'default', // Using default board ID for now
+    onTaskCreated: (task) => {
+      console.log('[WebSocket] Task created by another user:', task);
+      // temporarily disabled for debugging
+      // refetchBoard(); // Refetch board to show new task
+    },
+    onTaskUpdated: (taskId, updates) => {
+      console.log('[WebSocket] Task updated by another user:', taskId, updates);
+      refetchBoard(); // refetch board to show updates
+    },
+    onTaskMoved: (taskId, fromColumn, toColumn, position) => {
+      console.log('[WebSocket] Task moved by another user:', taskId, fromColumn, toColumn);
+      refetchBoard(); // refetch board to show movement
+    },
+    onTaskDeleted: (taskId) => {
+      console.log('[WebSocket] Task deleted by another user:', taskId);
+      refetchBoard(); // refetch board to remove task
+    },
+    onColumnCreated: (column) => {
+      console.log('[WebSocket] Column created by another user:', column);
+      refetchBoard(); // refetch board to show new column
+    },
+    onColumnDeleted: (columnId) => {
+      console.log('[WebSocket] Column deleted by another user:', columnId);
+      refetchBoard(); // refetch board to remove column
+    },
+    onColumnMoved: (columnId, destIndex) => {
+      console.log('[WebSocket] Column moved by another user:', columnId, destIndex);
+      refetchBoard(); // refetch board to show column reorder
+    }
+  });
   
   // Show loading while checking for saved mode
   if (isCheckingMode) {
