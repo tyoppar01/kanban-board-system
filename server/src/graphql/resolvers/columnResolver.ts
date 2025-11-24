@@ -2,7 +2,7 @@ import { IBoard } from "../../models/board";
 import { ColumnService } from "../../services/columnService";
 import { ClassName, MethodName, logProcess, logResponse } from "../../utils/loggerResponse";
 import { columnCreated, columnDeleted } from "../../metrics";
-import { emitColumnCreated, emitColumnDeleted, emitColumnMoved } from "src/websocket";
+import { emitColumnCreated, emitColumnDeleted, emitColumnMoved } from "../../websocket";
 
 export const columnResolver = { 
 

@@ -2,7 +2,7 @@ import { ITask } from "../../models/task";
 import { TaskService } from "../../services/taskService";
 import { ClassName, logProcess, logResponse, MethodName } from "../../utils/loggerResponse";
 import { taskCreated, taskDeleted, taskMoved, taskUpdated } from "../../metrics";
-import { emitTaskCreated, emitTaskUpdated, emitTaskMoved, emitTaskDeleted } from "src/websocket";
+import { emitTaskCreated, emitTaskUpdated, emitTaskMoved, emitTaskDeleted } from "../../websocket";
 
 const service: TaskService = TaskService.getInstance();
 
