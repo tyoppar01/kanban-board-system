@@ -15,30 +15,20 @@ export function initializeWebSocket(httpServer: HTTPServer) {
   io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
 
+    // join board room
+    socket.on('join:board', (boardId: string) => {
+      socket.join(`board:${boardId}`);
+      console.log(`Client ${socket.id} joined board room: board:${boardId}`);
+    });
+
+    // leave board room
+    socket.on('leave:board', (boardId: string) => {
+      socket.leave(`board:${boardId}`);
+      console.log(`Client ${socket.id} left board room: board:${boardId}`);
+    });
+
     socket.on('disconnect', () => {
       console.log(`Client disconnected: ${socket.id}`);
-
-      // join board room
-      socket.on('join:board', (boardId: string) => {
-        socket.join(`board:${boardId}`);
-        console.log(`Client ${socket.id} joined board room: board_${boardId}`);
-      });
-
-      // leave board room
-      socket.on('leave:board', (boardId: string) => {
-        socket.leave(`board:${boardId}`);
-        console.log(`Client ${socket.id} left board room: board_${boardId}`);
-      });
-
-      // leave board room
-      socket.on('leave:board', (boardId: string) => {
-        socket.leave(`board:${boardId}`);
-        console.log(`Client ${socket.id} left board room: board_${boardId}`);
-      });
-
-      socket.on('disconnect', () => {
-        console.log(`Client disconnected: ${socket.id}`);
-      });
     });
   });
 
