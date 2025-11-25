@@ -72,6 +72,7 @@ services:
       GRAFANA_CLOUD_API_KEY: ${GRAFANA_CLOUD_API_KEY}
     volumes:
       - ./alloy-config.alloy:/etc/alloy/config.alloy:ro
+      - alloy_data:/var/lib/alloy/data
     command:
       - run
       - --server.http.listen-addr=0.0.0.0:12345
@@ -87,3 +88,4 @@ networks:
 
 volumes:
   postgres_data:
+  alloy_data:
