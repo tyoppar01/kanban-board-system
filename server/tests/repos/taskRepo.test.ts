@@ -1,4 +1,3 @@
-import { ColumnRepository, TaskRepository, BoardRepository } from 'external-apis';
 import { IBoard } from '../../src/models/board';
 import { ITask } from '../../src/models/task';
 import { TaskRepo } from '../../src/repos/taskRepo';

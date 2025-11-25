@@ -42,7 +42,7 @@ export class AuthService {
         // validate user credentials
         const user = await this.authRepo.findByUsername(userProfile.username);
 
-        if (!user) {
+        if (!user?.username) {
             throw new Error("User not found");
         }
 
@@ -72,12 +72,9 @@ export class AuthService {
 
         // check if user already exists
         const existingUser = await this.authRepo.findByUsername(userProfile.username);
-        if (existingUser.username === userProfile.username) {
-            throw new Error("Username already taken");
-        }
 
         // hash password before storing
-        if (userProfile.password) {
+        if (existingUser?.password && userProfile.password) {
             userProfile.password = await this.hashPassword(userProfile.password);
         } else {
             throw new Error("Password is not provided for registration");
@@ -174,6 +171,11 @@ export class AuthService {
     private parseExpirationToMs(expiration: string): number {
         const unit = expiration.slice(-1);
         const value = parseInt(expiration.slice(0, -1));
+
+        // If value is NaN, return default
+        if (isNaN(value)) {
+            return 7 * 24 * 60 * 60 * 1000; // Default 7 days
+        }
 
         switch (unit) {
             case 's': return value * 1000;

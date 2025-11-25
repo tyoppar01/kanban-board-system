@@ -3,7 +3,7 @@
 // Prometheus scrape component
 prometheus.scrape "kanban_metrics" {
   targets = [{
-    __address__ = "host.docker.internal:8080",
+    __address__ = "kanban-server:8080",
     job         = "kanban-server",
   }]
 

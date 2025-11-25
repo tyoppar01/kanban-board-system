@@ -31,28 +31,49 @@ return AuthRepo.instance;
         try {
             // Find user by username
             const user = await this.authRepository.findByUsername(username);
-            return user;
+            if (!user) return null;
+            
+            const { password: _, ...userWithoutPassword } = user;
+            return {
+                ...userWithoutPassword,
+                createdDate: user.createdAt.toISOString(),
+                modifiedDate: user.updatedAt.toISOString(),
+                lastLoginDate: user.lastLogin?.toISOString()
+            } as IUser;
 
         } catch (error) {
-            throw new Error("Authentication failed");
+            // User not found, return null instead of throwing
+            return null;
         }
     }
 
     /**
      * Find user by username
      * @param username - User's username
-     * @returns User object or null
+     * @returns User object or throws error if not found
      */
-    async findByUsername(username: string): Promise<IUser> {
+    async findByUsername(username: string): Promise<IUser | null> {
+        
         try {
             const user = await this.authRepository.findByUsername(username);
 
+            // if user is empty, return empty IUser object
+            if (!user) {
+                return {
+                    username: '',
+                } as IUser;
+            }
+
+            const { password: _, ...userWithoutPassword } = user;
             return {
-                ...user,
+                ...userWithoutPassword,
+                createdDate: user.createdAt.toISOString(),
+                modifiedDate: user.updatedAt.toISOString(),
+                lastLoginDate: user.lastLogin?.toISOString()
             } as IUser;
 
         } catch (error) {
-            throw new Error("Failed to find user: " + error);
+            throw error;
         }
     }
 
@@ -81,7 +102,7 @@ return AuthRepo.instance;
     /**
      * Create a new user
      * @param userProfile - User profile data
-     * @returns Created user object
+     * @returns Created user object without password
      */
     async createUser(userProfile: Omit<IUser, 'id'>): Promise<IUser> {
         try {
@@ -90,7 +111,13 @@ return AuthRepo.instance;
                 userProfile.password || ''
             );
 
-            return user;
+            const { password: _, ...userWithoutPassword } = user;
+            return {
+                ...userWithoutPassword,
+                createdDate: user.createdAt.toISOString(),
+                modifiedDate: user.updatedAt.toISOString(),
+                lastLoginDate: user.lastLogin?.toISOString()
+            } as IUser;
 
         } catch (error) {
             throw new Error("Create User Failed");
