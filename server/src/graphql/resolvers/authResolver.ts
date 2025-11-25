@@ -19,6 +19,17 @@ export const authResolver = {
     login: async (_: any, {userProfile}: { userProfile: UserInput }) => {
 
       logProcess(MethodName.LOGIN, ClassName.RESOLVE, { username: userProfile.username, hasToken: !!userProfile.token });
+
+
+      // Debug logging to see what we receive
+      console.log('[LOGIN DEBUG] Received args:', JSON.stringify({
+        username: userProfile?.username,
+        hasPassword: !!userProfile?.password,
+        passwordLength: userProfile?.password?.length || 0,
+        hasToken: !!userProfile?.token,
+        fullUserProfile: userProfile
+      }, null, 2));
+      
       // authenticate user login with optional token from frontend
       const res = await service.authenticateUser(userProfile);
       logResponse(MethodName.LOGIN, res);
