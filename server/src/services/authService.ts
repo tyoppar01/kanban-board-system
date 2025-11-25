@@ -42,13 +42,13 @@ export class AuthService {
         // validate user credentials
         const user = await this.authRepo.findByUsername(userProfile.username);
 
-        if (!user?.username) {
+        if (!user || !user.id) {
             throw new Error("User not found");
         }
 
         // hash and validate password
         if (!userProfile.password || !user.password) {
-            throw new Error("Password is required for authentication");
+            throw new Error("Password is not valid");
         }
 
         const isPasswordValid = await bcrypt.compare(userProfile.password, user.password);
@@ -72,9 +72,12 @@ export class AuthService {
 
         // check if user already exists
         const existingUser = await this.authRepo.findByUsername(userProfile.username);
+        if (existingUser.username === userProfile.username) {
+            throw new Error("Username already taken");
+        }
 
         // hash password before storing
-        if (existingUser?.password && userProfile.password) {
+        if (userProfile.password) {
             userProfile.password = await this.hashPassword(userProfile.password);
         } else {
             throw new Error("Password is not provided for registration");
@@ -172,7 +175,7 @@ export class AuthService {
         const unit = expiration.slice(-1);
         const value = parseInt(expiration.slice(0, -1));
 
-        // If value is NaN, return default
+        // If value is NaN or invalid, return default
         if (isNaN(value)) {
             return 7 * 24 * 60 * 60 * 1000; // Default 7 days
         }

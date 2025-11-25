@@ -145,12 +145,11 @@ describe('AuthRepo (Unit Tests)', () => {
       expect(mockAuthRepositoryInstance.findByUsername).toHaveBeenCalledWith('authtest');
     });
 
-    it('should return null when user not found', async () => {
+    it('should throw error when user not found', async () => {
       mockAuthRepositoryInstance.findByUsername.mockRejectedValue(new Error('User not found'));
 
-      const result = await authRepo.authenticateUser('nonexistent', 'password');
-      
-      expect(result).toBeNull();
+      await expect(authRepo.authenticateUser('nonexistent', 'password'))
+        .rejects.toThrow('Authentication failed');
     });
   });
 });
