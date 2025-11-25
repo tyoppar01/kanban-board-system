@@ -2,6 +2,7 @@ import { ITask } from "../../models/task";
 import { TaskService } from "../../services/taskService";
 import { ClassName, logProcess, logResponse, MethodName } from "../../utils/loggerResponse";
 import { taskCreated, taskDeleted, taskMoved, taskUpdated } from "../../metrics";
+import { emitTaskCreated, emitTaskUpdated, emitTaskMoved, emitTaskDeleted } from "../../websocket";
 
 const service: TaskService = TaskService.getInstance();
 
@@ -17,6 +18,9 @@ export const taskResolver = {
       // Track metric
       taskCreated.inc({ board_id: 'default' });
       
+      // emit websocket event
+      emitTaskCreated('default', res);
+      
       return res;
     },
 
@@ -29,6 +33,9 @@ export const taskResolver = {
       if (res) {
         taskDeleted.inc({ board_id: 'default' });
       }
+
+      // emit websocket event
+      emitTaskDeleted('default', id);
       
       return res;
     },
@@ -47,6 +54,9 @@ export const taskResolver = {
         });
       }
       
+      // emit websocket event
+      emitTaskMoved('default', taskId, currCol, destCol);
+
       return res;
     },
 
@@ -59,6 +69,9 @@ export const taskResolver = {
       if (res) {
         taskUpdated.inc({ board_id: 'default' });
       }
+
+      // emit websocket event
+      emitTaskUpdated('default', task);
       
       return res;
     },

@@ -2,6 +2,7 @@ import { prisma } from '../config/database';
 import { Task } from '@prisma/client';
 
 export interface ITaskCreate {
+  id?: number; // Optional: frontend-provided random ID
   title: string;
   description?: string;
   boardId: number;
@@ -38,6 +39,7 @@ export class TaskRepository {
     try {
       const task = await prisma.task.create({
         data: {
+          id: taskData.id, // Use frontend-provided ID if available
           title: taskData.title,
           description: taskData.description,
           position: taskData.position,

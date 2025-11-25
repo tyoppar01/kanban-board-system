@@ -43,8 +43,9 @@ export class TaskRepo {
       const tasks = await this.taskRepository.getByColumn(todoColumn.id);
       const position = tasks.length;
 
-      // Create task in Prisma
+      // Create task in Prisma with frontend-provided ID
       await this.taskRepository.add({
+        id: task.id, // Pass the random ID from frontend
         title: task.title,
         description: task.description,
         boardId,

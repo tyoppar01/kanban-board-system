@@ -2,6 +2,7 @@ import { IBoard } from "../../models/board";
 import { ColumnService } from "../../services/columnService";
 import { ClassName, MethodName, logProcess, logResponse } from "../../utils/loggerResponse";
 import { columnCreated, columnDeleted } from "../../metrics";
+import { emitColumnCreated, emitColumnDeleted, emitColumnMoved } from "../../websocket";
 
 export const columnResolver = { 
 
@@ -31,6 +32,9 @@ export const columnResolver = {
             
             // Track metric
             columnCreated.inc({ board_id: 'default' });
+
+            // emit websocket event
+            emitColumnCreated('default', { name });
             
             return { taskList, columns, order: board.order };
         },
@@ -45,6 +49,9 @@ export const columnResolver = {
             if (output) {
                 columnDeleted.inc({ board_id: 'default' });
             }
+
+            // emit websocket event
+            emitColumnDeleted('default', name);
             
             return output;
         },
@@ -54,6 +61,10 @@ export const columnResolver = {
             logProcess(MethodName.MOVE_COL, ClassName.RESOLVE, name);
             const output: boolean  = await ColumnService.getInstance().moveColumn(name,destIndex);
             logResponse(MethodName.MOVE_COL, output);
+
+            // emit websocket event
+            emitColumnMoved('default', name, destIndex);
+
             return output;
         }
     }

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ApolloWrapper from "../components/ApolloWrapper";
 import { AuthProvider } from "../contexts/AuthContext";
+import { SocketProvider } from "../contexts/SocketContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,7 +26,9 @@ export default function RootLayout({
         <body className={`${inter.variable} antialiased`}>
           <AuthProvider>
             <ApolloWrapper>
+              <SocketProvider>
               {children}
+              </SocketProvider>
             </ApolloWrapper>
           </AuthProvider>
         </body>
