@@ -72,6 +72,27 @@ model UserProfile {
   updatedAt DateTime  @updatedAt
   lastLogin DateTime?
 
+  // Relations
+  tokens    Token[]
+
   @@map("user_profiles")
   @@index([username])
+}
+
+// Token model - stores JWT tokens for validation
+model Token {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  userId    Int
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  isRevoked Boolean   @default(false)
+
+  // Relations
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tokens")
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
 }
