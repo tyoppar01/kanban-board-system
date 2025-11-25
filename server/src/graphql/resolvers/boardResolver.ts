@@ -1,6 +1,7 @@
 import { IBoard } from "../../models/board";
 import { BoardService } from "../../services/boardService";
 import { ClassName, MethodName, logProcess, logResponse } from "../../utils/loggerResponse";
+import { boardViews } from "../../metrics";
 
 export const boardResolver = {
 
@@ -31,6 +32,9 @@ export const boardResolver = {
 
             logProcess(MethodName.GET_BOARD, ClassName.RESOLVE, columns);
             logResponse(MethodName.GET_BOARD, { taskList, columns, order: board.order })
+            
+            // Track metric
+            boardViews.inc({ board_id: 'default' });
             
             return { taskList, columns, order: board.order };
         },
