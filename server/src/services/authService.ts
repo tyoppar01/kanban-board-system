@@ -72,8 +72,10 @@ export class AuthService {
 
         // check if user already exists
         const existingUser = await this.authRepo.findByUsername(userProfile.username);
-        if (existingUser.username === userProfile.username) {
-            throw new Error("Username already taken");
+
+        // verify user already exists
+        if (existingUser !== null) {
+            throw new Error("Username already taken, please try another one");
         }
 
         // hash password before storing

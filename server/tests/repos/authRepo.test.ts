@@ -82,7 +82,7 @@ describe('AuthRepo (Unit Tests)', () => {
       const result = await authRepo.findByUsername('findme');
 
       expect(result).toBeDefined();
-      expect(result.username).toBe('findme');
+      expect(result?.username).toBe('findme');
       expect(mockAuthRepositoryInstance.findByUsername).toHaveBeenCalledWith('findme');
     });
 

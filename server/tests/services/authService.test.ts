@@ -132,7 +132,7 @@ describe('AuthService (Unit Tests)', () => {
     };
 
     it('should register new user successfully', async () => {
-      mockAuthRepo.findByUsername.mockResolvedValue({} as any); // Empty user (doesn't exist)
+      mockAuthRepo.findByUsername.mockResolvedValue(null as any); // User doesn't exist
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword123');
       mockAuthRepo.createUser.mockResolvedValue({
         id: 1,
@@ -158,14 +158,14 @@ describe('AuthService (Unit Tests)', () => {
     });
 
     it('should throw error when password is not provided', async () => {
-      mockAuthRepo.findByUsername.mockResolvedValue({} as any);
+      mockAuthRepo.findByUsername.mockResolvedValue(null as any);
 
       await expect(authService.registerUser({ username: 'newuser' }))
         .rejects.toThrow('Password is not provided for registration');
     });
 
     it('should throw error when user creation fails', async () => {
-      mockAuthRepo.findByUsername.mockResolvedValue({} as any);
+      mockAuthRepo.findByUsername.mockResolvedValue(null as any);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword123');
       mockAuthRepo.createUser.mockResolvedValue(null as any);
 
@@ -174,7 +174,7 @@ describe('AuthService (Unit Tests)', () => {
     });
 
     it('should throw error when password hashing fails', async () => {
-      mockAuthRepo.findByUsername.mockResolvedValue({} as any);
+      mockAuthRepo.findByUsername.mockResolvedValue(null as any);
       (bcrypt.hash as jest.Mock).mockRejectedValue(new Error('Hashing error'));
 
       await expect(authService.registerUser(newUser))
