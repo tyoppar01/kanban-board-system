@@ -42,7 +42,7 @@ export class AuthService {
         // validate user credentials
         const user = await this.authRepo.findByUsername(userProfile.username);
 
-        if (!user) {
+        if (!user?.username) {
             throw new Error("User not found");
         }
 
@@ -73,13 +73,8 @@ export class AuthService {
         // check if user already exists
         const existingUser = await this.authRepo.findByUsername(userProfile.username);
 
-        // verify user already exists
-        if (existingUser !== null) {
-            throw new Error("Username already taken, please try another one");
-        }
-
         // hash password before storing
-        if (userProfile.password) {
+        if (existingUser?.password && userProfile.password) {
             userProfile.password = await this.hashPassword(userProfile.password);
         } else {
             throw new Error("Password is not provided for registration");

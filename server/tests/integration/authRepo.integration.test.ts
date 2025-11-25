@@ -75,9 +75,11 @@ describeIfDocker('AuthRepo Integration Tests', () => {
       expect(result?.username).toBe('findme');
     });
 
-    it('should throw error when user not found', async () => {
-      await expect(authRepo.findByUsername('nonexistent'))
-        .rejects.toThrow();
+    it('should return empty user when user not found', async () => {
+      const result = await authRepo.findByUsername('nonexistent');
+      
+      expect(result).toBeDefined();
+      expect(result?.username).toBe('');
     });
   });
 
