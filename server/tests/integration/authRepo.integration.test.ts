@@ -72,7 +72,7 @@ describeIfDocker('AuthRepo Integration Tests', () => {
       const result = await authRepo.findByUsername('findme');
 
       expect(result).toBeDefined();
-      expect(result.username).toBe('findme');
+      expect(result?.username).toBe('findme');
     });
 
     it('should throw error when user not found', async () => {

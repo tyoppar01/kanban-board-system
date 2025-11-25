@@ -52,11 +52,11 @@ return AuthRepo.instance;
      * @param username - User's username
      * @returns User object or throws error if not found
      */
-    async findByUsername(username: string): Promise<IUser> {
+    async findByUsername(username: string): Promise<IUser | null> {
         try {
             const user = await this.authRepository.findByUsername(username);
             if (!user) {
-                throw new Error("User not found");
+                return null;
             }
 
             const { password: _, ...userWithoutPassword } = user;
