@@ -4,9 +4,25 @@ import '@testing-library/jest-dom';
 import KanbanBoard from '../KanbanBoard';
 import { useKanban } from '../../../hooks/useKanban';
 import * as storage from '../../../utils/storage';
+import { SocketProvider } from '../../../contexts/SocketContext';
 
 // Mock the useKanban hook
 jest.mock('../../../hooks/useKanban');
+
+// Mock the useRealtimeUpdates hook
+jest.mock('../../../hooks/useRealtimeUpdates', () => ({
+  useRealtimeUpdates: jest.fn(),
+}));
+
+// Mock socket.io-client
+jest.mock('socket.io-client', () => ({
+  io: jest.fn(() => ({
+    on: jest.fn(),
+    off: jest.fn(),
+    emit: jest.fn(),
+    disconnect: jest.fn(),
+  })),
+}));
 
 // Mock the storage utilities
 jest.mock('../../../utils/storage', () => ({
@@ -48,6 +64,11 @@ describe('KanbanBoard', () => {
   const mockGetStorageData = storage.getStorageData as jest.MockedFunction<typeof storage.getStorageData>;
   const mockSetStorageData = storage.setStorageData as jest.MockedFunction<typeof storage.setStorageData>;
 
+  // Test wrapper with SocketProvider
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+    <SocketProvider>{children}</SocketProvider>
+  );
+
   const mockData = {
     tasks: {
       'task-1': { id: 'task-1', content: 'Task 1' },
@@ -79,20 +100,25 @@ describe('KanbanBoard', () => {
 
   const defaultMockReturn = {
     data: mockData,
-    taskCounter: 1,
     addTask: jest.fn(),
+    addColumn: jest.fn(),
     onDragEnd: jest.fn(),
     actions: [],
+    storageState: { isLoading: false, error: undefined, isAvailable: true },
+    clearStorage: jest.fn(),
+    isHydrated: true,
     editingState: { isEditing: false, taskId: null },
     startEditingTask: jest.fn(),
     stopEditingTask: jest.fn(),
     updateTask: jest.fn(),
     deleteTask: jest.fn(),
-    storageState: { isLoading: false, error: undefined, isAvailable: true },
-    isHydrated: true,
-    clearStorage: jest.fn(),
     deleteColumn: jest.fn(),
-    addColumn: jest.fn(),
+    refetchBoard: jest.fn(),
+  };
+
+  // Helper function to render with SocketProvider
+  const renderWithProvider = (component: React.ReactElement) => {
+    return render(component, { wrapper: TestWrapper });
   };
 
   beforeEach(() => {
@@ -107,7 +133,7 @@ describe('KanbanBoard', () => {
       // Mock no saved storage mode
       mockGetStorageData.mockReturnValue(null);
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       
       expect(screen.getByText('Welcome to My Kanban')).toBeInTheDocument();
       expect(screen.getByText('Choose how you want to store your data:')).toBeInTheDocument();
@@ -118,7 +144,7 @@ describe('KanbanBoard', () => {
     it('saves selection and shows board after choosing Browser Only', async () => {
       mockGetStorageData.mockReturnValue(null);
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       
       const browserButton = screen.getByText('Browser Only').closest('button');
       fireEvent.click(browserButton!);
@@ -133,7 +159,7 @@ describe('KanbanBoard', () => {
     it('saves selection and shows board after choosing Backend', async () => {
       mockGetStorageData.mockReturnValue(null);
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       
       const backendButton = screen.getByText('Backend').closest('button');
       fireEvent.click(backendButton!);
@@ -148,7 +174,7 @@ describe('KanbanBoard', () => {
     it('skips modal when storage mode is already saved', () => {
       mockGetStorageData.mockReturnValue('backend');
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       
       expect(screen.queryByText('Welcome to My Kanban')).not.toBeInTheDocument();
       expect(screen.getByTestId('header')).toBeInTheDocument();
@@ -162,7 +188,7 @@ describe('KanbanBoard', () => {
         isHydrated: false,
       });
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
@@ -172,12 +198,12 @@ describe('KanbanBoard', () => {
         storageState: { isLoading: true, error: undefined, isAvailable: true },
       });
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
     it('renders board when hydrated and not loading', () => {
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       expect(screen.getByTestId('header')).toBeInTheDocument();
     });
@@ -198,13 +224,13 @@ describe('KanbanBoard', () => {
         actions,
       });
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       expect(screen.getByTestId('header')).toHaveTextContent('Actions: 1');
       expect(screen.getByTestId('header')).toHaveTextContent('Reset: Yes');
     });
 
     it('renders all columns in correct order', () => {
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
 
       expect(screen.getByTestId('column-todo')).toBeInTheDocument();
       expect(screen.getByTestId('column-in-progress')).toBeInTheDocument();
@@ -212,7 +238,7 @@ describe('KanbanBoard', () => {
     });
 
     it('passes correct tasks to each column', () => {
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
 
       expect(screen.getByTestId('column-todo')).toHaveTextContent('Tasks: 1');
       expect(screen.getByTestId('column-in-progress')).toHaveTextContent('Tasks: 1');
@@ -220,12 +246,12 @@ describe('KanbanBoard', () => {
     });
 
     it('renders add task button', () => {
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       expect(screen.getByTestId('add-task-button')).toBeInTheDocument();
     });
 
     it('renders footer with credits', () => {
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       expect(screen.getByText(/Built by Jasper and Najiha/i)).toBeInTheDocument();
     });
   });
@@ -246,7 +272,7 @@ describe('KanbanBoard', () => {
         data: emptyData,
       });
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
 
       expect(screen.getByTestId('column-todo')).toHaveTextContent('Tasks: 0');
       expect(screen.getByTestId('column-in-progress')).toHaveTextContent('Tasks: 0');
@@ -268,7 +294,7 @@ describe('KanbanBoard', () => {
         data: incompleteData,
       });
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
 
       // Should only render the todo column
       expect(screen.getByTestId('column-todo')).toBeInTheDocument();
@@ -285,7 +311,7 @@ describe('KanbanBoard', () => {
         addTask,
       });
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
       const button = screen.getByTestId('add-task-button');
       button.click();
 
@@ -307,7 +333,7 @@ describe('KanbanBoard', () => {
         editingState: { isEditing: true, taskId: 'task-1' },
       });
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
 
       // Verify columns are rendered (which means props were passed)
       expect(screen.getByTestId('column-todo')).toBeInTheDocument();
@@ -330,7 +356,7 @@ describe('KanbanBoard', () => {
         data: dataWithInvalidTasks,
       });
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
 
       // Should only show 1 valid task (task-1)
       expect(screen.getByTestId('column-todo')).toHaveTextContent('Tasks: 1');
@@ -345,7 +371,7 @@ describe('KanbanBoard', () => {
         onDragEnd,
       });
 
-      render(<KanbanBoard />);
+      renderWithProvider(<KanbanBoard />);
 
       // Verify DragDropContext is present by checking if columns are rendered
       // (DragDropContext would throw if not properly configured)
@@ -355,12 +381,12 @@ describe('KanbanBoard', () => {
 
   describe('Responsive Layout', () => {
     it('applies responsive grid classes', () => {
-      const { container } = render(<KanbanBoard />);
+      const { container } = renderWithProvider(<KanbanBoard />);
       
     });
 
     it('applies proper spacing classes', () => {
-      const { container } = render(<KanbanBoard />);
+      const { container } = renderWithProvider(<KanbanBoard />);
       
     });
   });
