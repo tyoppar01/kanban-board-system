@@ -1,5 +1,5 @@
-import { BoardRepo } from '../../src/repos/boardRepo';
 import { BoardRepository } from 'external-apis';
+import { BoardRepo } from '../../src/repos/boardRepo';
 
 // Mock the external-apis BoardRepository
 jest.mock('external-apis', () => ({

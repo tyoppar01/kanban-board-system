@@ -175,6 +175,11 @@ export class AuthService {
         const unit = expiration.slice(-1);
         const value = parseInt(expiration.slice(0, -1));
 
+        // If value is NaN, return default
+        if (isNaN(value)) {
+            return 7 * 24 * 60 * 60 * 1000; // Default 7 days
+        }
+
         switch (unit) {
             case 's': return value * 1000;
             case 'm': return value * 60 * 1000;
