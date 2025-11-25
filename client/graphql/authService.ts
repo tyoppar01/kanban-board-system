@@ -4,46 +4,18 @@ import { gql } from '@apollo/client';
 
 // GraphQL Mutations
 const LOGIN = gql`
-  mutation Login($username: String!, $password: String!) {
-    login(username: $username, password: $password) {
-      success
-      message
-      token
-      user {
-        id
-        username
-        createdAt
-        updatedAt
-        lastLogin
-      }
-    }
+  mutation Login($userProfile: UserInput!) {
+    login(userProfile: $userProfile)
   }
 `;
 
 const REGISTER = gql`
-  mutation Register($username: String!, $password: String!) {
-    register(username: $username, password: $password) {
-      success
-      message
-      token
-      user {
-        id
-        username
-        createdAt
-        updatedAt
-      }
-    }
-  }
-`;
-
-const GET_CURRENT_USER = gql`
-  query GetCurrentUser {
-    me {
+  mutation Register($userProfile: UserInput!) {
+    register(userProfile: $userProfile) {
       id
       username
       createdAt
       updatedAt
-      lastLogin
     }
   }
 `;
@@ -51,35 +23,35 @@ const GET_CURRENT_USER = gql`
 class AuthService {
   /**
    * Login user
-   * TODO: Connect to real backend GraphQL endpoint
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      // TODO: Uncomment when backend is ready
-      // const { data } = await apolloClient.mutate({
-      //   mutation: LOGIN_MUTATION,
-      //   variables: credentials,
-      // });
-      // return data.login;
+      const { data } = await apolloClient.mutate({
+        mutation: LOGIN,
+        variables: {
+          userProfile: {
+            username: credentials.username,
+            password: credentials.password
+          }
+        },
+      });
 
-      // Mock response for now
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-      
-      if (credentials.username === 'demo' && credentials.password === 'demo123') {
+      // Backend returns JWT token as a string
+      const token = (data as any).login;
+
+      if (token) {
         const mockUser: User = {
-          id: '1',
+          id: credentials.username, // Use username as ID for now
           username: credentials.username,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           lastLogin: new Date().toISOString(),
         };
 
-        const mockToken = 'mock-jwt-token-' + Date.now();
-
         return {
           success: true,
           message: 'Login successful',
-          token: mockToken,
+          token: token,
           user: mockUser,
         };
       }
@@ -89,32 +61,29 @@ class AuthService {
         message: 'Invalid username or password',
       };
     } catch (error) {
+      // Extract error message from GraphQL error
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      
+      // Don't log expected errors like "username or password does not match" to console
+      const expectedErrors = ['username or password does not match', 'Invalid credentials', 'does not match', 'Invalid username or password', 'Password is required'];
+      const isExpectedError = expectedErrors.some(msg => errorMessage.toLowerCase().includes(msg.toLowerCase()));
+      
+      if (!isExpectedError) {
+        console.error('Login error:', error);
+      }
+      
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Login failed',
+        message: 'Invalid username or password',
       };
     }
   }
 
   /**
    * Register new user
-   * TODO: Connect to real backend GraphQL endpoint
    */
   async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      // TODO: Uncomment when backend is ready
-      // const { data: result } = await apolloClient.mutate({
-      //   mutation: REGISTER_MUTATION,
-      //   variables: {
-      //     username: data.username,
-      //     password: data.password,
-      //   },
-      // });
-      // return result.register;
-
-      // Mock response for now
-      await new Promise(resolve => setTimeout(resolve, 1000)); // simulate network delay
-
       if (data.password !== data.confirmPassword) {
         return {
           success: false,
@@ -129,59 +98,64 @@ class AuthService {
         };
       }
 
-      const mockUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        username: data.username,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const { data: result } = await apolloClient.mutate({
+        mutation: REGISTER,
+        variables: {
+          userProfile: {
+            username: data.username,
+            password: data.password,
+          }
+        },
+      });
 
-      const mockToken = 'mock-jwt-token-' + Date.now();
+      // Backend returns User object
+      const user = (result as any).register;
 
-      return {
-        success: true,
-        message: 'Registration successful',
-        token: mockToken,
-        user: mockUser,
-      };
-    } catch (error) {
+      if (user) {
+        // After registration, login to get token
+        const loginResponse = await this.login({
+          username: data.username,
+          password: data.password
+        });
+
+        return loginResponse;
+      }
+
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Registration failed',
+        message: 'Registration failed',
+      };
+    } catch (error) {
+      // Extract error message from GraphQL error
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      
+      // Don't log expected errors like "Username already taken" to console
+      const expectedErrors = ['Username already taken', 'already exists', 'username or password does not match', ];
+      const isExpectedError = expectedErrors.some(msg => errorMessage.includes(msg));
+      
+      if (!isExpectedError) {
+        console.error('Registration error:', error);
+      }
+      
+      return {
+        success: false,
+        message: errorMessage,
       };
     }
   }
 
   /**
    * Get current user profile
-   * TODO: Connect to real backend GraphQL endpoint
    */
   async getCurrentUser(token: string): Promise<User | null> {
     try {
-      // TODO: Uncomment when backend is ready
-      // const { data } = await apolloClient.query({
-      //   query: GET_CURRENT_USER_QUERY,
-      //   context: {
-      //     headers: {
-      //       Authorization: `Bearer ${token}`,
-      //     },
-      //   },
-      // });
-      // return data.me;
-
-      // Mock response for now
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Decode mock token to get user info
-      const mockUser: User = {
-        id: '1',
-        username: 'demo',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-      };
-
-      return mockUser;
+      // For now, decode user info from token or use stored user
+      // Backend doesn't have a 'me' query yet
+      const storedUser = localStorage.getItem('auth_user');
+      if (storedUser) {
+        return JSON.parse(storedUser);
+      }
+      return null;
     } catch (error) {
       console.error('Failed to fetch user:', error);
       return null;
@@ -189,23 +163,12 @@ class AuthService {
   }
 
   /**
-   * Logout user (clear local storage, optionally invalidate token on backend)
-   * TODO: Add token invalidation mutation when backend is ready
+   * Logout user (clear local storage)
    */
   async logout(): Promise<void> {
     try {
-      // TODO: Optionally call backend to invalidate token
-      // await apolloClient.mutate({
-      //   mutation: gql`
-      //     mutation Logout {
-      //       logout {
-      //         success
-      //       }
-      //     }
-      //   `,
-      // });
-
-      // Clear local storage
+      // Backend doesn't have a logout mutation yet
+      // Just clear local storage
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
@@ -217,16 +180,12 @@ class AuthService {
 
   /**
    * Check if token is expired
-   * TODO: Implement proper JWT validation when backend is ready
    */
   isTokenExpired(token: string): boolean {
     try {
-      // TODO: Decode JWT and check expiration
-      // const payload = JSON.parse(atob(token.split('.')[1]));
-      // return Date.now() >= payload.exp * 1000;
-
-      // Mock: tokens don't expire for now
-      return false;
+      // Decode JWT and check expiration
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return Date.now() >= payload.exp * 1000;
     } catch {
       return true;
     }
