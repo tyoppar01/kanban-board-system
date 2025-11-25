@@ -106,7 +106,40 @@ jobs:
           scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
-          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
+          
+          echo "📝 Creating Grafana Alloy config on Server EC2 ..."
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} bash << 'SSHEOF'
+            cat > /home/${EC2_USER}/kanban-board-system/alloy-config.alloy << 'EOF'
+          // Grafana Alloy Configuration for Kanban Board Metrics
+          
+          // Prometheus scrape component
+          prometheus.scrape "kanban_metrics" {
+            targets = [{
+              __address__ = "server:8080",
+              job         = "kanban-server",
+            }]
+          
+            forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+            
+            scrape_interval = "15s"
+            scrape_timeout  = "10s"
+            metrics_path    = "/metrics"
+          }
+          
+          // Remote write to Grafana Cloud
+          prometheus.remote_write "grafana_cloud" {
+            endpoint {
+              url = env("GRAFANA_CLOUD_PROMETHEUS_URL")
+          
+              basic_auth {
+                username = env("GRAFANA_CLOUD_PROMETHEUS_USER")
+                password = env("GRAFANA_CLOUD_API_KEY")
+              }
+            }
+          }
+          EOF
+          SSHEOF
+          
           echo "📦 Copying env file to Server EC2 ..."
           scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/.env
           
