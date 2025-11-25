@@ -51,6 +51,9 @@ jobs:
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB=${{ secrets.POSTGRES_DB }}
           DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgresql:5432/${{ secrets.POSTGRES_DB }}
+          GRAFANA_CLOUD_PROMETHEUS_URL=${{ secrets.GRAFANA_CLOUD_PROMETHEUS_URL }}
+          GRAFANA_CLOUD_PROMETHEUS_USER=${{ secrets.GRAFANA_CLOUD_PROMETHEUS_USER }}
+          GRAFANA_CLOUD_API_KEY=${{ secrets.GRAFANA_CLOUD_API_KEY }}
           EOF
           echo "✅ Production .env file created"
           
@@ -103,6 +106,7 @@ jobs:
           scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
+          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
           echo "📦 Copying env file to Server EC2 ..."
           scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/.env
           
