@@ -107,7 +107,8 @@ jobs:
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
           echo "📄 Copying alloy-config.alloy from: $(pwd)/alloy-config.alloy"
-          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
+          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST}:/tmp/
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} "mv /tmp/alloy-config.alloy /home/${EC2_USER}/kanban-board-system/"
           echo "📦 Copying env file to Server EC2 ..."
           scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/.env
           
@@ -117,7 +118,8 @@ jobs:
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/
           echo "📄 Copying alloy-config.alloy from: $(pwd)/alloy-config.alloy"
-          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/
+          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} "mv /tmp/alloy-config.alloy /home/${EC2_USER}/kanban-board-system/"
           echo "📦 Copying env file to Client EC2 ..."
           scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/.env
           
@@ -137,6 +139,18 @@ jobs:
                         
             # Navigate to project directory
             cd /home/${EC2_USER}/kanban-board-system
+            
+            # Verify required files exist
+            echo "🔍 Verifying required files..."
+            if [ ! -f alloy-config.alloy ]; then
+              echo "❌ ERROR: alloy-config.alloy not found!"
+              exit 1
+            fi
+            if [ ! -f docker-compose.yml ]; then
+              echo "❌ ERROR: docker-compose.yml not found!"
+              exit 1
+            fi
+            echo "✅ All required files present"
             
             echo "📥 Loading Docker images..."
             docker load < /tmp/server-image.tar
@@ -161,6 +175,18 @@ jobs:
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} << EOF
             set -e
             cd /home/${EC2_USER}/kanban-board-system
+            
+            # Verify required files exist
+            echo "🔍 Verifying required files..."
+            if [ ! -f alloy-config.alloy ]; then
+              echo "❌ ERROR: alloy-config.alloy not found!"
+              exit 1
+            fi
+            if [ ! -f docker-compose.yml ]; then
+              echo "❌ ERROR: docker-compose.yml not found!"
+              exit 1
+            fi
+            echo "✅ All required files present"
             
             echo "📥 Loading Docker images..."
             docker load < /tmp/server-image.tar
