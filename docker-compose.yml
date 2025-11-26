@@ -1,11 +1,7 @@
 services:
   # Server (GraphQL)
   server:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
-      target: production
-    #image: kanban-server:latest
+    image: kanban-server:latest
     container_name: kanban-server
     restart: unless-stopped
     env_file:
@@ -13,13 +9,8 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${SERVER_PORT:-8080}
-      # Override DATABASE_URL to use Docker service name instead of localhost
-      DATABASE_URL: postgresql://${POSTGRES_USER:-kanban}:${POSTGRES_PASSWORD:-2919}@postgresql:5432/${POSTGRES_DB:-kanban_db}?schema=public
     ports:
       - "8080:8080"
-    depends_on:
-      postgresql:
-        condition: service_healthy
     networks:
       kanban-network:
     healthcheck:
@@ -31,11 +22,7 @@ services:
 
   # Client (Next.JS)
   client:
-    build:
-      context: .
-      dockerfile: client/Dockerfile
-      target: production
-    #image: kanban-client:latest
+    image: kanban-client:latest
     container_name: kanban-client
     restart: unless-stopped
     environment:
