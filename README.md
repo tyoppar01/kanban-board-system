@@ -37,4 +37,4 @@ clouding since 20/11/2025
 13. EC2
 14. Testcontainer
 15. Grafana
-16. CI/CD pipeline
+16. CI/CD pipeline...
