@@ -58,35 +58,41 @@ export default function KanbanBoard() {
   // WebSocket connection status
   const { isConnected } = useSocket();
 
-  // real-time updates integration
+  // real-time updates integration (only for backend storage mode)
   useRealtimeUpdates({
-    boardId: 'default', // Using default board ID for now
+    boardId: storageMode === 'backend' ? 'default' : '', // Only join board room in backend mode
     onTaskCreated: (task) => {
-      console.log('[WebSocket] Task created by another user:', task);
-      // temporarily disabled for debugging
-      // refetchBoard(); // Refetch board to show new task
+      if (storageMode !== 'backend') return; // Ignore in browser mode
+      //console.log('[WebSocket] Task created by another user:', task);
+      //refetchBoard(); // Refetch board to show new task
     },
     onTaskUpdated: (taskId, updates) => {
+      if (storageMode !== 'backend') return; // Ignore in browser mode
       console.log('[WebSocket] Task updated by another user:', taskId, updates);
       refetchBoard(); // refetch board to show updates
     },
     onTaskMoved: (taskId, fromColumn, toColumn, position) => {
+      if (storageMode !== 'backend') return; // Ignore in browser mode
       console.log('[WebSocket] Task moved by another user:', taskId, fromColumn, toColumn);
       refetchBoard(); // refetch board to show movement
     },
     onTaskDeleted: (taskId) => {
+      if (storageMode !== 'backend') return; // Ignore in browser mode
       console.log('[WebSocket] Task deleted by another user:', taskId);
       refetchBoard(); // refetch board to remove task
     },
     onColumnCreated: (column) => {
+      if (storageMode !== 'backend') return; // Ignore in browser mode
       console.log('[WebSocket] Column created by another user:', column);
       refetchBoard(); // refetch board to show new column
     },
     onColumnDeleted: (columnId) => {
       console.log('[WebSocket] Column deleted by another user:', columnId);
+      if (storageMode !== 'backend') return; // Ignore in browser mode
       refetchBoard(); // refetch board to remove column
     },
     onColumnMoved: (columnId, destIndex) => {
+      if (storageMode !== 'backend') return; // Ignore in browser mode
       console.log('[WebSocket] Column moved by another user:', columnId, destIndex);
       refetchBoard(); // refetch board to show column reorder
     }

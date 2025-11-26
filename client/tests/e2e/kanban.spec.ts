@@ -1,29 +1,159 @@
 import { test, expect } from '@playwright/test';
 
+// Helper function to register a new user
+async function register(page: any, username: string, password: string) {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1000);
+  
+  // Switch to register view
+  const switchToRegister = page.locator('button').filter({ hasText: /sign up|register|create account/i });
+  try {
+    await expect(switchToRegister.first()).toBeVisible({ timeout: 3000 });
+    await switchToRegister.first().click();
+    await page.waitForTimeout(1000);
+    console.log('✓ Switched to register view');
+  } catch (e) {
+    console.log('Already on register view or button not found');
+  }
+  
+  // Fill in registration form - need to fill ALL password fields
+  const usernameInput = page.locator('input[type="text"]').or(page.locator('input[name="username"]')).first();
+  const passwordInputs = page.locator('input[type="password"]');
+  
+  await expect(usernameInput).toBeVisible({ timeout: 5000 });
+  await usernameInput.fill(username);
+  
+  // Fill password field (first password input)
+  await passwordInputs.nth(0).fill(password);
+  
+  // Fill confirm password field (second password input)
+  await passwordInputs.nth(1).fill(password);
+  
+  console.log(`✓ Filled registration form: ${username} with matching passwords`);
+  
+  // Click register button
+  const registerButton = page.locator('button[type="submit"]').or(page.getByRole('button', { name: /register|sign up|create/i }));
+  await registerButton.first().click();
+  console.log('✓ Clicked register button');
+  
+  // Wait for navigation to board or error message
+  try {
+    await page.waitForURL('**/board', { timeout: 15000 });
+    console.log('✓ Successfully registered and redirected to board');
+  } catch (e) {
+    // Check for error messages
+    await page.waitForTimeout(2000);
+    const errorMessage = await page.locator('text=/error|already exists|invalid/i').textContent().catch(() => null);
+    if (errorMessage) {
+      console.log(`Registration error: ${errorMessage}`);
+      throw new Error(`Registration failed: ${errorMessage}`);
+    }
+    throw new Error('Registration did not redirect to board');
+  }
+}
+
+// Helper function to login
+async function login(page: any, username: string, password: string) {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1000);
+  
+  // Make sure we're on login view (not register)
+  const switchToLogin = page.locator('button').filter({ hasText: /login|sign in/i }).first();
+  try {
+    if (await switchToLogin.isVisible({ timeout: 2000 })) {
+      await switchToLogin.click();
+      await page.waitForTimeout(500);
+      console.log('✓ Switched to login view');
+    }
+  } catch (e) {
+    console.log('Already on login view');
+  }
+  
+  // Fill in login form
+  const usernameInput = page.locator('input[type="text"]').or(page.locator('input[name="username"]')).first();
+  const passwordInput = page.locator('input[type="password"]').first();
+  
+  await expect(usernameInput).toBeVisible({ timeout: 5000 });
+  await usernameInput.fill(username);
+  await passwordInput.fill(password);
+  console.log(`✓ Filled login form: ${username}`);
+  
+  // Click login button
+  const loginButton = page.locator('button[type="submit"]').or(page.getByRole('button', { name: /login|sign in/i }));
+  await loginButton.first().click();
+  console.log('✓ Clicked login button');
+  
+  // Wait for navigation to board
+  try {
+    await page.waitForURL('**/board', { timeout: 15000 });
+    console.log('✓ Successfully logged in and redirected to board');
+  } catch (e) {
+    // Check for error messages
+    await page.waitForTimeout(2000);
+    const errorMessage = await page.locator('text=/error|invalid|incorrect/i').textContent().catch(() => null);
+    if (errorMessage) {
+      console.log(`Login error: ${errorMessage}`);
+      throw new Error(`Login failed: ${errorMessage}`);
+    }
+    await page.screenshot({ path: 'debug-login-failed.png', fullPage: true });
+    throw new Error('Login did not redirect to board');
+  }
+}
+
 test.describe('Full User Workflow - End to End', () => {
+  // Use unique username for each test run to avoid conflicts
+  const testUsername = `e2e_user_${Date.now()}`;
+  const testPassword = 'testpass123';
+
   test('should complete full workflow: create task, move to in-progress, and persist after reload (backend)', async ({ page }) => {
     
-    // visit kanban board
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(500);
+    // Step 0: Register new user
+    console.log('Step 0: Registering new user...');
+    await register(page, testUsername, testPassword);
+    console.log('✓ Registered and authenticated successfully');
     
-    // select backend mode to test database persistence
-    const backendButton = page.getByRole('button', { name: /backend/i });
+    // Wait for board to load
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+    
+    // Handle storage mode modal if it appears
+    console.log('Checking for storage mode modal...');
     try {
-      if (await backendButton.isVisible({ timeout: 2000 })) {
+      const backendButton = page.getByRole('button', { name: /backend/i }).first();
+      if (await backendButton.isVisible({ timeout: 3000 })) {
+        console.log('Selecting backend storage mode...');
         await backendButton.click();
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(2000);
       }
     } catch (e) {
-      // modal didn't appear or backend already selected
+      console.log('No storage modal, backend already selected');
     }
     
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    // Wait for any loading states to complete
+    await page.waitForTimeout(2000);
     
-    // step 1: verify board is there
-    const mainContainer = page.locator('div.min-h-screen.bg-gray-50').first();
-    await expect(mainContainer).toBeVisible({ timeout: 20000 });
+    // step 1: verify board is loaded by checking for column headers OR task count badges
+    console.log('Step 1: Verifying board is loaded...');
+    
+    // Try multiple selectors to find the board
+    const columnHeaders = page.locator('h2').filter({ hasText: /.+/i }); // Any h2 with text
+    const taskCountBadges = page.locator('span.rounded-full.flex.items-center'); // Task count badges
+    const addTaskButton = page.locator('button.fixed.bottom-8.right-8');
+    
+    // Wait for any of these elements to appear
+    await Promise.race([
+      expect(columnHeaders.first()).toBeVisible({ timeout: 15000 }),
+      expect(taskCountBadges.first()).toBeVisible({ timeout: 15000 }),
+      expect(addTaskButton).toBeVisible({ timeout: 15000 })
+    ]).catch(async () => {
+      // Debug: take screenshot and log page content
+      await page.screenshot({ path: 'debug-board-not-loaded.png', fullPage: true });
+      const html = await page.content();
+      console.log('Page HTML:', html.substring(0, 500));
+      throw new Error('Board did not load - no columns, badges, or add button found');
+    });
+    
+    console.log('✓ Board loaded successfully');
     
     // step 2: create a new task and verify db write
     console.log('Step 2: Creating a new task...');
@@ -33,7 +163,7 @@ test.describe('Full User Workflow - End to End', () => {
     console.log(`Initial task count: ${initialTaskCount}`);
     
     // click the add task button (floating button)
-    const addButton = page.locator('button.fixed.bottom-8.right-8');
+    const addButton = page.getByRole('button', { name: 'Add new task' });
     await expect(addButton).toBeVisible({ timeout: 5000 });
     await addButton.click();
     await page.waitForTimeout(2000);
@@ -61,6 +191,14 @@ test.describe('Full User Workflow - End to End', () => {
     await editInput.fill(uniqueTaskName);
     await page.keyboard.press('Enter');
     await page.waitForTimeout(1000);
+    
+    // Debug: check task count after edit
+    const afterEditCount = await page.locator('[data-rfd-draggable-id^="task-"]').count();
+    console.log(`Task count after edit: ${afterEditCount} (expected: ${afterCreateCount})`);
+    
+    // Debug: list all tasks
+    const allTaskTexts = await page.locator('[data-rfd-draggable-id^="task-"]').allTextContents();
+    console.log(`All task texts after edit:`, allTaskTexts);
     
     // verify the task was created with the custom name
     const createdTask = page.locator('[data-rfd-draggable-id^="task-"]').filter({ hasText: uniqueTaskName });
@@ -144,27 +282,50 @@ test.describe('Full User Workflow - End to End', () => {
 
   test('should complete full workflow: create task, move to in-progress, and persist after reload (browser)', async ({ page }) => {
     
-    // visit kanban board
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(500);
+    // Step 0: Register new user
+    console.log('Step 0: Registering new user...');
+    await register(page, testUsername + '_browser', testPassword);
+    console.log('✓ Registered and authenticated successfully');
     
-    // select BROWSER mode to test localStorage persistence
-    const browserButton = page.getByRole('button', { name: /browser/i });
+    // Wait for board to load
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+    
+    // Handle storage mode modal if it appears
+    console.log('Checking for storage mode modal...');
     try {
-      if (await browserButton.isVisible({ timeout: 2000 })) {
+      const browserButton = page.getByRole('button', { name: /browser/i }).first();
+      if (await browserButton.isVisible({ timeout: 3000 })) {
+        console.log('Selecting browser storage mode...');
         await browserButton.click();
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(2000);
       }
     } catch (e) {
-      // modal didn't appear or browser already selected
+      console.log('No storage modal, browser already selected');
     }
     
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    // Wait for any loading states to complete
+    await page.waitForTimeout(2000);
     
     // step 1: verify board is loaded
-    const mainContainer = page.locator('div.min-h-screen.bg-gray-50').first();
-    await expect(mainContainer).toBeVisible({ timeout: 10000 });
+    console.log('Step 1: Verifying board is loaded...');
+    
+    const columnHeaders = page.locator('h2').filter({ hasText: /.+/i });
+    const taskCountBadges = page.locator('span.rounded-full.flex.items-center');
+    const addTaskButton = page.locator('button.fixed.bottom-8.right-8');
+    
+    await Promise.race([
+      expect(columnHeaders.first()).toBeVisible({ timeout: 15000 }),
+      expect(taskCountBadges.first()).toBeVisible({ timeout: 15000 }),
+      expect(addTaskButton).toBeVisible({ timeout: 15000 })
+    ]).catch(async () => {
+      await page.screenshot({ path: 'debug-board-browser-not-loaded.png', fullPage: true });
+      const html = await page.content();
+      console.log('Page HTML:', html.substring(0, 500));
+      throw new Error('Board did not load - no columns, badges, or add button found');
+    });
+    
+    console.log('✓ Board loaded successfully');
     
     // step 2: create a new task and verify localStorage write
     console.log('Step 2: Creating a new task in browser storage...');
@@ -174,7 +335,7 @@ test.describe('Full User Workflow - End to End', () => {
     console.log(`Initial task count: ${initialTaskCount}`);
     
     // click the add task button
-    const addButton = page.locator('button.fixed.bottom-8.right-8');
+    const addButton = page.getByRole('button', { name: 'Add new task' });
     await expect(addButton).toBeVisible({ timeout: 5000 });
     await addButton.click();
     await page.waitForTimeout(2000);
@@ -200,6 +361,14 @@ test.describe('Full User Workflow - End to End', () => {
     await editInput.fill(uniqueTaskName);
     await page.keyboard.press('Enter');
     await page.waitForTimeout(1000);
+    
+    // Debug: check task count after edit
+    const afterEditCount = await page.locator('[data-rfd-draggable-id^="task-"]').count();
+    console.log(`Task count after edit: ${afterEditCount} (expected: ${afterCreateCount})`);
+    
+    // Debug: list all tasks
+    const allTaskTexts = await page.locator('[data-rfd-draggable-id^="task-"]').allTextContents();
+    console.log(`All task texts after edit:`, allTaskTexts);
     
     // verify the task was created
     const createdTask = page.locator('[data-rfd-draggable-id^="task-"]').filter({ hasText: uniqueTaskName });
