@@ -58,16 +58,46 @@ jobs:
             client-image.tar
           retention-days: 1
 
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies - External APIs
+        working-directory: external-apis
+        run: |
+          npm ci
+          npm run prisma:generate
+
+      - name: Install dependencies - Server
+        working-directory: server
+        run: npm ci
+
+      - name: Run integration tests
+        working-directory: server
+        run: |
+          echo "🧪 Running integration tests..."
+          npm test -- tests/integration
+          echo "✅ Integration tests passed"
+
   test-summary:
     name: Test Summary
-    needs: build-and-test
+    needs: [build-and-test, integration-tests]
     runs-on: ubuntu-latest
     if: always()
     
     steps:
       - name: Check test results
         run: |
-          if [ "${{ needs.build-and-test.result }}" == "success" ]; then
+          if [ "${{ needs.build-and-test.result }}" == "success" ] && [ "${{ needs.integration-tests.result }}" == "success" ]; then
             echo "✅ All tests passed successfully!"
           else
             echo "❌ Tests failed. Deployment blocked."
