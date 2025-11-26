@@ -1,7 +1,10 @@
 services:
   # Server (GraphQL)
   server:
-    image: kanban-server:latest
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    # image: kanban-server:latest
     container_name: kanban-server
     restart: unless-stopped
     env_file:
@@ -22,7 +25,10 @@ services:
 
   # Client (Next.JS)
   client:
-    image: kanban-client:latest
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    # image: kanban-client:latest
     container_name: kanban-client
     restart: unless-stopped
     environment:
