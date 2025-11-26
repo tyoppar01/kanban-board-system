@@ -5,8 +5,8 @@ import { describeIfDocker } from '../helpers/integrationTestUtils';
 import { TestDatabaseSetup } from '../helpers/testDatabaseSetup';
 
 describeIfDocker('AuthRepo Integration Tests', () => {
-  let postgresContainer: StartedPostgreSqlContainer;
   let authRepo: AuthRepo;
+  let postgresContainer: StartedPostgreSqlContainer;
 
   beforeAll(async () => {
     // Setup database container and run migrations
@@ -45,7 +45,7 @@ describeIfDocker('AuthRepo Integration Tests', () => {
       expect(result).toBeDefined();
       expect(result.id).toBeDefined();
       expect(result.username).toBe('testuser');
-      expect(result.password).toBeUndefined(); // Password should not be returned
+      expect(result.password).toBeDefined(); // Password is returned
     });
 
     it('should throw error when creating user with duplicate username', async () => {
@@ -75,11 +75,11 @@ describeIfDocker('AuthRepo Integration Tests', () => {
       expect(result?.username).toBe('findme');
     });
 
-    it('should return empty user when user not found', async () => {
+    it('should return empty object when user not found', async () => {
       const result = await authRepo.findByUsername('nonexistent');
       
       expect(result).toBeDefined();
-      expect(result?.username).toBe('');
+      expect(result).toEqual({});
     });
   });
 

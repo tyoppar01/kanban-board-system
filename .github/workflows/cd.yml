@@ -106,7 +106,6 @@ jobs:
           scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
-          echo "📄 Copying alloy-config.alloy from: $(pwd)/alloy-config.alloy"
           scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST}:/tmp/
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} "rm -rf /home/${EC2_USER}/kanban-board-system/alloy-config.alloy && mv /tmp/alloy-config.alloy /home/${EC2_USER}/kanban-board-system/"
           echo "📦 Copying env file to Server EC2 ..."
@@ -117,7 +116,6 @@ jobs:
           scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
           scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/
-          echo "📄 Copying alloy-config.alloy from: $(pwd)/alloy-config.alloy"
           scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
           ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} "rm -rf /home/${EC2_USER}/kanban-board-system/alloy-config.alloy && mv /tmp/alloy-config.alloy /home/${EC2_USER}/kanban-board-system/"
           echo "📦 Copying env file to Client EC2 ..."
