@@ -7,10 +7,12 @@ This Kanban Board application integrates both backend and frontend logic, develo
 3. Drag-and-drop (DND) task movement between columns
 4. Display of the latest action performed
 5. Editable columns based on user's needs
-6. Real-time data fetching from MongoDB
+6. Real-time data updates via Web Socket
+7. User authentication
+8. and more...
 
 ## Setup instruction
-Execute start.sh to automate the installation and startup process.
+clouding since 20/11/2025
 
 ## Contribution Guide
 * Create a new branch for each feature or fix.
@@ -19,20 +21,20 @@ Execute start.sh to automate the installation and startup process.
 * Submit pull requests for review before merging.
 * Require (1) approval for every PR review before merging.
 
-## Further improvement
-* Add authentication to access user's board.
-* Add demo video / images to demostrate the board features.
-
-
 ## Tech Stack
 1. Express
 2. Node.js
-3. Bash Script
+3. Bash
 4. Next.js
 5. Typescript
 6. Jest
 7. Playwright
 8. Docker
 9. Apollo GraphQL
-10. MongoDB
+10. PostgreSQL
 11. Git
+12. Docker
+13. EC2
+14. Testcontainer
+15. Grafana
+16. CI/CD pipeline
