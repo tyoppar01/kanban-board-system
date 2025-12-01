@@ -103,21 +103,21 @@ jobs:
 
           # Server Instance
           echo "📦 Copying files to Server EC2 ..."
-          scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
-          scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/tmp/
+          scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/
+          scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/
-          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST}:/tmp/
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} "rm -rf /home/${EC2_USER}/kanban-board-system/alloy-config.alloy && mv /tmp/alloy-config.alloy /home/${EC2_USER}/kanban-board-system/"
+          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST} "rm -rf /home/${EC2_USER}/kanban-board-system/alloy-config.alloy && mv /home/${EC2_USER}/alloy-config.alloy /home/${EC2_USER}/kanban-board-system/"
           echo "📦 Copying env file to Server EC2 ..."
           scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/kanban-board-system/.env
           
           # Client Instance
           echo "📦 Copying files to Client EC2 ..."
-          scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
-          scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
+          scp -i ~/.ssh/deploy_key server-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/
+          scp -i ~/.ssh/deploy_key client-image.tar ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/
           scp -i ~/.ssh/deploy_key docker-compose.yml ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/
-          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST_CLIENT}:/tmp/
-          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} "rm -rf /home/${EC2_USER}/kanban-board-system/alloy-config.alloy && mv /tmp/alloy-config.alloy /home/${EC2_USER}/kanban-board-system/"
+          scp -i ~/.ssh/deploy_key alloy-config.alloy ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/
+          ssh -i ~/.ssh/deploy_key ${EC2_USER}@${EC2_HOST_CLIENT} "rm -rf /home/${EC2_USER}/kanban-board-system/alloy-config.alloy && mv /home/${EC2_USER}/alloy-config.alloy /home/${EC2_USER}/kanban-board-system/"
           echo "📦 Copying env file to Client EC2 ..."
           scp -i ~/.ssh/deploy_key .env.production ${EC2_USER}@${EC2_HOST_CLIENT}:/home/${EC2_USER}/kanban-board-system/.env
           
@@ -151,8 +151,8 @@ jobs:
             echo "✅ All required files present"
             
             echo "📥 Loading Docker images..."
-            docker load < /tmp/server-image.tar
-            docker load < /tmp/client-image.tar
+            docker load < /home/${EC2_USER}/server-image.tar
+            docker load < /home/${EC2_USER}/client-image.tar
             
             # Backup current images (for rollback)
             echo "💾 Creating backup tags..."
@@ -165,7 +165,7 @@ jobs:
             docker-compose up -d
             
             # Clean up temp files
-            rm -f /tmp/server-image.tar /tmp/client-image.tar
+            rm -f /home/${EC2_USER}/server-image.tar /home/${EC2_USER}/client-image.tar
             echo "✅ Server deployment complete!"
           EOF
           
@@ -187,8 +187,8 @@ jobs:
             echo "✅ All required files present"
             
             echo "📥 Loading Docker images..."
-            docker load < /tmp/server-image.tar
-            docker load < /tmp/client-image.tar
+            docker load < /home/${EC2_USER}/server-image.tar
+            docker load < /home/${EC2_USER}/client-image.tar
             
             echo "💾 Creating backup tags..."
             docker tag kanban-server:latest kanban-server:previous 2>/dev/null || true
@@ -198,7 +198,7 @@ jobs:
             docker-compose down --timeout 30 || true
             docker-compose up -d client
             
-            rm -f /tmp/server-image.tar /tmp/client-image.tar
+            rm -f /home/${EC2_USER}/server-image.tar /home/${EC2_USER}/client-image.tar
             echo "✅ Client deployment complete!"
           EOF
 
