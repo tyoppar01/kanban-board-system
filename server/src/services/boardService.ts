@@ -1,7 +1,8 @@
 import { IBoard } from "../models/board";
 import { BoardRepo } from "../repos/boardRepo";
+import { IBoardService } from "./interfaces/IBoardService";
 
-export class BoardService {
+export class BoardService implements IBoardService {
 
       private static instance: BoardService;
 

@@ -7,9 +7,10 @@ export const boardResolver = {
 
     Query: {
 
-        board: async () => {
+        board: async (_: any, __: any, context: any) => {
+            const boardService = context?.services?.boardService || BoardService.getInstance();
 
-            const board: IBoard = await BoardService.getInstance().getFullBoard();
+            const board: IBoard = await boardService.getFullBoard();
 
             logProcess(MethodName.GET_BOARD, ClassName.RESOLVE, board);
 

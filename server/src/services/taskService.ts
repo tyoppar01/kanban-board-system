@@ -3,10 +3,11 @@ import { BoardRepo } from "../repos/boardRepo";
 import { TaskRepo } from "../repos/taskRepo";
 import { ErrorCode } from "../utils/errorCode";
 import { logResponse, MethodName } from "../utils/loggerResponse";
+import { ITaskService } from "./interfaces/ITaskService";
 
 type EditableTaskFields = Omit<ITask, "id" | "createdDate">;
 
-export class TaskService {
+export class TaskService implements ITaskService {
 
   private static instance: TaskService;
 
