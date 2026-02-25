@@ -4,6 +4,7 @@ import { IUser } from '../../src/models/user';
 import { AuthRepo } from '../../src/repos/authRepo';
 import { TokenRepo } from '../../src/repos/tokenRepo';
 import { AuthService } from '../../src/services/authService';
+import { createMockContext } from '../helpers/testHelper';
 
 // Mock dependencies
 jest.mock('../../src/repos/authRepo');
