@@ -8,7 +8,9 @@
     "dev": "nodemon",
     "start": "ts-node src/server.ts",
     "build": "tsc",
-    "test": "jest --coverage"
+    "test": "jest --coverage --testPathIgnorePatterns=integration",
+    "test:integration": "jest tests/integration",
+    "test:watch": "jest --watch"
   },
   "keywords": [
     "express",
