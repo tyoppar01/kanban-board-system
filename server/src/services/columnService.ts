@@ -1,8 +1,9 @@
 import { IBoard } from "../models/board";
 import { BoardRepo } from "../repos/boardRepo";
 import { ErrorCode } from "../utils/errorCode";
+import { IColumnService } from "./interfaces/IColumnService";
 
-export class ColumnService {
+export class ColumnService implements IColumnService {
 
       private static instance: ColumnService;
 

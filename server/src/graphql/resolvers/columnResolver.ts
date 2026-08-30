@@ -8,9 +8,10 @@ export const columnResolver = {
 
     Mutation: {
 
-        addColumn: async (_: any, { name }: { name: string }) => {
+        addColumn: async (_: any, { name }: { name: string }, context: any) => {
+            const columnService = context?.services?.columnService || ColumnService.getInstance();
 
-            const board: IBoard = await ColumnService.getInstance().addColumn(name);
+            const board: IBoard = await columnService.addColumn(name);
             logProcess(MethodName.ADD_COL, ClassName.RESOLVE, board);
 
             const taskList = Object.values(board.taskList || {})
@@ -39,10 +40,11 @@ export const columnResolver = {
             return { taskList, columns, order: board.order };
         },
 
-        removeColumn: async (_: any, { name }: { name: string }): Promise<boolean> => {
+        removeColumn: async (_: any, { name }: { name: string }, context: any): Promise<boolean> => {
+            const columnService = context?.services?.columnService || ColumnService.getInstance();
 
             logProcess(MethodName.REMOVE_COL, ClassName.RESOLVE, name);
-            const output: boolean = await ColumnService.getInstance().removeColumn(name);
+            const output: boolean = await columnService.removeColumn(name);
             logResponse(MethodName.REMOVE_COL, output);
             
             // Track metric
@@ -56,10 +58,11 @@ export const columnResolver = {
             return output;
         },
 
-        moveColumn: async (_: any, { name, destIndex }: { name: string, destIndex: number }): Promise<boolean> => {
+        moveColumn: async (_: any, { name, destIndex }: { name: string, destIndex: number }, context: any): Promise<boolean> => {
+            const columnService = context?.services?.columnService || ColumnService.getInstance();
 
             logProcess(MethodName.MOVE_COL, ClassName.RESOLVE, name);
-            const output: boolean  = await ColumnService.getInstance().moveColumn(name,destIndex);
+            const output: boolean  = await columnService.moveColumn(name, destIndex);
             logResponse(MethodName.MOVE_COL, output);
 
             // emit websocket event

@@ -1,15 +1,11 @@
 import { IUser } from "../models/user";
 import { AuthRepo } from "../repos/authRepo";
 import { TokenRepo } from "../repos/tokenRepo";
+import { IAuthService, JWTPayload } from "./interfaces/IAuthService";
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 
-interface JWTPayload {
-    userId: number;
-    username: string;
-}
-
-export class AuthService {
+export class AuthService implements IAuthService {
 
     private static instance: AuthService;
     private readonly saltRounds: number = 10;

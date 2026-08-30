@@ -16,7 +16,8 @@ export const authResolver = {
 
   Mutation: {
 
-    login: async (_: any, {userProfile}: { userProfile: UserInput }) => {
+    login: async (_: any, {userProfile}: { userProfile: UserInput }, context: any) => {
+      const authService = context?.services?.authService || service;
 
       logProcess(MethodName.LOGIN, ClassName.RESOLVE, { username: userProfile.username, hasToken: !!userProfile.token });
 
@@ -31,16 +32,17 @@ export const authResolver = {
       }, null, 2));
       
       // authenticate user login with optional token from frontend
-      const res = await service.authenticateUser(userProfile);
+      const res = await authService.authenticateUser(userProfile);
       logResponse(MethodName.LOGIN, res);
       return res;
     },
 
-    register: async (_: any, {userProfile}: { userProfile: UserInput }) => {
+    register: async (_: any, {userProfile}: { userProfile: UserInput }, context: any) => {
+      const authService = context?.services?.authService || service;
 
       logProcess(MethodName.REGISTER, ClassName.RESOLVE, { username: userProfile.username });
       // register new user
-      const res = await service.registerUser(userProfile);
+      const res = await authService.registerUser(userProfile);
       logResponse(MethodName.REGISTER, res);
       return res;
     },

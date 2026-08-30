@@ -10,9 +10,10 @@ export const taskResolver = {
 
   Mutation: {
 
-    addTask: async (_: any, { task }: { task: ITask }): Promise<ITask> => {
+    addTask: async (_: any, { task }: { task: ITask }, context: any): Promise<ITask> => {
+      const taskService = context?.services?.taskService || service;
       logProcess(MethodName.ADD_TASK, ClassName.RESOLVE, task);
-      const res = await service.addTask(task);
+      const res = await taskService.addTask(task);
       logResponse(MethodName.ADD_TASK, res);
       
       // Track metric
@@ -24,9 +25,10 @@ export const taskResolver = {
       return res;
     },
 
-    removeTask: async (_: any, { id, column }: { id: number; column: string }): Promise<boolean> => {
+    removeTask: async (_: any, { id, column }: { id: number; column: string }, context: any): Promise<boolean> => {
+      const taskService = context?.services?.taskService || service;
       logProcess(MethodName.REMOVE_TASK, ClassName.RESOLVE, {id, column});
-      const res = await service.removeTask(id, column);
+      const res = await taskService.removeTask(id, column);
       logResponse(MethodName.REMOVE_TASK, res);
       
       // Track metric
@@ -40,9 +42,10 @@ export const taskResolver = {
       return res;
     },
 
-    relocateTask: async (_: any, { taskId, index, currCol, destCol }: any): Promise<boolean> => {
+    relocateTask: async (_: any, { taskId, index, currCol, destCol }: any, context: any): Promise<boolean> => {
+      const taskService = context?.services?.taskService || service;
       logProcess(MethodName.MOVE_TASK, ClassName.RESOLVE, { taskId, index, currCol, destCol });
-      const res = await service.relocateTask(taskId, index, currCol, destCol);
+      const res = await taskService.relocateTask(taskId, index, currCol, destCol);
       logResponse(MethodName.MOVE_TASK, res);
       
       // Track metric
@@ -60,9 +63,10 @@ export const taskResolver = {
       return res;
     },
 
-    editTask: async (_: any, { task }: { task: ITask }): Promise<boolean> => {
+    editTask: async (_: any, { task }: { task: ITask }, context: any): Promise<boolean> => {
+      const taskService = context?.services?.taskService || service;
       logProcess(MethodName.EDIT_TASK, ClassName.RESOLVE, task);
-      const res = await service.editTask(task);
+      const res = await taskService.editTask(task);
       logResponse(MethodName.EDIT_TASK, res);
       
       // Track metric
